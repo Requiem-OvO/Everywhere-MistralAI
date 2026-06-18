@@ -1,4 +1,4 @@
-﻿name: (Windows) Build and Release
+name: (Windows) Build and Release
 
 on:
   push:
@@ -37,46 +37,46 @@ jobs:
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v3
 
-    - name: Install Inno Setup
-      shell: pwsh
-      run: |
-        choco install innosetup
+    # - name: Install Inno Setup
+    #   shell: pwsh
+    #   run: |
+    #     choco install innosetup
 
-    - name: Install SimplySignDesktop
-      shell: pwsh
-      run: |
-        $msiPath = "tools/sign_windows/SimplySignDesktop-9.3.3.71-64-bit-en.msi"
-        if (-not (Test-Path $msiPath)) {
-            Write-Error "MSI file not found at: $msiPath"
-            exit 1
-        }
+    # - name: Install SimplySignDesktop
+    #   shell: pwsh
+    #   run: |
+    #     $msiPath = "tools/sign_windows/SimplySignDesktop-9.3.3.71-64-bit-en.msi"
+    #     if (-not (Test-Path $msiPath)) {
+    #         Write-Error "MSI file not found at: $msiPath"
+    #         exit 1
+    #     }
+    #
+    #     $absMsiPath = Convert-Path $msiPath
+    #     $logPath = "$PWD\install.log"
+    #
+    #     Write-Host "Installing SimplySignDesktop from $absMsiPath..."
+    #     # Use /qn for completely silent installation (no UI) and ALLUSERS=1 to force machine-wide install
+    #     $process = Start-Process msiexec -ArgumentList "/i `"$absMsiPath`" /qn /norestart ALLUSERS=1 /l*v `"$logPath`"" -Wait -PassThru
+    #
+    #     if ($process.ExitCode -ne 0) {
+    #         Write-Host "SimplySignDesktop installation failed with exit code $($process.ExitCode)"
+    #         if (Test-Path $logPath) {
+    #             Write-Host "----------------------------------------------------------------"
+    #             Write-Host "Install Log Content:"
+    #             Write-Host "----------------------------------------------------------------"
+    #             Get-Content $logPath
+    #             Write-Host "----------------------------------------------------------------"
+    #         } else {
+    #             Write-Host "Log file not found at $logPath"
+    #         }
+    #         exit $process.ExitCode
+    #     }
+    #     Write-Host "SimplySignDesktop installed successfully."
 
-        $absMsiPath = Convert-Path $msiPath
-        $logPath = "$PWD\install.log"
-
-        Write-Host "Installing SimplySignDesktop from $absMsiPath..."
-        # Use /qn for completely silent installation (no UI) and ALLUSERS=1 to force machine-wide install
-        $process = Start-Process msiexec -ArgumentList "/i `"$absMsiPath`" /qn /norestart ALLUSERS=1 /l*v `"$logPath`"" -Wait -PassThru
-        
-        if ($process.ExitCode -ne 0) {
-            Write-Host "SimplySignDesktop installation failed with exit code $($process.ExitCode)"
-            if (Test-Path $logPath) {
-                Write-Host "----------------------------------------------------------------"
-                Write-Host "Install Log Content:"
-                Write-Host "----------------------------------------------------------------"
-                Get-Content $logPath
-                Write-Host "----------------------------------------------------------------"
-            } else {
-                Write-Host "Log file not found at $logPath"
-            }
-            exit $process.ExitCode
-        }
-        Write-Host "SimplySignDesktop installed successfully."
-
-    - name: Set up Python
-      uses: actions/setup-python@v6
-      with:
-        python-version: '3.10'
+    # - name: Set up Python
+    #   uses: actions/setup-python@v6
+    #   with:
+    #     python-version: '3.10'
 
     - name: Install Workloads
       run: dotnet workload restore src/Everywhere.Windows/Everywhere.Windows.csproj
@@ -88,35 +88,43 @@ jobs:
 
     - name: Publish Everywhere.Windows
       shell: pwsh
-      env:
-        SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-        CLIENT_ID: ${{ secrets.CLIENT_ID }}
-        AI_GATEWAY_BASE_URL: ${{ vars.AI_GATEWAY_BASE_URL }}
-        ACCOUNT_BASE_URL: ${{ vars.ACCOUNT_BASE_URL }}
-        CLOUD_SYNC_BASE_URL: ${{ vars.CLOUD_SYNC_BASE_URL }}
+      # env:
+      #   SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+      #   CLIENT_ID: ${{ secrets.CLIENT_ID }}
+      #   AI_GATEWAY_BASE_URL: ${{ vars.AI_GATEWAY_BASE_URL }}
+      #   ACCOUNT_BASE_URL: ${{ vars.ACCOUNT_BASE_URL }}
+      #   CLOUD_SYNC_BASE_URL: ${{ vars.CLOUD_SYNC_BASE_URL }}
+      # run: |
+      #   dotnet publish src/Everywhere.Windows/Everywhere.Windows.csproj `
+      #     -c Release `
+      #     --self-contained true `
+      #     -p:Version="$env:VERSION_PREFIX" `
+      #     -p:SemanticVersion="$env:SEMANTIC_VERSION" `
+      #     -p:SentryDsn="$env:SENTRY_DSN" `
+      #     -p:ClientId="$env:CLIENT_ID" `
+      #     -p:AIGatewayBaseUrl="$env:AI_GATEWAY_BASE_URL" `
+      #     -p:AccountBaseUrl="$env:ACCOUNT_BASE_URL" `
+      #     -p:CloudSyncBaseUrl="$env:CLOUD_SYNC_BASE_URL" `
+      #     -o ./publish `
+      #     --no-restore
       run: |
         dotnet publish src/Everywhere.Windows/Everywhere.Windows.csproj `
           -c Release `
           --self-contained true `
           -p:Version="$env:VERSION_PREFIX" `
           -p:SemanticVersion="$env:SEMANTIC_VERSION" `
-          -p:SentryDsn="$env:SENTRY_DSN" `
-          -p:ClientId="$env:CLIENT_ID" `
-          -p:AIGatewayBaseUrl="$env:AI_GATEWAY_BASE_URL" `
-          -p:AccountBaseUrl="$env:ACCOUNT_BASE_URL" `
-          -p:CloudSyncBaseUrl="$env:CLOUD_SYNC_BASE_URL" `
           -o ./publish `
           --no-restore
 
-    - name: Login, Compile, and Sign
-      shell: pwsh
-      env:
-        SIGN_USERNAME: ${{ secrets.CERTUM_USERNAME }}
-        SIGN_OTP_TOKEN: ${{ secrets.CERTUM_OTP_TOKEN }}
-      run: |
-        python -m pip install --upgrade pip
-        pip install pyotp
-        python -u tools/sign_and_pack.py ./publish tools/installer.iss
+    # - name: Login, Compile, and Sign
+    #   shell: pwsh
+    #   env:
+    #     SIGN_USERNAME: ${{ secrets.CERTUM_USERNAME }}
+    #     SIGN_OTP_TOKEN: ${{ secrets.CERTUM_OTP_TOKEN }}
+    #   run: |
+    #     python -m pip install --upgrade pip
+    #     pip install pyotp
+    #     python -u tools/sign_and_pack.py ./publish tools/installer.iss
 
     - name: Create release zip
       shell: pwsh
@@ -133,4 +141,4 @@ jobs:
         tag_name: ${{ env.RELEASE_TAG }}
         files: |
           ./Everywhere-Windows-x64-v${{env.VERSION}}.zip
-          ./Everywhere-Windows-x64-Setup-v${{env.VERSION}}.exe
+          # ./Everywhere-Windows-x64-Setup-v${{env.VERSION}}.exe
