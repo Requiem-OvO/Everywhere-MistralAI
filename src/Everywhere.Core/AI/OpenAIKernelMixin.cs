@@ -1,4 +1,4 @@
-﻿using System.ClientModel;
+using System.ClientModel;
 using System.ClientModel.Primitives;
 using System.Diagnostics;
 using System.Text;
@@ -41,14 +41,23 @@ public class OpenAIKernelMixin : KernelMixin
             new ChatClient(
                 ModelId,
                 authenticationPolicy,
-                new OpenAIClientOptions
-                {
-                    Endpoint = new Uri(Endpoint, UriKind.Absolute),
-                    Transport = new HttpClientPipelineTransport(connection.HttpClient, true, loggerFactory)
-                }
+                CreateClientOptions(connection, loggerFactory)
             ).AsIChatClient(),
             this
         ).AsChatCompletionService();
+    }
+
+    /// <summary>
+    /// Creates the <see cref="OpenAIClientOptions"/> for the chat client.
+    /// Override this in a subclass to inject provider-specific pipeline policies.
+    /// </summary>
+    protected virtual OpenAIClientOptions CreateClientOptions(ModelConnection connection, ILoggerFactory loggerFactory)
+    {
+        return new OpenAIClientOptions
+        {
+            Endpoint = new Uri(Endpoint, UriKind.Absolute),
+            Transport = new HttpClientPipelineTransport(connection.HttpClient, true, loggerFactory)
+        };
     }
 
     /// <summary>

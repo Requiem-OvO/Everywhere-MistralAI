@@ -858,6 +858,51 @@ partial class PresetBasedAssistantConfigurator
                     OutputLimit = 4_096,
                 }
             ]
+        },
+        new()
+        {
+            Id = "mistral",
+            DisplayName = "Mistral AI",
+            Endpoint = "https://api.mistral.ai/v1",
+            OfficialWebsiteUrl = "https://mistral.ai",
+            DarkIconUrl = "avares://Everywhere.Core/Assets/Icons/mistral-color.svg",
+            LightIconUrl = "avares://Everywhere.Core/Assets/Icons/mistral-color.svg",
+            Schema = ModelProviderSchema.Mistral,
+            ModelDefinitions =
+            [
+                new ModelDefinitionTemplate
+                {
+                    ModelId = "mistral-medium-latest",
+                    Name = "Mistral Medium",
+                    SupportsToolCall = true,
+                    InputModalities = Modalities.Text | Modalities.Image,
+                    OutputModalities = Modalities.Text,
+                    ContextLimit = 256_000,
+                    OutputLimit = 256_000,
+                    IsDefault = true
+                },
+                new ModelDefinitionTemplate
+                {
+                    ModelId = "mistral-small-latest",
+                    Name = "Mistral Small",
+                    SupportsToolCall = true,
+                    InputModalities = Modalities.Text | Modalities.Image,
+                    OutputModalities = Modalities.Text,
+                    ContextLimit = 256_000,
+                    OutputLimit = 256_000,
+                    Specializations = ModelSpecializations.TitleGeneration
+                },
+                new ModelDefinitionTemplate
+                {
+                    ModelId = "devstral-latest",
+                    Name = "Devstral",
+                    SupportsToolCall = true,
+                    InputModalities = Modalities.Text,
+                    OutputModalities = Modalities.Text,
+                    ContextLimit = 256_000,
+                    OutputLimit = 256_000
+                }
+            ]
         }
     ];
 }

@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.AI.Configurator;
@@ -92,7 +92,7 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
     [DefaultValue(20)]
     public partial int RequestTimeoutSeconds { get; set; } = 20;
 
-    public bool IsOpenAI => Schema == ModelProviderSchema.OpenAI;
+    public bool IsOpenAI => Schema is ModelProviderSchema.OpenAI or ModelProviderSchema.Mistral;
 
     [DynamicResourceKey(
         LocaleKey.Assistant_OpenAIOptions_Header,

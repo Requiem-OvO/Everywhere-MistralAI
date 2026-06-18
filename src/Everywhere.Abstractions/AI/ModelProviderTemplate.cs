@@ -1,4 +1,4 @@
-﻿namespace Everywhere.AI;
+namespace Everywhere.AI;
 
 /// <summary>
 /// Represents a provider template for customizing assistant.
