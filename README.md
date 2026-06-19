@@ -5,10 +5,20 @@
 > 由于原项目官方明确表示不接收 Preset Mode 相关的 PR，为了满足特定场景的需求，我维护了这个 Fork 分支。
 
 ## ✨ 核心特性 (相比原版)
-- 🚀 **原生支持 [Mistral AI](https://mistral.ai/)**：无缝接入 Mistral 的大语言模型 API。
+- 🚀 **原生支持 [Mistral AI](https://mistral.ai/)**：现在Everywhere能正确调用Mistral AI的深度思考、图像输入功能了
 - 🔄 **保持同步**：定期合并原项目的最新更新与 Bug 修复。
 
-> 如果您只需要原版功能，请前往[Everywhere](https://github.com/Sylinko/Everywhere)。
+## 如何调用mistral ai？
+
+1.在预设模式中将模型提供商切换为mistral ai
+
+2.填入密钥
+
+### 如何调用mistral ai的深度思考功能？
+
+需要在推理强度中填写high
+
+<img width="1245" height="727" alt="image" src="https://github.com/user-attachments/assets/11c339b5-1d98-4845-8333-fb0a73ea82c8" />
 
 
 <a id="readme-top"></a>
