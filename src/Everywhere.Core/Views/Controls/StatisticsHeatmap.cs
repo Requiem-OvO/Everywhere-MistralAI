@@ -2,8 +2,6 @@ using System.Globalization;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
-using Avalonia.VisualTree;
-using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.Statistics;
 using ZLinq;
 
@@ -12,13 +10,67 @@ namespace Everywhere.Views;
 /// <summary>
 /// Renders the home dashboard activity heatmap without introducing a charting dependency.
 /// </summary>
-public sealed class StatisticsHeatmap : UserControl, IRecipient<LocaleChangedMessage>
+public sealed class StatisticsHeatmap : UserControl
 {
+    /// <summary>
+    /// Defines the <see cref="Days"/> property.
+    /// </summary>
     public static readonly StyledProperty<IReadOnlyList<IStatisticsHeatmapDay>?> DaysProperty =
         AvaloniaProperty.Register<StatisticsHeatmap, IReadOnlyList<IStatisticsHeatmapDay>?>(nameof(Days));
 
+    /// <summary>
+    /// Gets or sets the collection of heatmap days to display.
+    /// </summary>
+    public IReadOnlyList<IStatisticsHeatmapDay>? Days
+    {
+        get => GetValue(DaysProperty);
+        set => SetValue(DaysProperty, value);
+    }
+
+    /// <summary>
+    /// Defines the <see cref="Months"/> property.
+    /// </summary>
     public static readonly StyledProperty<int> MonthsProperty =
         AvaloniaProperty.Register<StatisticsHeatmap, int>(nameof(Months), 6);
+
+    /// <summary>
+    /// Gets or sets the number of months to display in the heatmap.
+    /// </summary>
+    public int Months
+    {
+        get => GetValue(MonthsProperty);
+        set => SetValue(MonthsProperty, value);
+    }
+
+    /// <summary>
+    /// Defines the <see cref="HighBrush"/> property.
+    /// </summary>
+    public static readonly StyledProperty<IBrush?> HighBrushProperty =
+        AvaloniaProperty.Register<StatisticsHeatmap, IBrush?>(nameof(HighBrush));
+
+    /// <summary>
+    /// Gets or sets the brush used to render the highest value cells in the heatmap.
+    /// </summary>
+    public IBrush? HighBrush
+    {
+        get => GetValue(HighBrushProperty);
+        set => SetValue(HighBrushProperty, value);
+    }
+
+    /// <summary>
+    /// Defines the <see cref="LowBrush"/> property.
+    /// </summary>
+    public static readonly StyledProperty<IBrush?> LowBrushProperty =
+        AvaloniaProperty.Register<StatisticsHeatmap, IBrush?>(nameof(LowBrush));
+
+    /// <summary>
+    /// Gets or sets the brush used to render the lowest value cells in the heatmap.
+    /// </summary>
+    public IBrush? LowBrush
+    {
+        get => GetValue(LowBrushProperty);
+        set => SetValue(LowBrushProperty, value);
+    }
 
     private const double CellSize = 20;
     private const double CellGap = 4;
@@ -32,16 +84,9 @@ public sealed class StatisticsHeatmap : UserControl, IRecipient<LocaleChangedMes
     private readonly DynamicResourceKey _wednesdayKey = new(LocaleKey.HomePage_HeatmapWeekdayWednesdayShort);
     private readonly DynamicResourceKey _fridayKey = new(LocaleKey.HomePage_HeatmapWeekdayFridayShort);
 
-    public IReadOnlyList<IStatisticsHeatmapDay>? Days
+    static StatisticsHeatmap()
     {
-        get => GetValue(DaysProperty);
-        set => SetValue(DaysProperty, value);
-    }
-
-    public int Months
-    {
-        get => GetValue(MonthsProperty);
-        set => SetValue(MonthsProperty, value);
+        AffectsRender<StatisticsHeatmap>(DaysProperty, MonthsProperty, HighBrushProperty, LowBrushProperty);
     }
 
     public StatisticsHeatmap()
@@ -79,22 +124,23 @@ public sealed class StatisticsHeatmap : UserControl, IRecipient<LocaleChangedMes
 
     public override void Render(DrawingContext context)
     {
-        base.Render(context);
-
         _hitTargets.Clear();
         var days = (Days ?? []).AsValueEnumerable().ToDictionary(x => x.Date);
         var max = Math.Max(1, days.Values.AsValueEnumerable().Select(x => x.Value).DefaultIfEmpty(0).Max());
+        var bounds = Bounds;
         var range = CreateRange();
         var desiredGridWidth = Math.Max(0, GetDesiredContentSize().Width - LeftLabelWidth);
-        var availableGridWidth = Math.Max(0, Bounds.Width - LeftLabelWidth);
+        var availableGridWidth = Math.Max(0, bounds.Width - LeftLabelWidth);
         var gridOffsetX = Math.Min(0, availableGridWidth - desiredGridWidth);
 
         DrawWeekdayLabels(context);
 
-        using (context.PushClip(new Rect(LeftLabelWidth, 0, availableGridWidth, Bounds.Height)))
+        using (context.PushClip(new Rect(LeftLabelWidth, 0, availableGridWidth, bounds.Height)))
         {
             DrawMonthLabels(context, range, gridOffsetX);
 
+            var highBrush = HighBrush;
+            var lowBrush = LowBrush;
             for (var date = range.AlignedStart; date <= range.End; date = date.AddDays(1))
             {
                 if (date < range.Start || date > range.Today)
@@ -104,12 +150,25 @@ public sealed class StatisticsHeatmap : UserControl, IRecipient<LocaleChangedMes
 
                 days.TryGetValue(date, out var day);
                 var value = day?.Value ?? 0;
+                var opacity = GetLevelOpacity(GetLevel(value, max));
                 var rect = GetCellRect(range.AlignedStart, date).Translate(new Vector(gridOffsetX, 0));
-                var brush = CreateBrush(GetLevel(value, max));
-                context.DrawRectangle(brush, null, rect, 4d, 4d);
+                if (opacity < 1d)
+                {
+                    using (context.PushOpacity(1d - opacity))
+                    {
+                        context.DrawRectangle(lowBrush, null, rect, 4d, 4d);
+                    }
+                }
+                if (opacity > 0d)
+                {
+                    using (context.PushOpacity(opacity))
+                    {
+                        context.DrawRectangle(highBrush, null, rect, 4d, 4d);
+                    }
+                }
 
-                var visibleRect = rect.Intersect(new Rect(LeftLabelWidth, 0, availableGridWidth, Bounds.Height));
-                if (visibleRect.Width > 0 && visibleRect.Height > 0)
+                var visibleRect = rect.Intersect(new Rect(LeftLabelWidth, 0, availableGridWidth, bounds.Height));
+                if (visibleRect is { Width: > 0, Height: > 0 })
                 {
                     _hitTargets[visibleRect] = day ?? new StatisticsSimpleHeatmapDay(date, 0);
                 }
@@ -141,31 +200,6 @@ public sealed class StatisticsHeatmap : UserControl, IRecipient<LocaleChangedMes
 
         ToolTip.SetTip(_toolTipHolder, null);
         _toolTipHolder.Arrange(new Rect(-CellSize, -CellSize, CellSize, CellSize));
-    }
-
-    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
-    {
-        base.OnPropertyChanged(change);
-
-        if (change.Property == DaysProperty || change.Property == MonthsProperty)
-        {
-            InvalidateMeasure();
-            InvalidateVisual();
-        }
-    }
-
-    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
-    {
-        base.OnAttachedToVisualTree(e);
-
-        WeakReferenceMessenger.Default.Register(this);
-    }
-
-    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
-    {
-        WeakReferenceMessenger.Default.Unregister<LocaleChangedMessage>(this);
-
-        base.OnDetachedFromVisualTree(e);
     }
 
     public void Receive(LocaleChangedMessage message)
@@ -228,15 +262,7 @@ public sealed class StatisticsHeatmap : UserControl, IRecipient<LocaleChangedMes
         return value <= 0 ? 0 : Math.Clamp((int)Math.Ceiling(value / (double)max * 5), 1, 5);
     }
 
-    private static SolidColorBrush CreateBrush(int level) => level switch
-    {
-        0 => new SolidColorBrush(Color.FromRgb(42, 43, 49)),
-        1 => new SolidColorBrush(Color.FromRgb(31, 54, 87)),
-        2 => new SolidColorBrush(Color.FromRgb(38, 82, 139)),
-        3 => new SolidColorBrush(Color.FromRgb(42, 112, 202)),
-        4 => new SolidColorBrush(Color.FromRgb(68, 143, 246)),
-        _ => new SolidColorBrush(Color.FromRgb(112, 166, 255))
-    };
+    private static double GetLevelOpacity(int level) => Math.Clamp(level, 0, 5) / 5d;
 
     private FormattedText CreateText(string text) =>
         new(text, CultureInfo.CurrentUICulture, FlowDirection, new Typeface(FontFamily.Default), FontSize, Foreground);

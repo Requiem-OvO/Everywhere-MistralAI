@@ -177,6 +177,7 @@
                 CanDismissByClicking="False"
                 Content="{Binding ContentKey^}"
                 DismissCommand="{Binding DismissCommand, Mode=OneTime}"
+                DismissCommandParameter="{Binding Mode=OneTime}"
                 Notification="{Binding Type, Converter={x:Static shadui:NotificationTypeToNotificationConverter.Shared}}"/>
             </DataTemplate>
           </ItemsControl.ItemTemplate>
@@ -564,6 +565,8 @@
               <v:StatisticsHeatmap
                 Days="{Binding HeatmapDays}"
                 FontSize="{DynamicResource FontSizeS}"
+                HighBrush="{DynamicResource PrimaryColor}"
+                LowBrush="{DynamicResource SettingsItemBackgroundColor}"
                 Months="6"/>
 
               <StackPanel
@@ -574,19 +577,24 @@
                   Text="{I18N {x:Static LocaleKey.HomePage_Less}}"/>
                 <Border
                   Width="10" Height="10"
-                  Background="#2A2B31" CornerRadius="2"/>
+                  Background="{DynamicResource PrimaryColor}"
+                  CornerRadius="2" Opacity="0.2"/>
                 <Border
                   Width="10" Height="10"
-                  Background="#1F3657" CornerRadius="2"/>
+                  Background="{DynamicResource PrimaryColor}"
+                  CornerRadius="2" Opacity="0.4"/>
                 <Border
                   Width="10" Height="10"
-                  Background="#26528B" CornerRadius="2"/>
+                  Background="{DynamicResource PrimaryColor}"
+                  CornerRadius="2" Opacity="0.6"/>
                 <Border
                   Width="10" Height="10"
-                  Background="#2A70CA" CornerRadius="2"/>
+                  Background="{DynamicResource PrimaryColor}"
+                  CornerRadius="2" Opacity="0.8"/>
                 <Border
                   Width="10" Height="10"
-                  Background="#448FF6" CornerRadius="2"/>
+                  Background="{DynamicResource PrimaryColor}"
+                  CornerRadius="2"/>
                 <TextBlock
                   Classes="Muted Caption"
                   Text="{I18N {x:Static LocaleKey.HomePage_More}}"/>

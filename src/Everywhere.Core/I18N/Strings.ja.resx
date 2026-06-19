@@ -3149,7 +3149,7 @@
         <value>{0:N0} 個の要素、{1:N0} 枚の画像</value>
     </data>
     <data name="HomePage_AssistantActivity" xml:space="preserve">
-        <value>アシスタントの活動</value>
+        <value>活動</value>
     </data>
     <data name="HomePage_LastMonths" xml:space="preserve">
         <value>最近の {0} か月</value>

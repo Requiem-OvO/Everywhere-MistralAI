@@ -3149,7 +3149,7 @@
         <value>{0:N0} 個元素，{1:N0} 張圖片</value>
     </data>
     <data name="HomePage_AssistantActivity" xml:space="preserve">
-        <value>助手活動</value>
+        <value>活動</value>
     </data>
     <data name="HomePage_LastMonths" xml:space="preserve">
         <value>最近 {0} 個月</value>
