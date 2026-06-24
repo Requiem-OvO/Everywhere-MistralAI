@@ -5,6 +5,7 @@
     <RepoRoot>..\..\semantic-kernel</RepoRoot>
     <ProjectRoot>$(RepoRoot)\dotnet\src\Connectors\Connectors.MistralAI</ProjectRoot>
     <RootNamespace>Microsoft.SemanticKernel.Connectors.MistralAI</RootNamespace>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
 
   <ItemGroup>
