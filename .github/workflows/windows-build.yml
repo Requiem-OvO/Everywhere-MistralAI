@@ -46,7 +46,7 @@ jobs:
     - name: Restore
       shell: pwsh
       run: |
-        dotnet restore Everywhere.Windows.slnx
+        dotnet restore Everywhere.Windows.slnx -r win-x64
 
     - name: Build
       shell: pwsh
