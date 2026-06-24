@@ -45,7 +45,7 @@
     <Compile Include="Client\MistralChatMessage.cs">
       <Link>Client\MistralChatMessage.cs</Link>
     </Compile>
-    <Compile Include="$(ProjectRoot)\Client\MistralClient.cs">
+    <Compile Include="Client\MistralClient.cs">
       <Link>Client\MistralClient.cs</Link>
     </Compile>
     <Compile Include="$(ProjectRoot)\Client\MistralEmbedding.cs">

@@ -3,7 +3,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.MistralAI;
-using Microsoft.SemanticKernel.Connectors.MistralAI.Client;
 
 namespace Everywhere.AI;
 
@@ -33,7 +32,7 @@ public sealed class MistralKernelMixin : KernelMixin
             loggerFactory: loggerFactory,
             skipHttpClientProvider: true);
 
-        ChatCompletionService = new OptimizedMistralChatCompletionService(service, this);
+        ChatCompletionService = new OptimizedMistralChatCompletionService(service);
     }
 
     public override bool IsPersistentMessageMetadataKey(string key) => key is "reasoningSignature";
@@ -57,7 +56,7 @@ public sealed class MistralKernelMixin : KernelMixin
         // https://docs.mistral.ai/capabilities/reasoning/
         if (_options.IncludeReasoningContent)
         {
-            settings.ExtensionData = new Dictionary<string, object?>
+            settings.ExtensionData = new Dictionary<string, object>
             {
                 ["thinking"] = new { type = "enabled" }
             };
@@ -68,9 +67,9 @@ public sealed class MistralKernelMixin : KernelMixin
 
     /// <summary>
     /// Wrapper around MistralAI's IChatCompletionService to inject Usage metadata
-    /// and extract reasoning content from streaming responses.
+    /// into streaming responses. Reasoning content is already handled by the patched MistralClient.
     /// </summary>
-    private sealed class OptimizedMistralChatCompletionService(IChatCompletionService innerService, MistralKernelMixin owner) : IChatCompletionService
+    private sealed class OptimizedMistralChatCompletionService(IChatCompletionService innerService) : IChatCompletionService
     {
         public IReadOnlyDictionary<string, object?> Attributes => innerService.Attributes;
 
@@ -95,51 +94,39 @@ public sealed class MistralKernelMixin : KernelMixin
                                kernel,
                                cancellationToken))
             {
-                // Extract reasoning content from the inner content if available
-                if (content.InnerContent is MistralChatCompletionChunk chunk)
+                // Inject Usage metadata for consistent handling in ChatService
+                if (content.Metadata?.TryGetValue("Usage", out var usageObj) is true &&
+                    usageObj is MistralUsage usage)
                 {
-                    for (var i = 0; i < chunk.GetChoiceCount(); i++)
+                    var usageDetails = new UsageDetails
                     {
-                        var reasoningContent = chunk.GetReasoningContent(i);
-                        if (!string.IsNullOrEmpty(reasoningContent))
+                        InputTokenCount = usage.PromptTokens,
+                        OutputTokenCount = usage.CompletionTokens,
+                        TotalTokenCount = usage.TotalTokens
+                    };
+
+                    var newMetadata = new Dictionary<string, object?>();
+                    if (content.Metadata is not null)
+                    {
+                        foreach (var (key, value) in content.Metadata)
                         {
-                            content.Items.Add(new StreamingReasoningContent(reasoningContent));
+                            newMetadata[key] = value;
                         }
                     }
+                    newMetadata["Usage"] = usageDetails;
 
-                    // Inject Usage metadata for consistent handling in ChatService
-                    if (chunk.Usage is { } usage)
+                    yield return new StreamingChatMessageContent(
+                        content.Role,
+                        content.Content,
+                        content.InnerContent,
+                        content.ChoiceIndex,
+                        content.ModelId,
+                        content.Encoding,
+                        newMetadata)
                     {
-                        var usageDetails = new UsageDetails
-                        {
-                            InputTokenCount = usage.PromptTokens,
-                            OutputTokenCount = usage.CompletionTokens,
-                            TotalTokenCount = usage.TotalTokens
-                        };
-
-                        var newMetadata = new Dictionary<string, object?>();
-                        if (content.Metadata is not null)
-                        {
-                            foreach (var (key, value) in content.Metadata)
-                            {
-                                newMetadata[key] = value;
-                            }
-                        }
-                        newMetadata["Usage"] = usageDetails;
-
-                        yield return new StreamingChatMessageContent(
-                            content.Role,
-                            content.Content,
-                            content.InnerContent,
-                            content.ChoiceIndex,
-                            content.ModelId,
-                            content.Encoding,
-                            newMetadata)
-                        {
-                            Items = content.Items
-                        };
-                        continue;
-                    }
+                        Items = content.Items
+                    };
+                    continue;
                 }
 
                 yield return content;
