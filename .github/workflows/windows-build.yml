@@ -1,0 +1,68 @@
+name: (Windows) Build Only
+
+on:
+  workflow_dispatch:
+    inputs:
+      configuration:
+        description: Build configuration
+        required: true
+        default: Release
+        type: choice
+        options:
+          - Release
+          - Debug
+  push:
+    branches:
+      - main
+      
+  pull_request:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Enable long paths in git
+      run: git config --global core.longpaths true
+
+    - name: Checkout code
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+        submodules: true
+        lfs: true
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v5
+      with:
+        global-json-file: global.json
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v3
+
+    - name: Install Workloads
+      run: dotnet workload restore src/Everywhere.Windows/Everywhere.Windows.csproj
+
+    - name: Restore
+      shell: pwsh
+      run: |
+        dotnet restore Everywhere.Windows.slnx
+
+    - name: Build
+      shell: pwsh
+      run: |
+        $config = "${{ inputs.configuration }}"
+        if (-not $config) { $config = "Release" }
+        dotnet build Everywhere.Windows.slnx `
+          -c $config `
+          --no-restore `
+          -m:1
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: Everywhere-Windows-${{ inputs.configuration || 'Release' }}
+        path: |
+          src/Everywhere.Windows/bin
+          src/*/bin
+        if-no-files-found: warn
