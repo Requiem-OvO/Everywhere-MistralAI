@@ -5,6 +5,8 @@
     <RepoRoot>..\..\semantic-kernel</RepoRoot>
     <ProjectRoot>$(RepoRoot)\dotnet\src\Connectors\Connectors.MistralAI</ProjectRoot>
     <RootNamespace>Microsoft.SemanticKernel.Connectors.MistralAI</RootNamespace>
+    <!-- Must disable default compile items because this project uses explicit <Compile Include=.../> entries
+         to mix local patch files with submodule originals via $(ProjectRoot) references. -->
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
 

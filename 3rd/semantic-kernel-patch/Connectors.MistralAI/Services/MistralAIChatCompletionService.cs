@@ -27,23 +27,7 @@ public sealed class MistralAIChatCompletionService : IChatCompletionService
     /// <param name="endpoint">Optional  uri endpoint including the port where MistralAI server is hosted. Default is https://api.mistral.ai.</param>
     /// <param name="httpClient">Optional HTTP client to be used for communication with the MistralAI API.</param>
     /// <param name="loggerFactory">Optional logger factory to be used for logging.</param>
-    public MistralAIChatCompletionService(string modelId, string apiKey, Uri? endpoint = null, HttpClient? httpClient = null, ILoggerFactory? loggerFactory = null)
-    {
-        this.Client = new MistralClient(
-            modelId: modelId,
-            endpoint: endpoint ?? httpClient?.BaseAddress,
-            apiKey: apiKey,
-            httpClient: HttpClientProvider.GetHttpClient(httpClient),
-            logger: loggerFactory?.CreateLogger(this.GetType()) ?? NullLogger.Instance
-        );
-
-        this.AttributesInternal.Add(AIServiceExtensions.ModelIdKey, modelId);
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="MistralAIChatCompletionService"/> class with a pre-configured HttpClient.
-    /// This constructor is used when the HttpClient is already configured with proper settings (e.g., proxy, timeout).
-    /// </summary>
+    /// <param name="skipHttpClientProvider">If true, uses the provided HttpClient as-is without wrapping it through HttpClientProvider.</param>
     public MistralAIChatCompletionService(string modelId, string apiKey, Uri? endpoint = null, HttpClient? httpClient = null, ILoggerFactory? loggerFactory = null, bool skipHttpClientProvider = false)
     {
         this.Client = new MistralClient(
