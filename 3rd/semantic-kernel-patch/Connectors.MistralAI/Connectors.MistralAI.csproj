@@ -28,10 +28,10 @@
     <Compile Include="$(ProjectRoot)\Client\ContentChunkType.cs">
       <Link>Client\ContentChunkType.cs</Link>
     </Compile>
-    <Compile Include="$(ProjectRoot)\Client\DocumentUrlChunk.cs">
+    <Compile Include="Client\DocumentUrlChunk.cs">
       <Link>Client\DocumentUrlChunk.cs</Link>
     </Compile>
-    <Compile Include="$(ProjectRoot)\Client\ImageUrlChunk.cs">
+    <Compile Include="Client\ImageUrlChunk.cs">
       <Link>Client\ImageUrlChunk.cs</Link>
     </Compile>
     <Compile Include="$(ProjectRoot)\Client\MistralChatChoice.cs">
@@ -70,7 +70,7 @@
     <Compile Include="$(ProjectRoot)\Client\MistralUsage.cs">
       <Link>Client\MistralUsage.cs</Link>
     </Compile>
-    <Compile Include="$(ProjectRoot)\Client\TextChunk.cs">
+    <Compile Include="Client\TextChunk.cs">
       <Link>Client\TextChunk.cs</Link>
     </Compile>
     <Compile Include="$(ProjectRoot)\Client\TextEmbeddingRequest.cs">
