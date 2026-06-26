@@ -713,10 +713,10 @@ internal sealed class MistralClient
             DocumentPageLimit = executionSettings.DocumentPageLimit
         };
 
-        // Transfer thinking configuration from ExtensionData to request
-        if (executionSettings.ExtensionData is not null && executionSettings.ExtensionData.TryGetValue("thinking", out var thinking))
+        // Transfer reasoning_effort configuration from ExtensionData to request
+        if (executionSettings.ExtensionData is not null && executionSettings.ExtensionData.TryGetValue("reasoning_effort", out var reasoningEffort))
         {
-            request.Thinking = thinking;
+            request.ReasoningEffort = reasoningEffort?.ToString();
         }
 
         executionSettings.ToolCallBehavior?.ConfigureRequest(kernel, request);

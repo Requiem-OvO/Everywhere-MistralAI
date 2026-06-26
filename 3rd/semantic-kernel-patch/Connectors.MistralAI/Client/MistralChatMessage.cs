@@ -30,10 +30,6 @@ internal sealed class MistralChatMessage
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IList<MistralToolCall>? ToolCalls { get; set; }
 
-    [JsonPropertyName("reasoning_content")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? ReasoningContent { get; set; }
-
     /// <summary>
     /// Construct an instance of <see cref="MistralChatMessage"/>.
     /// </summary>

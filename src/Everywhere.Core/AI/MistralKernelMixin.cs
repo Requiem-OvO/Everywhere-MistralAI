@@ -55,13 +55,10 @@ public sealed class MistralKernelMixin : KernelMixin
         };
 
         // https://docs.mistral.ai/capabilities/reasoning/
-        if (_options.IncludeReasoningContent)
+        settings.ExtensionData = new Dictionary<string, object>
         {
-            settings.ExtensionData = new Dictionary<string, object>
-            {
-                ["thinking"] = new { type = "enabled" }
-            };
-        }
+            ["reasoning_effort"] = _options.IncludeReasoningContent ? "high" : "none"
+        };
 
         return settings;
     }
