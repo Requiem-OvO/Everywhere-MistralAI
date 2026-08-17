@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Reactive.Disposables;
 using Avalonia.Controls;
 using Avalonia.Input.Platform;
@@ -8,26 +7,25 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Common;
 using Everywhere.Interop;
 using Everywhere.Utilities;
-using Everywhere.Views;
 using ShadUI;
 
 namespace Everywhere.ViewModels;
 
 public abstract class ReactiveViewModelBase : ObservableValidator, IDisposable
 {
-    [field: AllowNull, MaybeNull]
-    protected DialogManager DialogManager
-    {
-        get => field ??= ServiceLocator.Resolve<DialogManager>();
-        private set;
-    }
+    /// <summary>
+    /// Gets the dialog host associated with this ViewModel's TopLevel. Global host selection is
+    /// used only when the bound TopLevel does not currently own a registered host.
+    /// </summary>
+    protected DialogHost DialogHost =>
+        _dialogHost ??= DialogManager.ResolveHost(_topLevel) ?? throw new InvalidOperationException("No dialog host is available.");
 
-    [field: AllowNull, MaybeNull]
-    protected ToastHost ToastHost
-    {
-        get => field ??= ServiceLocator.Resolve<ToastHost>();
-        private set;
-    }
+    /// <summary>
+    /// Gets the toast host associated with this ViewModel's TopLevel. The reference is retained
+    /// only for the current loaded lifetime so a later attachment can target another window.
+    /// </summary>
+    protected ToastHost ToastHost =>
+        _toastHost ??= ToastManager.ResolveHost(_topLevel) ?? throw new InvalidOperationException("No toast host is available.");
 
     protected IClipboard Clipboard =>
         _topLevel?.Clipboard ?? throw new InvalidOperationException("Clipboard is not available.");
@@ -38,21 +36,29 @@ public abstract class ReactiveViewModelBase : ObservableValidator, IDisposable
     protected static ILauncher Launcher => BetterBclLauncher.Shared;
 
     protected AnonymousExceptionHandler DialogExceptionHandler => new((exception, message, _, _) =>
-        DialogManager.CreateDialog(
-            exception.GetFriendlyMessage().ToString() ?? LocaleResolver.Common_Unknown,
-            message ?? LocaleResolver.Common_Error));
+        DialogHost
+            .CreateDialog(
+                exception.GetFriendlyMessage().ToString() ?? LocaleResolver.Common_Unknown,
+                message ?? LocaleResolver.Common_Error)
+            .ShowAsync()
+            .Detach(IExceptionHandler.DangerouslyIgnoreAllException));
 
     protected AnonymousExceptionHandler ToastExceptionHandler => new((exception, message, _, _) =>
-        ToastHost.CreateToast(message ?? LocaleResolver.Common_Error)
+        ToastHost
+            .CreateToast(message ?? LocaleResolver.Common_Error)
             .WithContent(exception.GetFriendlyMessage())
             .DismissOnClick()
             .ShowError());
 
     protected CompositeDisposable LifetimeDisposables { get; } = new();
 
+    protected virtual IExceptionHandler? LifetimeExceptionHandler => null;
+
     private bool _isLoaded;
     private bool _isDisposed;
     private TopLevel? _topLevel;
+    private DialogHost? _dialogHost;
+    private ToastHost? _toastHost;
 
     /// <summary>
     /// Invoked when the view's <see cref="Control.Loaded"/> event is raised.
@@ -67,11 +73,15 @@ public abstract class ReactiveViewModelBase : ObservableValidator, IDisposable
     /// <returns></returns>
     protected internal virtual Task ViewUnloaded() => Task.CompletedTask;
 
-    protected virtual IExceptionHandler? LifetimeExceptionHandler => null;
+    /// <summary>
+    /// Invoked when main navigation targets this view model.
+    /// </summary>
+    /// <param name="remainingSegments">Decoded path segments after the matched main navigation route.</param>
+    protected internal virtual void OnNavigatedTo(IReadOnlyList<string> remainingSegments) { }
 
     private void HandleLifetimeException(string stage, Exception e)
     {
-        var handler = LifetimeExceptionHandler ?? DialogManager.ToExceptionHandler();
+        var handler = LifetimeExceptionHandler ?? DialogHost.ToExceptionHandler();
         handler.HandleException(e, $"Lifetime Exception: [{stage}]");
     }
 
@@ -94,12 +104,8 @@ public abstract class ReactiveViewModelBase : ObservableValidator, IDisposable
 
                 _isLoaded = true;
                 _topLevel = TopLevel.GetTopLevel(target);
-
-                if (_topLevel is IReactiveHost reactiveHost)
-                {
-                    DialogManager = reactiveHost.DialogHost.Manager;
-                    ToastHost = reactiveHost.ToastHost;
-                }
+                _dialogHost = DialogManager.ResolveHost(_topLevel);
+                _toastHost = ToastManager.ResolveHost(_topLevel);
                 await ViewLoaded(cancellationToken);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -129,7 +135,6 @@ public abstract class ReactiveViewModelBase : ObservableValidator, IDisposable
                 }
                 finally
                 {
-                    _topLevel = null;
                     DisposeHelper.DisposeToDefault(ref cancellationTokenSource);
                 }
 
@@ -141,6 +146,13 @@ public abstract class ReactiveViewModelBase : ObservableValidator, IDisposable
             catch (Exception e)
             {
                 HandleLifetimeException(nameof(ViewUnloaded), e);
+            }
+            finally
+            {
+                // HandleLifetimeException may use Dialog or Toast for error reporting, so we must clear the references after the call.
+                _dialogHost = null;
+                _toastHost = null;
+                _topLevel = null;
             }
         }
 

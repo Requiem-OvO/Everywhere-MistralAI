@@ -1,129 +1,137 @@
-﻿using System.Text.RegularExpressions;
-using Everywhere.Serialization;
-using MessagePack;
-using ZLinq;
+using Everywhere.Collections;
 
 namespace Everywhere.Chat.Plugins;
 
 /// <summary>
-/// Allowed tool/plugin names or function names with enable/disable flag. The key is in format of "pluginKey" or "pluginKey.functionName", value is whether it's enabled or not.
+/// Evaluates rule sources in order, allowing each later source to override decisions made earlier.
 /// </summary>
-/// <remarks>
-/// Wildcard is allowed. e.g.
-/// { "builtin.visual_tree.*": true, "builtin.web.web_*": true, "builtin.web.web_search": false }
-///
-/// Note that `builtin.visual_tree.*` and `builtin.visual_tree` are different.
-/// Thr former means all functions in `builtin.visual_tree` should be applied (enable or disable) no matter whether then are enabled.
-/// But the latter only means the `builtin.visual_tree` should be applied, functions will keep their original state.
-///
-/// When applying, keys first ordered then apply one by one, latter overrides former.
-/// </remarks>
-[MessagePackFormatter(typeof(ToolRulesetsMessagePackFormatter))]
-public sealed class ToolRulesets : Dictionary<string, bool>
+public sealed class ToolRulesetsPipeline : IToolRulesets
 {
-    public ToolRulesets() : base(StringComparer.OrdinalIgnoreCase) { }
+    private readonly IReadOnlyList<IToolRulesets> _sources;
 
-    public ToolRulesets(int capacity) : base(capacity, StringComparer.OrdinalIgnoreCase) { }
-
-    public ToolRulesets(IDictionary<string, bool> dictionary) : base(dictionary, StringComparer.OrdinalIgnoreCase) { }
-
-    public ToolRulesets Union(ToolRulesets? overrides)
+    public ToolRulesetsPipeline(IEnumerable<IToolRulesets?> sources)
     {
-        if (overrides is null) return this;
-
-        var union = new ToolRulesets(this);
-        foreach (var kvp in overrides)
-        {
-            union[kvp.Key] = kvp.Value;
-        }
-
-        return union;
+        _sources = [.. sources.Where(static source => source is not null).Cast<IToolRulesets>()];
     }
 
-    public bool? IsPluginAllowed(ChatPlugin plugin)
+    public bool? GetPluginRule(ChatPlugin plugin) =>
+        _sources.AsValueEnumerable().Aggregate(null, (bool? current, IToolRulesets source) => source.GetPluginRule(plugin) ?? current);
+
+    public bool? GetFunctionRule(ChatPlugin plugin, ChatFunction function) =>
+        _sources.AsValueEnumerable().Aggregate(null, (bool? current, IToolRulesets source) => source.GetFunctionRule(plugin, function) ?? current);
+}
+
+/// <summary>
+/// Stores exact plugin and function rules in a JSON-friendly observable dictionary.
+/// </summary>
+public class ObservableToolRulesets : ObservableDictionary<string, bool>, IToolRulesets
+{
+    public ObservableToolRulesets() : base(StringComparer.OrdinalIgnoreCase) { }
+
+    public ObservableToolRulesets(IEnumerable<KeyValuePair<string, bool>> records) : base(records, StringComparer.OrdinalIgnoreCase)
     {
-        bool? isAllowed = null;
-        foreach (var kvp in this.AsValueEnumerable().OrderBy(kvp => kvp.Key))
-        {
-            var dotIndex = kvp.Key.LastIndexOf('.');
-            var pluginPattern = dotIndex < 0 ? kvp.Key : kvp.Key[..dotIndex];
-
-            // Use simple Glob to Regex conversion
-            var regexPattern = "^" + Regex.Escape(pluginPattern).Replace("\\*", ".*").Replace("\\?", ".") + "$";
-            var pluginRegex = new Regex(regexPattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-            if (pluginRegex.IsMatch(plugin.Key))
-            {
-                if (dotIndex < 0)
-                {
-                    isAllowed = kvp.Value;
-                }
-                else if (kvp.Value)
-                {
-                    // Any rule enabling functions in this plugin forces the plugin to be enabled
-                    isAllowed = true;
-                }
-            }
-        }
-
-        return isAllowed;
     }
 
-    public bool? IsFunctionAllowed(ChatPlugin plugin, ChatFunction function)
-    {
-        bool? isAllowed = null;
-        var fullFunctionName = $"{plugin.Key}.{function.KernelFunction.Metadata.Name}";
-        foreach (var kvp in this.AsValueEnumerable().OrderBy(kvp => kvp.Key))
-        {
-            var dotIndex = kvp.Key.LastIndexOf('.');
-            if (dotIndex < 0)
-            {
-                // Rule targets plugin layer
-                var pluginRegexPattern = "^" + Regex.Escape(kvp.Key).Replace("\\*", ".*").Replace("\\?", ".") + "$";
-                var pluginRegex = new Regex(pluginRegexPattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+    public bool? GetPluginRule(ChatPlugin plugin) =>
+        TryGetValue(ToolSettingsKey.ForPlugin(plugin), out var value) ? value : null;
 
-                // If plugin is explicitly disabled, the function is as well.
-                // Otherwise, we keep its state as is.
-                if (pluginRegex.IsMatch(plugin.Name) && !kvp.Value)
-                {
-                    isAllowed = false;
-                }
-            }
-            else
-            {
-                // Rule targets function layer
-                var functionRegexPattern = "^" + Regex.Escape(kvp.Key).Replace("\\*", ".*").Replace("\\?", ".") + "$";
-                var functionRegex = new Regex(functionRegexPattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-                if (functionRegex.IsMatch(fullFunctionName))
-                {
-                    isAllowed = kvp.Value;
-                }
-            }
+    public bool? GetFunctionRule(ChatPlugin plugin, ChatFunction function) =>
+        TryGetValue(ToolSettingsKey.ForFunction(plugin, function), out var value) ? value : null;
+}
+
+/// <summary>
+/// Applies the inheritance and editing semantics of persistent approval-bypass rules.
+/// </summary>
+public static class ToolBypassApprovalPolicy
+{
+    public static bool BypassesApproval(IToolRulesets rulesets, ChatPlugin plugin, ChatFunction function)
+    {
+        if (!function.CanBypassApproval) return false;
+        return rulesets.GetFunctionRule(plugin, function) ?? rulesets.GetPluginRule(plugin) ?? function.IsDefaultBypassApproval;
+    }
+
+    public static void SetPluginRule(ObservableToolRulesets rulesets, ChatPlugin plugin, bool value)
+    {
+        var pluginKey = ToolSettingsKey.ForPlugin(plugin);
+        if (!value)
+        {
+            rulesets[pluginKey] = false;
+            return;
         }
 
-        return isAllowed;
+        var functionPrefix = ToolSettingsKey.ForFunctionPrefix(plugin.Key);
+        var keysToRemove = new List<string>();
+        foreach (var (key, enabled) in rulesets)
+        {
+            // Granting the whole plugin must make "all tools" literal. New function-level
+            // exceptions may still be recorded after the plugin rule has been granted.
+            if (!enabled && key.StartsWith(functionPrefix, StringComparison.OrdinalIgnoreCase))
+                keysToRemove.Add(key);
+        }
+
+        foreach (var key in keysToRemove)
+        {
+            rulesets.Remove(key);
+        }
+
+        rulesets[pluginKey] = true;
+    }
+
+    public static void SetFunctionRule(ObservableToolRulesets rulesets, ChatPlugin plugin, ChatFunction function, bool value)
+    {
+        if (!function.CanBypassApproval) return;
+
+        var key = ToolSettingsKey.ForFunction(plugin, function);
+        var baseline = rulesets.GetPluginRule(plugin) ?? function.IsDefaultBypassApproval;
+        if (value == baseline)
+        {
+            rulesets.Remove(key);
+        }
+        else
+        {
+            rulesets[key] = value;
+        }
+    }
+
+    public static void RemovePluginRules(ObservableToolRulesets rulesets, string pluginKey)
+    {
+        var functionPrefix = ToolSettingsKey.ForFunctionPrefix(pluginKey);
+        rulesets.Remove(ToolSettingsKey.ForPlugin(pluginKey));
+        var keysToRemove = rulesets.Keys.AsValueEnumerable().Where(k => k.StartsWith(functionPrefix, StringComparison.OrdinalIgnoreCase)).ToArray();
+        foreach (var key in keysToRemove)
+        {
+            rulesets.Remove(key);
+        }
     }
 }
 
-public static class ToolRulesetsExtensions
+/// <summary>
+/// Creates stable exact keys for persisted plugin and function settings.
+/// Each typed segment is JSON Pointer escaped, so plugin and function names can never collide.
+/// </summary>
+public static class ToolSettingsKey
 {
-    /// <summary>
-    /// Creates a copy of the source ToolRulesets and applies overrides on top. If source is null, returns overrides. If overrides is null, returns a copy of source.
-    /// </summary>
-    /// <param name="source"></param>
-    /// <param name="overrides"></param>
-    /// <returns></returns>
-    public static ToolRulesets? Copy(this ToolRulesets? source, ToolRulesets? overrides = null)
+    public static string ForPlugin(ChatPlugin plugin) => ForPlugin(plugin.Key);
+
+    public static string ForPlugin(string pluginKey) => $"p:{Escape(pluginKey)}";
+
+    public static string ForFunction(ChatPlugin plugin, ChatFunction function) =>
+        ForFunction(plugin.Key, function.KernelFunction.Name);
+
+    public static string ForFunction(string pluginKey, string functionName) =>
+        $"f:{Escape(pluginKey)}/{Escape(functionName)}";
+
+    public static string ForFunctionPrefix(string pluginKey) => $"f:{Escape(pluginKey)}/";
+
+    public static string ForPermission(ChatPlugin plugin, ChatFunction function, string? id = null)
     {
-        if (source is null) return overrides;
-
-        var copy = new ToolRulesets(source);
-        if (overrides is null) return copy;
-
-        foreach (var kvp in overrides)
-        {
-            copy[kvp.Key] = kvp.Value;
-        }
-
-        return copy;
+        var functionKey = ForFunction(plugin, function);
+        return string.IsNullOrEmpty(id) ? functionKey : $"{functionKey}/permission/{Escape(id)}";
     }
+
+    public static string Escape(string value) =>
+        value
+            .Replace("~", "~0", StringComparison.Ordinal)
+            .Replace("/", "~1", StringComparison.Ordinal)
+            .Replace(":", "~2", StringComparison.Ordinal);
 }

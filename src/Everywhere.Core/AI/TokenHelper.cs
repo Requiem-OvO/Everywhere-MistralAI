@@ -36,7 +36,7 @@ public static class TokenHelper
     /// </summary>
     /// <param name="text">The input string to calculate the token count for.</param>
     /// <returns>An approximate number of tokens.</returns>
-    public static int EstimateTokenCount(string text)
+    public static int EstimateTokenCount(string? text)
     {
         return string.IsNullOrEmpty(text) ? 0 : Tokenizer.CountTokens(text);
     }

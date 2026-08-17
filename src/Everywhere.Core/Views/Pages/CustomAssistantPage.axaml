@@ -1,9 +1,9 @@
 ﻿<UserControl
   x:Class="Everywhere.Views.Pages.CustomAssistantPage" xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ai="clr-namespace:Everywhere.AI"
-  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="clr-namespace:Everywhere.Views"
-  xmlns:vm="clr-namespace:Everywhere.ViewModels" x:DataType="vm:CustomAssistantPageViewModel"
-  ClipToBounds="False">
+  xmlns:c="clr-namespace:Everywhere.Configuration;assembly=Everywhere.Abstractions" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
+  xmlns:v="clr-namespace:Everywhere.Views" xmlns:vm="clr-namespace:Everywhere.ViewModels"
+  x:DataType="vm:CustomAssistantPageViewModel" ClipToBounds="False">
   <shadui:NavigationView
     Padding="24,0,0,20" HeaderMaxWidth="1000"
     HeaderPadding="0,0,12,0"
@@ -119,11 +119,51 @@
 
     <shadui:NavigationView.ContentTemplate>
       <DataTemplate DataType="ai:CustomAssistant">
-        <ScrollViewer HorizontalScrollBarVisibility="Disabled">
-          <v:SettingsItemsControl
-            MaxWidth="1000" Margin="0,0,26,0"
-            ItemsSource="{Binding SettingsItems, FallbackValue={x:Null}}"/>
-        </ScrollViewer>
+        <DockPanel
+          MaxWidth="1000" Margin="0,0,26,0"
+          VerticalSpacing="16">
+          <v:CustomAssistantInformationForm
+            DockPanel.Dock="Top"
+            CustomAssistant="{Binding}"/>
+
+          <TabControl
+            Padding="0,4,0,0"
+            ItemsSource="{Binding SettingsItems}">
+            <TabControl.ItemTemplate>
+              <shadui:IDataTemplates>
+                <DataTemplate x:DataType="c:SettingsGroupItem">
+                  <TextBlock Text="{Binding GroupKey^}"/>
+                </DataTemplate>
+
+                <DataTemplate x:DataType="c:SettingsItem">
+                  <TextBlock Text="{Binding HeaderKey^}"/>
+                </DataTemplate>
+              </shadui:IDataTemplates>
+            </TabControl.ItemTemplate>
+
+            <TabControl.ContentTemplate>
+              <shadui:IDataTemplates>
+                <DataTemplate x:DataType="c:SettingsGroupItem">
+                  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+                    <v:SettingsItemsControl ItemsSource="{Binding Children, FallbackValue={x:Null}}"/>
+                  </ScrollViewer>
+                </DataTemplate>
+
+                <DataTemplate DataType="c:SettingsControlItem">
+                  <v:SettingsControlPresenter
+                    Margin="0,0,12,0"
+                    shadui:BindingAssist.Classes="{Binding Classes, Mode=OneTime}"
+                    ClipToBounds="False"
+                    Item="{Binding}"/>
+                </DataTemplate>
+
+                <DataTemplate x:DataType="c:SettingsItem">
+                  <v:SettingsItemControl Item="{Binding}"/>
+                </DataTemplate>
+              </shadui:IDataTemplates>
+            </TabControl.ContentTemplate>
+          </TabControl>
+        </DockPanel>
       </DataTemplate>
     </shadui:NavigationView.ContentTemplate>
 

@@ -1,6 +1,6 @@
 ﻿<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:c="clr-namespace:Everywhere.Configuration" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
+  xmlns:c="clr-namespace:Everywhere.Configuration;assembly=Everywhere.Abstractions" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
   xmlns:v="using:Everywhere.Views">
   <ControlTheme
     x:Key="{x:Type v:SettingsItemControl}"
@@ -59,28 +59,19 @@
                   <DockPanel
                     x:Name="PART_ContentDockPanel" HorizontalSpacing="32"
                     VerticalSpacing="8">
-                    <DockPanel.Styles>
-                      <Style Selector="ContentControl">
-                        <Setter Property="DockPanel.Dock" Value="Bottom"/>
-                        <Style Selector="^.right:not(.FullSize)">
-                          <Setter Property="DockPanel.Dock" Value="Right"/>
-                        </Style>
-                      </Style>
-                    </DockPanel.Styles>
-
                     <ContentControl
                       x:Name="PART_SettingsItemContentControl" VerticalAlignment="Center"
                       ClipToBounds="False"
                       Content="{TemplateBinding Item}"
                       IsVisible="{Binding !Item?.IsEmpty, RelativeSource={RelativeSource TemplatedParent}, TargetNullValue={x:False}}">
-                      <Classes.FullSize>
+                      <Classes.FullWidth>
                         <MultiBinding Converter="{x:Static BoolConverters.And}">
                           <Binding
                             ElementName="HeaderTextBlock" Path="!IsVisible"/>
                           <Binding
                             ElementName="DescriptionTextBlock" Path="!IsVisible"/>
                         </MultiBinding>
-                      </Classes.FullSize>
+                      </Classes.FullWidth>
 
                       <Interaction.Behaviors>
                         <shadui:AdaptiveRatioBehavior
@@ -117,9 +108,9 @@
                             MaxLength="{Binding MaxLength}"
                             MaxLines="6"
                             PasswordChar="{Binding PasswordChar}"
+                            PlaceholderText="{Binding PlaceholderText}"
                             Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                            TextWrapping="{Binding TextWrapping}"
-                            Watermark="{Binding Watermark}"/>
+                            TextWrapping="{Binding TextWrapping}"/>
                         </DataTemplate>
 
                         <DataTemplate DataType="c:SettingsIntegerItem">
@@ -167,7 +158,7 @@
                           </StackPanel>
                         </DataTemplate>
 
-                        <DataTemplate DataType="c:SettingsCustomizableItem">
+                        <DataTemplate DataType="c:SettingsDefaultValueItem">
                           <DockPanel
                             HorizontalAlignment="Left"
                             shadui:BindingAssist.Classes="{Binding Classes, Mode=OneTime}"
@@ -213,10 +204,10 @@
                         </DataTemplate>
 
                         <DataTemplate DataType="c:SettingsControlItem">
-                          <ContentControl
+                          <v:SettingsControlPresenter
                             shadui:BindingAssist.Classes="{Binding Classes, Mode=OneTime}"
                             ClipToBounds="False"
-                            Content="{Binding Control}"/>
+                            Item="{Binding}"/>
                         </DataTemplate>
                       </ContentControl.DataTemplates>
                     </ContentControl>
@@ -229,7 +220,7 @@
                           x:Name="HeaderTextBlock" VerticalAlignment="Center"
                           IsHitTestVisible="False"
                           IsVisible="{Binding $self.Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                          Text="{Binding Item?.HeaderKey^, FallbackValue={x:Null}, RelativeSource={RelativeSource TemplatedParent}}"
+                          Text="{Binding Item?.HeaderKey^, RelativeSource={RelativeSource TemplatedParent}}"
                           TextWrapping="Wrap"/>
                         <shadui:Badge
                           HorizontalAlignment="Left" VerticalAlignment="Center"
@@ -243,7 +234,7 @@
                         x:Name="DescriptionTextBlock" Classes="Muted Caption"
                         IsHitTestVisible="False"
                         IsVisible="{Binding $self.Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                        Text="{Binding Item?.DescriptionKey^, FallbackValue={x:Null}, RelativeSource={RelativeSource TemplatedParent}}"
+                        Text="{Binding Item?.DescriptionKey^, TargetNullValue={x:Null}, RelativeSource={RelativeSource TemplatedParent}}"
                         TextWrapping="Wrap"/>
                     </StackPanel>
                   </DockPanel>
@@ -265,27 +256,32 @@
                 </Transitions>
               </Border.Transitions>
 
-              <ContentControl
-                x:Name="ContentExpandControlContainer"
-                IsVisible="{Binding ElementName=PART_ToggleButton, Path=IsChecked}">
-                <shadui:ContentExpandControl
-                  x:Name="PART_ContentExpand"
-                  Margin="{Binding Padding, Converter={x:Static shadui:ThicknessConverters.NoTop}, RelativeSource={RelativeSource TemplatedParent}}"
-                  HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                  VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}">
-                  <v:ConditionalContentControl
-                    Condition="{Binding Item?.Children, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static ObjectConverters.IsNotNull}}"
-                    ContentDataBinding="{Binding Item, RelativeSource={RelativeSource TemplatedParent}}">
-                    <v:ConditionalContentControl.TrueContent>
-                      <DataTemplate x:DataType="c:SettingsItem">
-                        <v:SettingsItemsControl
-                          Margin="0,16,0,0" HorizontalAlignment="Stretch"
-                          ItemsSource="{Binding Children}"/>
-                      </DataTemplate>
-                    </v:ConditionalContentControl.TrueContent>
-                  </v:ConditionalContentControl>
-                </shadui:ContentExpandControl>
-              </ContentControl>
+              <shadui:ContentExpandControl
+                x:Name="PART_ContentExpand"
+                Margin="{Binding Padding, Converter={x:Static shadui:ThicknessConverters.NoTop}, RelativeSource={RelativeSource TemplatedParent}}"
+                HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}">
+                <shadui:ContentExpandControl.IsVisible>
+                  <MultiBinding Converter="{x:Static BoolConverters.And}">
+                    <TemplateBinding
+                      Mode="OneWay" Property="IsExpanded"/>
+                    <TemplateBinding
+                      Mode="OneWay" Property="IsExpandable"/>
+                  </MultiBinding>
+                </shadui:ContentExpandControl.IsVisible>
+
+                <v:ConditionalContentControl
+                  Condition="{Binding Item?.Children, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static ObjectConverters.IsNotNull}}"
+                  ContentDataBinding="{Binding Item, RelativeSource={RelativeSource TemplatedParent}}">
+                  <v:ConditionalContentControl.TrueContent>
+                    <DataTemplate x:DataType="c:SettingsItem">
+                      <v:SettingsItemsControl
+                        Margin="0,16,0,0" HorizontalAlignment="Stretch"
+                        ItemsSource="{Binding Children}"/>
+                    </DataTemplate>
+                  </v:ConditionalContentControl.TrueContent>
+                </v:ConditionalContentControl>
+              </shadui:ContentExpandControl>
             </Border>
           </DockPanel>
         </Border>
@@ -316,15 +312,19 @@
       <Style Selector="^ ToggleButton#PART_ToggleButton">
         <Setter Property="IsHitTestVisible" Value="False"/>
       </Style>
-      <Style Selector="^ ContentControl#ContentExpandControlContainer">
-        <Setter Property="IsVisible" Value="False"/>
-      </Style>
     </Style>
 
     <Style Selector="^[IsExpandable=True]">
       <Style Selector="^ ToggleButton#PART_ToggleButton">
         <Setter Property="shadui:ButtonAssist.CheckedBackground" Value="{DynamicResource SettingsItemBackgroundColor}"/>
         <Setter Property="shadui:ButtonAssist.HoverBackground" Value="{DynamicResource SettingsItemHoverBackgroundColor}"/>
+      </Style>
+    </Style>
+
+    <Style Selector="^ /template/ ContentControl#PART_SettingsItemContentControl">
+      <Setter Property="DockPanel.Dock" Value="Bottom"/>
+      <Style Selector="^.right:not(.FullWidth)">
+        <Setter Property="DockPanel.Dock" Value="Right"/>
       </Style>
     </Style>
 
@@ -354,6 +354,10 @@
       <Style Selector="^ PathIcon#PART_Icon">
         <Setter Property="IsVisible" Value="False"/>
       </Style>
+    </Style>
+
+    <Style Selector="^.FullWidth /template/ ContentControl#PART_SettingsItemContentControl">
+      <Setter Property="DockPanel.Dock" Value="Bottom"/>
     </Style>
   </ControlTheme>
 </ResourceDictionary>

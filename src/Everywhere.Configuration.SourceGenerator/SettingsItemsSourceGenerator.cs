@@ -55,6 +55,7 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
             .Where(p => p is { IsStatic: false, GetMethod: not null, IsImplicitlyDeclared: false })
             .Where(p => !p.IsHiddenItem())
             .Select(p => BuildPropertyMetadata(p, p, p.Name))
+            .OrderBy(static metadata => metadata.Index)
             .ToImmutableArray();
 
         var ns = type.GetNamespace();
@@ -117,7 +118,7 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
                             using (sb.Indent())
                             {
                                 sb.AppendLine($"GroupName = \"{EscapeStringForCode(groupName)}\",");
-                                sb.AppendLine($"HeaderKey = new global::Everywhere.I18N.DirectResourceKey(\"{EscapeStringForCode(groupName)}\"),");
+                                sb.AppendLine($"HeaderKey = new global::Everywhere.I18N.DirectLocaleKey(\"{EscapeStringForCode(groupName)}\"),");
                             }
                             sb.AppendLine("};");
                             sb.AppendLine();
@@ -156,7 +157,7 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
     }
 
     /// <summary>
-    /// A settings item may be nested, e.g. Customizable`, so we use recursion here.
+    /// A settings item may be nested, so we use recursion here.
     /// </summary>
     /// <param name="ctx"></param>
     /// <param name="sb"></param>
@@ -286,12 +287,12 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
                     }
 
                     var transformExpr = GetNamedArgValue(attribute, "I18N", "false") == "true" ?
-                        $"DynamicResourceKey($\"SettingsSelectionItem_{metadata.Symbol.ContainingType.Name}_{metadata.Name}_{{k}}\")" :
-                        "DirectResourceKey(k)";
+                        $"DynamicLocaleKey($\"SettingsSelectionItem_{metadata.Symbol.ContainingType.Name}_{metadata.Name}_{{k}}\")" :
+                        "DirectLocaleKey(k)";
 
                     converterBuilder.Append("return x.Select(k => new global::Everywhere.Configuration.SettingsSelectionItem.Item(new global::Everywhere.I18N.");
                     converterBuilder.Append(transformExpr);
-                    converterBuilder.AppendLine(", k, contentTemplate)).ToList();");
+                    converterBuilder.AppendLine(", k, contentTemplate)).ToArray();");
                 }
 
                 EmitBinding(
@@ -304,37 +305,10 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
                 sb.AppendLine($"{itemName}.IsEditable = {GetNamedArgValue(attribute, "IsEditable", "false")};");
                 break;
             }
-            case ItemKind.Customizable:
-            {
-                var innerType = ((INamedTypeSymbol)metadata.Type).TypeArguments[0];
-                var innerMetadata = BuildPropertyMetadata(metadata.Symbol, metadata.AttributeOwner, metadata.Name, innerType);
-
-                var innerItemName = itemName + "_inner";
-                // Recursive call for the wrapped item
-                EmitItemRecursive(
-                    in ctx,
-                    sb,
-                    innerMetadata,
-                    innerItemName,
-                    $"{bindingPath}.BindableValue",
-                    null);
-
-                sb.AppendLine($"var {itemName} = new global::Everywhere.Configuration.SettingsCustomizableItem({innerItemName});");
-                sb.Append($"{itemName}[!global::Everywhere.Configuration.SettingsCustomizableItem.ResetCommandProperty] = ");
-                EmitBinding(sb, $"{bindingPath}.ResetCommand", BindingMode.OneWay).AppendLine(";");
-
-                // Special case from reflection code: set watermark for string properties
-                if (innerMetadata.Kind == ItemKind.String)
-                {
-                    sb.Append($"{innerItemName}[!global::Everywhere.Configuration.SettingsStringItem.WatermarkProperty] = ");
-                    EmitBinding(sb, $"{bindingPath}.DefaultValue", BindingMode.OneWay).AppendLine(";");
-                }
-                break;
-            }
             case ItemKind.SettingsControl:
             {
                 // In this case, we need to call the property itself to get the ISettingsControl instance
-                // Then cast it to ISettingsControl and call CreateControl()
+                // Then cast it to ISettingsControl and call CreateControl(serviceProvider)
                 // Next, set the DataContext of the created control to 'this'
                 // Finally, assign it to a new SettingsControlItem
 
@@ -349,11 +323,11 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
                     return;
                 }
 
-                sb.AppendLine($"global::System.Func<global::Avalonia.Controls.Control> control_{itemName}_factory = () =>").AppendLine("{");
+                sb.AppendLine($"global::System.Func<global::System.IServiceProvider, global::Avalonia.Controls.Control> control_{itemName}_factory = serviceProvider =>").AppendLine("{");
                 using (sb.Indent())
                 {
                     sb.AppendLine(
-                        $"var control_{itemName} = ((global::Everywhere.Configuration.ISettingsControl)this.{metadata.Name}).CreateControl();");
+                        $"var control_{itemName} = ((global::Everywhere.Configuration.ISettingsControl)this.{metadata.Name}).CreateControl(serviceProvider);");
                     sb.AppendLine($"control_{itemName}.DataContext = this;");
                     sb.AppendLine($"return control_{itemName};");
                 }
@@ -436,19 +410,24 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
         sb.Append($"{itemName}[!global::Everywhere.Configuration.SettingsItem.ValueProperty] = ");
         EmitBinding(sb, bindingPath, BindingMode.TwoWay).AppendLine(";");
 
-        // Check if the item has [DefaultValue] attribute. If so, wrap it in a SettingsCustomizableItem to enable the Reset button.
-        if (metadata.Kind != ItemKind.Customizable &&
-            metadata.AttributeOwner.GetAttribute("System.ComponentModel.DefaultValueAttribute") is { ConstructorArguments: [var defaultValue, ..] })
+        // Check if the item has [DefaultValue] attribute. If so, wrap it in a SettingsDefaultValueItem to enable the Reset button.
+        if (metadata.AttributeOwner.GetAttribute("System.ComponentModel.DefaultValueAttribute") is { ConstructorArguments: [var defaultValue, ..] })
         {
             var defaultValueLiteral = ToLiteral(defaultValue.Value);
+            var resetValueLiteral = metadata is { Kind: ItemKind.String, Type.NullableAnnotation: NullableAnnotation.Annotated } ? "null" : defaultValueLiteral;
             var wrapperItemName = $"{itemName}_wrapper";
 
-            sb.AppendLine($"var {wrapperItemName} = new global::Everywhere.Configuration.SettingsCustomizableItem({itemName});");
+            if (metadata.Kind == ItemKind.String && defaultValue.Value is string)
+            {
+                sb.AppendLine($"{itemName}.PlaceholderText = {defaultValueLiteral};");
+            }
+
+            sb.AppendLine($"var {wrapperItemName} = new global::Everywhere.Configuration.SettingsDefaultValueItem({itemName});");
             sb.AppendLine($"{wrapperItemName}.ResetCommand = new global::CommunityToolkit.Mvvm.Input.RelayCommand(() =>");
             sb.AppendLine("{");
             using (sb.Indent())
             {
-                sb.AppendLine($"this.{bindingPath} = {defaultValueLiteral};");
+                sb.AppendLine($"this.{bindingPath} = {resetValueLiteral};");
             }
             sb.AppendLine("});");
 
@@ -459,10 +438,18 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
             itemName = wrapperItemName;
         }
 
+        var finalItemName = $"{itemName}_final";
+        sb.AppendLine($"global::Everywhere.Configuration.SettingsItem {finalItemName} = {itemName};");
+
+        if (ResolveSettingsItemModifier(ctx, metadata) is { } modifier)
+        {
+            EmitSettingsItemModifier(sb, modifier, itemName, finalItemName, metadata);
+        }
+
         // Add the generated item to its parent collection
         if (!string.IsNullOrEmpty(parentCollection))
         {
-            sb.AppendLine($"{parentCollection}.Add({itemName});").AppendLine();
+            sb.AppendLine($"{parentCollection}.Add({finalItemName});").AppendLine();
         }
     }
 
@@ -470,18 +457,18 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
     {
         var headerExpr = string.IsNullOrWhiteSpace(metadata.HeaderKey) ?
             "null" :
-            $"new global::Everywhere.I18N.DynamicResourceKey({metadata.HeaderKey})";
+            $"new global::Everywhere.I18N.DynamicLocaleKey({metadata.HeaderKey})";
         sb.AppendLine($"{itemName}.HeaderKey = {headerExpr};");
 
         if (metadata.DescriptionKey is { Length: > 0 })
         {
-            sb.AppendLine($"{itemName}.DescriptionKey = new global::Everywhere.I18N.DynamicResourceKey({metadata.DescriptionKey});");
+            sb.AppendLine($"{itemName}.DescriptionKey = new global::Everywhere.I18N.DynamicLocaleKey({metadata.DescriptionKey});");
         }
     }
 
     /// <summary>
-    /// Matches DynamicResourceKey("headerKey", "descriptionKey"), supports multi-line and spaces, e.g.
-    /// DynamicResourceKey(
+    /// Matches DynamicLocaleKey("headerKey", "descriptionKey"), supports multi-line and spaces, e.g.
+    /// DynamicLocaleKey(
     ///     LocaleKey.CustomAssistant_Icon_Header,
     ///     LocaleKey.CustomAssistant_Icon_Description)
     /// </summary>
@@ -489,8 +476,8 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
     /// We need to parse the syntax ourselves because sometimes the attribute arguments are also SourceGenerated,
     /// and thus we cannot rely on ConstantValue of the attribute data.
     /// </remarks>
-    private static readonly Regex DynamicResourceKeyRegex = new(
-        @"DynamicResourceKey\s*\(\s*(?<headerKey>[^,)\r\n]+)(\s*,\s*(?<descriptionKey>[^)\r\n]+))?\s*\)",
+    private static readonly Regex DynamicLocaleKeyRegex = new(
+        @"DynamicLocaleKey\s*\(\s*(?<headerKey>[^,)\r\n]+)(\s*,\s*(?<descriptionKey>[^)\r\n]+))?\s*\)",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture | RegexOptions.Singleline);
 
     /// <summary>
@@ -504,12 +491,17 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
     {
         type ??= ((IPropertySymbol)symbol).Type;
         var kind = Classify(symbol, type);
-        var dynamicResourceKeyAttribute = attributeOwner.GetAttribute(KnownAttributes.DynamicResourceKey);
+        var dynamicResourceKeyAttribute = attributeOwner.GetAttribute(KnownAttributes.DynamicLocaleKey);
         var code = dynamicResourceKeyAttribute?.ApplicationSyntaxReference?.GetSyntax().ToString();
-        var match = code is not null ? DynamicResourceKeyRegex.Match(code) : null;
+        var match = code is not null ? DynamicLocaleKeyRegex.Match(code) : null;
         var headerKey = match?.Groups["headerKey"].Value.Trim() ?? string.Empty;
         var descriptionKey = match?.Groups["descriptionKey"].Success == true ? match.Groups["descriptionKey"].Value.Trim() : null;
         var settingsItemAttribute = attributeOwner.GetAttribute(KnownAttributes.SettingsItem);
+        var index = settingsItemAttribute?.GetNamedArgument("Index") switch
+        {
+            { IsNull: false, Value: int value } => value,
+            _ => int.MaxValue
+        };
         var group = settingsItemAttribute?.GetNamedArgument("Group") switch
         {
             { Kind: TypedConstantKind.Error } => settingsItemAttribute.ApplicationSyntaxReference?.GetSyntax().ToString() switch
@@ -524,7 +516,7 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
             { IsNull: false, Value: string g } => g,
             _ => null
         };
-        return new PropertyMetadata(symbol, attributeOwner, name, kind, type, headerKey, descriptionKey, group);
+        return new PropertyMetadata(symbol, attributeOwner, name, kind, type, headerKey, descriptionKey, index, group);
     }
 
     private static void ApplyTypeSpecificMetadata(IndentedStringBuilder sb, string itemName, in PropertyMetadata metadata)
@@ -533,7 +525,7 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
         {
             case ItemKind.String when metadata.AttributeOwner.GetAttribute(KnownAttributes.SettingsStringItem) is { } attribute:
             {
-                sb.AppendLine($"{itemName}.Watermark = {GetNamedArgValue(attribute, "Watermark", "null")};");
+                sb.AppendLine($"{itemName}.PlaceholderText = {GetNamedArgValue(attribute, "PlaceholderText", "null")};");
                 sb.AppendLine($"{itemName}.MaxLength = {GetNamedArgValue(attribute, "MaxLength", "int.MaxValue")};");
                 sb.AppendLine($"{itemName}.IsMultiline = {GetNamedArgValue(attribute, "IsMultiline", "false")};");
                 sb.AppendLine(
@@ -577,14 +569,14 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
                     foreach (var member in enumMembers)
                     {
                         var memberAccess = $"{enumTypeStr}.{member.Name}";
-                        // Check for [DynamicResourceKey] on the enum member
+                        // Check for [DynamicLocaleKey] on the enum member
                         string? headerKey = null;
-                        if (member.GetAttribute(KnownAttributes.DynamicResourceKey) is { } attr)
+                        if (member.GetAttribute(KnownAttributes.DynamicLocaleKey) is { } attr)
                         {
                             var code = attr.ApplicationSyntaxReference?.GetSyntax().ToString();
                             if (code is not null)
                             {
-                                var match = DynamicResourceKeyRegex.Match(code);
+                                var match = DynamicLocaleKeyRegex.Match(code);
                                 headerKey = match.Groups["headerKey"].Value.Trim();
                             }
                             else if (attr.ConstructorArguments.Length > 0 &&
@@ -595,8 +587,8 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
                         }
 
                         var resourceKeyExpr = headerKey is not null ?
-                            $"new global::Everywhere.I18N.DynamicResourceKey({headerKey})" :
-                            $"new global::Everywhere.I18N.DynamicResourceKey(\"{metadata.Type.Name}_{member.Name}\")";
+                            $"new global::Everywhere.I18N.DynamicLocaleKey({headerKey})" :
+                            $"new global::Everywhere.I18N.DynamicLocaleKey(\"{metadata.Type.Name}_{member.Name}\")";
 
                         sb.AppendLine($"new global::Everywhere.Configuration.SettingsSelectionItem.Item({resourceKeyExpr}, {memberAccess}, null),");
                     }
@@ -712,6 +704,102 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
         sb.AppendLine(";").AppendLine();
     }
 
+    private static SettingsItemModifier? ResolveSettingsItemModifier(in SourceProductionContext ctx, in PropertyMetadata metadata)
+    {
+        var modifierName = metadata.AttributeOwner.GetAttribute(KnownAttributes.SettingsItem)?.GetNamedArgument("Modifier") switch
+        {
+            { IsNull: false, Value: string value } when !string.IsNullOrWhiteSpace(value) => value,
+            _ => null
+        };
+
+        if (modifierName is null) return null;
+
+        var ownerType = metadata.Symbol.ContainingType;
+        var candidates = ownerType.GetAllMembers()
+            .OfType<IMethodSymbol>()
+            .Where(m => m.Name == modifierName && IsAccessibleSettingsItemModifier(m, ownerType))
+            .ToArray();
+        var validCandidates = candidates
+            .Where(IsValidSettingsItemModifier)
+            .ToArray();
+
+        if (validCandidates.Length == 1)
+        {
+            var method = validCandidates[0];
+            var target = method.IsStatic ? method.ContainingType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) : "this";
+            return new SettingsItemModifier(target, method.Name, !method.ReturnsVoid);
+        }
+
+        ctx.ReportDiagnostic(
+            Diagnostic.Create(
+                Diagnostics.InvalidSettingsItemModifier,
+                metadata.Symbol.Locations.FirstOrDefault(),
+                metadata.Name,
+                modifierName));
+        return null;
+    }
+
+    private static bool IsAccessibleSettingsItemModifier(IMethodSymbol method, INamedTypeSymbol ownerType)
+    {
+        if (SymbolEqualityComparer.Default.Equals(method.ContainingType, ownerType)) return true;
+
+        return method.DeclaredAccessibility switch
+        {
+            Accessibility.Public or Accessibility.Protected or Accessibility.ProtectedOrInternal => true,
+            Accessibility.Internal or Accessibility.ProtectedAndInternal
+                when SymbolEqualityComparer.Default.Equals(method.ContainingAssembly, ownerType.ContainingAssembly) => true,
+            _ => false
+        };
+    }
+
+    private static bool IsValidSettingsItemModifier(IMethodSymbol method)
+    {
+        return method is { MethodKind: MethodKind.Ordinary, IsGenericMethod: false, Parameters.Length: 1 } &&
+            IsSettingsItemType(method.Parameters[0].Type) &&
+            (method.ReturnsVoid || IsSettingsItemType(method.ReturnType));
+    }
+
+    private static bool IsSettingsItemType(ITypeSymbol type)
+    {
+        for (var current = type; current is INamedTypeSymbol namedType; current = namedType.BaseType)
+        {
+            if (namedType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) ==
+                "global::Everywhere.Configuration.SettingsItem")
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static void EmitSettingsItemModifier(
+        IndentedStringBuilder sb,
+        SettingsItemModifier modifier,
+        string modifierArgumentName,
+        string finalItemName,
+        in PropertyMetadata metadata)
+    {
+        var call = $"{modifier.Target}.{modifier.MethodName}({modifierArgumentName})";
+        if (!modifier.ReturnsSettingsItem)
+        {
+            sb.AppendLine($"{call};");
+            return;
+        }
+
+        var modifiedItemName = $"{modifierArgumentName}_modified";
+        sb.AppendLine($"var {modifiedItemName} = {call};");
+        sb.AppendLine($"if (!global::System.Object.ReferenceEquals({modifiedItemName}, {finalItemName}))");
+        sb.AppendLine("{");
+        using (sb.Indent())
+        {
+            sb.AppendLine($"{finalItemName} = {modifiedItemName};");
+            ApplyHeaderAndDescription(sb, finalItemName, metadata);
+            ApplySettingsItemAttributes(sb, finalItemName, metadata);
+        }
+        sb.AppendLine("}");
+    }
+
     /// <summary>
     /// Emit the whole IBinding that represents the binding logic.
     /// for simple paths, this is just a Binding; for complex logical expressions, this may involve MultiBindings.
@@ -720,7 +808,7 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
     /// e.g.
     /// new CompiledBinding
     /// {
-    ///     Path = "SelectedWebSearchEngineProvider.EndPoint.ActualValue",
+    ///     Path = "SelectedWebSearchEngineProvider.EndPoint",
     ///     Source = this,
     ///     Mode = global::Avalonia.Data.BindingMode.TwoWay,
     ///     Converter = ...
@@ -923,8 +1011,6 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
 
         return type switch
         {
-            INamedTypeSymbol { IsGenericType: true } nts when
-                nts.ConstructedFrom.ToDisplayString() == "Everywhere.Configuration.Customizable<T>" => ItemKind.Customizable,
             { SpecialType: SpecialType.System_Boolean } => ItemKind.Bool,
             {
                 OriginalDefinition: INamedTypeSymbol
@@ -1039,7 +1125,6 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
         String,
         Int,
         Double,
-        Customizable,
         Enum,
         Templated,
         SettingsControl,
@@ -1054,7 +1139,14 @@ public sealed class SettingsItemsSourceGenerator : IIncrementalGenerator
         ITypeSymbol Type,
         string HeaderKey,
         string? DescriptionKey,
+        int Index,
         string? Group
+    );
+
+    private readonly record struct SettingsItemModifier(
+        string Target,
+        string MethodName,
+        bool ReturnsSettingsItem
     );
 
     private enum BindingMode

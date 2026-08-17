@@ -25,7 +25,7 @@
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="pages:SettingsPage+Item">
             <Button
-              Classes="SettingsItem NoPressedAnimation" Padding="20,14"
+              Classes="SettingsItem NoScale" Padding="20,14"
               HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
               Command="{Binding $parent[v:MainView].ViewModel.NavigateToCommand}"
               CommandParameter="{Binding Page}">

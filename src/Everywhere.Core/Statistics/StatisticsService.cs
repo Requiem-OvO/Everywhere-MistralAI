@@ -1,4 +1,4 @@
-using Everywhere.Configuration;
+using Everywhere.Common;
 using Everywhere.Statistics.Database;
 using Microsoft.EntityFrameworkCore;
 using ZLinq;
@@ -86,7 +86,7 @@ public sealed class StatisticsService(IDbContextFactory<StatisticsDbContext> dbF
                     x.Sum(v => v.OutputTokenCount),
                     x.Sum(v => v.CachedInputTokenCount)))
                 .OrderBy(x => x.Date)
-                .ToList();
+                .ToArray();
         }
 
         IEnumerable<(DateOnly Date, long Value)> rows = metric switch
@@ -119,7 +119,7 @@ public sealed class StatisticsService(IDbContextFactory<StatisticsDbContext> dbF
             .GroupBy(x => x.Date)
             .Select(IStatisticsHeatmapDay (x) => new StatisticsSimpleHeatmapDay(x.Key, x.Sum(v => v.Value)))
             .OrderBy(x => x.Date)
-            .ToList();
+            .ToArray();
     }
 
     private static async Task<StatisticsTokenSummary> GetTokenSummaryAsync(

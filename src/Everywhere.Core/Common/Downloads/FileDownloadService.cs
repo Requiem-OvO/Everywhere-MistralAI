@@ -145,7 +145,7 @@ public sealed class FileDownloadService(
             }
         }
 
-        return responsive.Count == 0 ? sources : responsive.Concat(untested).ToList();
+        return responsive.Count == 0 ? sources : [.. responsive, .. untested];
     }
 
     private static async Task<bool> ProbeSourceAsync(HttpClient httpClient, string url, CancellationToken cancellationToken)

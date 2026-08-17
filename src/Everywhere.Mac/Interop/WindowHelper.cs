@@ -8,7 +8,7 @@ using ObjCRuntime;
 
 namespace Everywhere.Mac.Interop;
 
-public class WindowHelper : IWindowHelper
+public sealed class WindowHelper : IWindowHelper
 {
     private int OpenedWindowCount
     {
@@ -58,12 +58,12 @@ public class WindowHelper : IWindowHelper
 
     private void HandleWindowOpened(Window window, RoutedEventArgs args)
     {
-        if (window is TransientWindow) OpenedWindowCount++;
+        if (window is not ChatWindow) OpenedWindowCount++;
     }
 
     private void HandleWindowClosed(Window window, RoutedEventArgs args)
     {
-        if (window is TransientWindow) OpenedWindowCount--;
+        if (window is not ChatWindow) OpenedWindowCount--;
     }
 
     /// <summary>
@@ -193,16 +193,33 @@ public class WindowHelper : IWindowHelper
         return false;
     }
 
+    public void RequestUserAttention(Window window)
+    {
+        NSApplication.SharedApplication.RequestUserAttention(NSRequestUserAttentionType.InformationalRequest);
+    }
+
+    public void InitializeWindow(Window window)
+    {
+        if (GetNativeWindow(window) is not { } nativeWindow) return;
+
+        if (window is ChatWindow)
+        {
+            // for ChatWindow, disallow closing
+            nativeWindow.StyleMask &= ~NSWindowStyle.Closable;
+        }
+        else
+        {
+            // for other windows, disable fullscreen
+            nativeWindow.CollectionBehavior |= NSWindowCollectionBehavior.FullScreenNone;
+            nativeWindow.CollectionBehavior &= ~(NSWindowCollectionBehavior.FullScreenPrimary | NSWindowCollectionBehavior.FullScreenAuxiliary);
+        }
+    }
+
     /// <summary>
     /// Gets the native NSWindow from an Avalonia Window.
     /// </summary>
     private static NSWindow? GetNativeWindow(Window window)
     {
         return window.TryGetPlatformHandle()?.Handle is { } handle ? Runtime.GetNSObject<NSWindow>(handle) : null;
-    }
-
-    public void RequestUserAttention(Window window)
-    {
-        NSApplication.SharedApplication.RequestUserAttention(NSRequestUserAttentionType.InformationalRequest);
     }
 }

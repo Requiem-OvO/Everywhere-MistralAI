@@ -24,10 +24,10 @@ public class SyncSaveChangesInterceptor : SaveChangesInterceptor
         // 1. Identify all entities that are ISyncable and are being Added or Modified.
         var syncEntries = context.ChangeTracker.Entries<ICloudSyncable>()
             .Where(e => e.State is EntityState.Added or EntityState.Modified)
-            .ToList();
+            .ToArray();
 
         // If no syncable entities are changed, proceed normally.
-        if (syncEntries.Count == 0) return result;
+        if (syncEntries.Length == 0) return result;
 
         // 2. Fetch or Create the Global Sync Metadata.
         // We use a constant ID "Global" to ensure a singleton row.

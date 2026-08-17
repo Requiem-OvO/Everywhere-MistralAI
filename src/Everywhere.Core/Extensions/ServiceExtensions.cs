@@ -1,12 +1,18 @@
-﻿using Everywhere.AI;
+﻿using System.Runtime.Versioning;
+using Everywhere.AI;
+using Everywhere.AI.Prompts;
+using Everywhere.AI.Prompts.Database;
 using Everywhere.Chat;
 using Everywhere.Chat.Plugins;
 using Everywhere.Chat.Plugins.BuiltIn;
+using Everywhere.Chat.Plugins.BuiltIn.FileSystem;
 using Everywhere.Chat.Plugins.Mcp;
 using Everywhere.Common;
 using Everywhere.Common.Notification;
 using Everywhere.Configuration;
+using Everywhere.Configuration.Engine;
 using Everywhere.Database;
+using Everywhere.Initialization;
 using Everywhere.Skills;
 using Everywhere.Statistics;
 using Everywhere.Statistics.Database;
@@ -34,10 +40,26 @@ public static class ServiceExtensions
                 .AddSerilog(dispose: true)
                 .AddFilter<SerilogLoggerProvider>("Microsoft.EntityFrameworkCore", LogLevel.Warning));
 
-        public IServiceCollection AddAvaloniaBasicServices()
-        {
-            return services.AddDialogManagerAndToastManager();
-        }
+
+#if WINDOWS
+        [SupportedOSPlatform("windows")]
+#endif
+        public IServiceCollection AddSettings() =>
+            services
+                .AddSingleton<Settings>()
+                .AddTransient<IAsyncInitializer, SettingsEngine>()
+                .AddTransient<SoftwareUpdateControl>()
+#if WINDOWS
+                .AddTransient<RestartAsAdministratorControl>()
+#endif
+                .AddTransient<OpenWebBrowserControl>()
+                .AddTransient<DebugFeaturesControl>()
+                .AddSingleton<FontFamilyCatalog>()
+                .AddSingleton<PersistentKeyValueStorage>()
+                .AddSingleton<IKeyValueStorage>(xx => xx.GetRequiredService<PersistentKeyValueStorage>())
+                .AddTransient<IAsyncInitializer>(xx => xx.GetRequiredService<PersistentKeyValueStorage>())
+                .AddSingleton<PersistentState>()
+                .AddTransient<IAsyncInitializer, CustomAssistantInitializer>();
 
         public IServiceCollection AddViewsAndViewModels() =>
             services
@@ -48,6 +70,10 @@ public static class ServiceExtensions
                 .AddSingleton<IMainViewNavigationItem, HomePage>()
                 .AddSingleton<CustomAssistantPageViewModel>()
                 .AddSingleton<IMainViewNavigationItem, CustomAssistantPage>()
+                .AddSingleton<PromptPageViewModel>()
+                .AddSingleton<IMainViewNavigationItem, PromptPage>()
+                .AddTransient<PromptEditorViewModel>()
+                .AddTransient<PromptEditorPage>()
                 .AddSingleton<ChatPluginPageViewModel>()
                 .AddSingleton<IMainViewNavigationItem, ChatPluginPage>()
                 .AddSingleton<SkillPageViewModel>()
@@ -71,11 +97,21 @@ public static class ServiceExtensions
                     var dbPath = RuntimeConstants.GetDatabasePath("chat.db");
                     options.UseSqlite($"Data Source={dbPath}");
                 })
+                // Prompt Manager owns an isolated database. The built-in default prompt is virtual
+                // and is provided by IDefaultPromptProvider rather than inserted into this database.
+                .AddDbContextFactory<PromptDbContext>((_, options) =>
+                {
+                    var dbPath = RuntimeConstants.GetDatabasePath("prompt.db");
+                    options.UseSqlite($"Data Source={dbPath}");
+                })
                 .AddDbContextFactory<StatisticsDbContext>((_, options) =>
                 {
                     var dbPath = RuntimeConstants.GetDatabasePath("statistics.db");
                     options.UseSqlite($"Data Source={dbPath}");
                 })
+                .AddSingleton<IDefaultPromptProvider, DefaultPromptProvider>()
+                .AddSingleton<IPromptService, PromptService>()
+                .AddSingleton<IAssistantPromptReferenceService, AssistantPromptReferenceService>()
                 .AddSingleton<IBlobStorage, BlobStorage>()
                 .AddSingleton<IChatContextStorage, ChatContextStorage>()
                 .AddSingleton<NotificationCenter>()
@@ -84,6 +120,7 @@ public static class ServiceExtensions
                 .AddSingleton<IStatisticsRecorder, StatisticsRecorder>()
                 .AddSingleton<IStatisticsService, StatisticsService>()
                 .AddTransient<IAsyncInitializer, ChatDbInitializer>()
+                .AddTransient<IAsyncInitializer, PromptDbInitializer>()
                 .AddTransient<IAsyncInitializer, StatisticsDbInitializer>()
                 .AddTransient<IAsyncInitializer, StatisticsBackfiller>();
 
@@ -92,10 +129,16 @@ public static class ServiceExtensions
                 .AddSingleton<IKernelMixinFactory, KernelMixinFactory>()
                 .AddSingleton<IChatPluginManager, ChatPluginManager>()
                 .AddSingleton<SkillSource>()
+                .AddSingleton<IVirtualSkillProvider, EmbeddedSkillProvider>()
                 .AddSingleton<SkillManager>()
                 .AddSingleton<ISkillManager>(x => x.GetRequiredService<SkillManager>())
                 .AddSingleton<ISkillPromptProvider>(x => x.GetRequiredService<SkillManager>())
                 .AddTransient<IAsyncInitializer>(x => x.GetRequiredService<SkillManager>())
+                .AddSingleton<FileHandler, SkillFileHandler>()
+                .AddSingleton<FileHandler, PdfFileHandler>()
+                .AddSingleton<FileHandler, TextFileHandler>()
+                .AddSingleton<FileHandler, BinaryFileHandler>()
+                .AddSingleton<FileHandlerContextFactory>()
                 .AddSingleton<IChatWindowNotificationService, ChatWindowNotificationService>()
                 .AddSingleton<IChatService, ChatService>()
                 .AddSingleton<IGreetings, Greetings>()
@@ -104,11 +147,12 @@ public static class ServiceExtensions
                 .AddManagedMcp()
 
                 // Add built-in plugins
-                .AddTransient<BuiltInChatPlugin, EssentialPlugin>()
-                .AddTransient<BuiltInChatPlugin, VisualContextPlugin>()
-                .AddTransient<BuiltInChatPlugin, FileSystemPlugin>()
-                .AddTransient<BuiltInChatPlugin, WebPlugin>()
-                .AddTransient<BuiltInChatPlugin, TerminalPlugin>();
+                .AddSingleton<BuiltInChatPlugin, EssentialPlugin>()
+                .AddSingleton<BuiltInChatPlugin, VisualContextPlugin>()
+                .AddSingleton<BuiltInChatPlugin, FileSystemPlugin>()
+                .AddSingleton<BuiltInChatPlugin, WebPlugin>()
+                .AddSingleton<BuiltInChatPlugin, TerminalPlugin>()
+                .AddSingleton<BuiltInChatPlugin, OfficeCLIPlugin>();
 
     }
 }

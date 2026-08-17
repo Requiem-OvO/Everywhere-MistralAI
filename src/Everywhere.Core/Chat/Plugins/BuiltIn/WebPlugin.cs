@@ -1,9 +1,8 @@
 ﻿using System.ComponentModel;
+using System.Globalization;
 using System.Text;
-using System.Text.Encodings.Web;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Everywhere.AI;
+using Everywhere.Chat.Documents;
 using Everywhere.Chat.Permissions;
 using Everywhere.Cloud;
 using Everywhere.Common;
@@ -12,15 +11,15 @@ using Everywhere.Web;
 using Lucide.Avalonia;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
-using ZLinq;
 
 namespace Everywhere.Chat.Plugins.BuiltIn;
 
-public sealed partial class WebPlugin : BuiltInChatPlugin
+public sealed class WebPlugin : BuiltInChatPlugin
 {
-    public override IDynamicResourceKey HeaderKey { get; } = new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Web_Header);
-    public override IDynamicResourceKey DescriptionKey { get; } = new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Web_Description);
+    public override IDynamicLocaleKey HeaderKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_Header);
+    public override IDynamicLocaleKey DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_Description);
     public override LucideIconKind? Icon => LucideIconKind.Globe;
+    public override bool IsDefaultEnabled => true;
     public override IReadOnlyList<SettingsItem> SettingsItems => _webBrowserSettings.SettingsItems;
 
     private readonly WebSearchEngineSettings _webSearchEngineSettings;
@@ -28,12 +27,6 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
     private readonly IWebBrowserHost _webBrowserHost;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<WebPlugin> _logger;
-
-    private readonly JsonSerializerOptions _jsonSerializerOptions = new()
-    {
-        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-        TypeInfoResolver = WebPluginJsonSerializerContext.Default
-    };
 
     public WebPlugin(
         Settings settings,
@@ -54,7 +47,7 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
                     SearchAsync,
                     ChatFunctionPermissions.NetworkAccess,
                     isVisible: false,
-                    isEnabled: false,
+                    isDefaultEnabled: false,
                     onPermissionConsent: _ => true)); // always allow
             list.Add(
                 new BuiltInChatFunction(
@@ -68,9 +61,9 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
         if (_webSearchEngineSettings.SelectedProvider is not { } provider)
         {
             throw new HandledException(
-                new ArgumentException("Web search engine provider is not selected."),
-                new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage),
-                showDetails: false);
+                new ArgumentException(
+                    "No web-search provider is configured. Ask the user to select one in Settings > Web Search."),
+                LocaleKey.BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage);
         }
 
         return provider switch
@@ -82,47 +75,45 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
                 new AnySearchConnector(
                     apiKey: anySearch.ApiKey != Guid.Empty ? EnsureApiKey(anySearch.ApiKey) : null,
                     _httpClientFactory.CreateClient(),
-                    EnsureUri(anySearch.EndPoint)),
+                    EnsureUri(anySearch.ActualEndPoint)),
             // ReSharper disable once IdentifierTypo
             ApiKeyWebSearchEngineProvider { Id: WebSearchEngineProviderId.Bocha } bocha =>
-                new BoChaConnector(EnsureApiKey(bocha.ApiKey), _httpClientFactory.CreateClient(), EnsureUri(bocha.EndPoint)),
+                new BoChaConnector(EnsureApiKey(bocha.ApiKey), _httpClientFactory.CreateClient(), EnsureUri(bocha.ActualEndPoint)),
             ApiKeyWebSearchEngineProvider { Id: WebSearchEngineProviderId.Brave } brave =>
-                new BraveConnector(EnsureApiKey(brave.ApiKey), _httpClientFactory.CreateClient(), EnsureUri(brave.EndPoint)),
+                new BraveConnector(EnsureApiKey(brave.ApiKey), _httpClientFactory.CreateClient(), EnsureUri(brave.ActualEndPoint)),
             GoogleWebSearchEngineProvider google => new GoogleConnector(
                 EnsureApiKey(google.ApiKey),
                 google.SearchEngineId ??
                 throw new HandledException(
-                    new UnauthorizedAccessException("Search Engine ID is not set."),
-                    new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Web_GoogleSearchEngineIdNotSet_ErrorMessage),
-                    showDetails: false),
+                    new UnauthorizedAccessException(
+                        "Google web search requires a Search Engine ID. Ask the user to configure it in Settings > Web Search."),
+                    LocaleKey.BuiltInChatPlugin_Web_GoogleSearchEngineIdNotSet_ErrorMessage),
                 _httpClientFactory.CreateClient(),
-                EnsureUri(google.EndPoint)),
+                EnsureUri(google.ActualEndPoint)),
             ApiKeyWebSearchEngineProvider { Id: WebSearchEngineProviderId.Jina } jina =>
-                new JinaConnector(EnsureApiKey(jina.ApiKey), _httpClientFactory.CreateClient(), EnsureUri(jina.EndPoint)),
+                new JinaConnector(EnsureApiKey(jina.ApiKey), _httpClientFactory.CreateClient(), EnsureUri(jina.ActualEndPoint)),
             // ReSharper disable once InconsistentNaming
             SearXNGWebSearchEngineProvider searXNG =>
-                new SearxngConnector(_httpClientFactory.CreateClient(), EnsureUri(searXNG.EndPoint)),
+                new SearxngConnector(_httpClientFactory.CreateClient(), EnsureUri(searXNG.ActualEndPoint)),
             ApiKeyWebSearchEngineProvider { Id: WebSearchEngineProviderId.Tavily } tavily =>
-                new TavilyConnector(EnsureApiKey(tavily.ApiKey), _httpClientFactory.CreateClient(), EnsureUri(tavily.EndPoint)),
+                new TavilyConnector(EnsureApiKey(tavily.ApiKey), _httpClientFactory.CreateClient(), EnsureUri(tavily.ActualEndPoint)),
             // ReSharper disable once IdentifierTypo
             ApiKeyWebSearchEngineProvider { Id: WebSearchEngineProviderId.UniFuncs } uniFuncs =>
-                new UniFuncsConnector(EnsureApiKey(uniFuncs.ApiKey), _httpClientFactory.CreateClient(), EnsureUri(uniFuncs.EndPoint)),
+                new UniFuncsConnector(EnsureApiKey(uniFuncs.ApiKey), _httpClientFactory.CreateClient(), EnsureUri(uniFuncs.ActualEndPoint)),
             _ => throw new HandledException(
-                new NotSupportedException($"Web search engine provider '{provider.Id}' is not supported."),
-                new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Web_UnsupportedWebSearchEngineProvider_ErrorMessage),
-                showDetails: false)
+                new NotSupportedException(
+                    $"The configured web-search provider '{provider.Id}' is not supported by this build."),
+                LocaleKey.BuiltInChatPlugin_Web_UnsupportedWebSearchEngineProvider_ErrorMessage)
         };
 
-        Uri EnsureUri(Customizable<string> url)
+        Uri EnsureUri(string? url)
         {
-            if (!Uri.TryCreate(url.ActualValue, UriKind.Absolute, out var uri) ||
-                uri.Scheme is not "http" and not "https")
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme is not "http" and not "https")
             {
                 throw new HandledException(
                     new ArgumentException(
-                        "Endpoint is not a valid absolute http/https URI. Please instruct the user to correct in Main Window > Web Search."),
-                    new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Web_InvalidWebSearchEngineEndpoint_ErrorMessage),
-                    showDetails: false);
+                        $"The configured web-search endpoint '{url}' is not a valid absolute HTTP or HTTPS URL. Ask the user to correct it in Settings > Web Search."),
+                    LocaleKey.BuiltInChatPlugin_Web_InvalidWebSearchEngineEndpoint_ErrorMessage);
             }
 
             // Extract only the base URI without query parameters
@@ -132,9 +123,9 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
         string EnsureApiKey(Guid id) =>
             ApiKey.GetKey(id) ??
             throw new HandledException(
-                new UnauthorizedAccessException("API key is not set. Please instruct the user to configure in Main Window > Web Search."),
-                new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Web_WebSearchEngineApiKeyNotSet_ErrorMessage),
-                showDetails: false);
+                new UnauthorizedAccessException(
+                    "The API key required by the configured web-search provider is missing. Ask the user to configure it in Settings > Web Search."),
+                LocaleKey.BuiltInChatPlugin_Web_WebSearchEngineApiKeyNotSet_ErrorMessage);
     }
 
     /// <summary>
@@ -154,8 +145,8 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
         "Searches the public web for real-time information. Returns a JSON array of web pages. " +
         "STRICTLY confined to internet content; DO NOT use to search local files or personal data. " +
         "Results may be inaccurate.")]
-    [DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Web_WebSearch_Header, LocaleKey.BuiltInChatPlugin_Web_WebSearch_Description)]
-    private async Task<string> SearchAsync(
+    [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_WebSearch_Header, LocaleKey.BuiltInChatPlugin_Web_WebSearch_Description)]
+    private async Task<PromptNode> SearchAsync(
         [FromKernelServices] IChatPluginDisplaySink displaySink,
         [Description("Search query")] string query,
         [Description("Number of results. Default is 10.")] int count = 10,
@@ -164,39 +155,40 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
         _logger.LogDebug("Performing web search with query: {Query}, count: {Count}", query, count);
         using var connector = CreateConnector();
 
-        displaySink.AppendDynamicResourceKey(
-            new FormattedDynamicResourceKey(
+        displaySink.AppendDynamicLocaleKey(
+            new FormattedDynamicLocaleKey(
                 LocaleKey.BuiltInChatPlugin_Web_WebSearch_Searching,
-                new DirectResourceKey(query)));
+                new DirectLocaleKey(query)));
 
-        var results = await connector.SearchAsync(query, count, cancellationToken).ConfigureAwait(false);
-        var indexedResults = results
-            .AsValueEnumerable()
-            .Select((r, i) => new IndexedWebPage(
-                Index: i + 1,
-                Name: r.Name,
-                Url: r.Link,
-                Snippet: r.Value))
-            .ToList();
+        var results = (await connector.SearchAsync(query, count, cancellationToken).ConfigureAwait(false)).AsValueEnumerable().ToArray();
+
         displaySink.AppendUrls(
-            indexedResults.Select(r => new ChatPluginUrl(
-                r.Url,
-                new DirectResourceKey((r.Name ?? r.Snippet).SafeSubstring(0, 64)))
-            {
-                Index = r.Index
-            }).ToList());
+            results
+                .AsValueEnumerable()
+                .Select(r => new ChatPluginUrl(r.Link, new DirectLocaleKey((r.Name ?? r.Value).SafeSubstring(0, 64))))
+                .ToArray());
 
-        return JsonSerializer.Serialize(indexedResults, _jsonSerializerOptions);
+        return new PromptTokenLimit(
+            40960,
+            results
+                .AsValueEnumerable()
+                .Select(r => new PromptElement("result")
+                    .AttributeNotNullOrEmpty("name", r.Name)
+                    .AttributeNotNullOrEmpty("url", r.Link)
+                    .ChildNotNullOrEmpty(r.Value))
+                .ToArray());
     }
 
     [KernelFunction("web_extract")]
     [Description("Fetch and extract the main content from a web page. This tool is useful for summarizing or analyzing the content of a webpage.")]
-    [DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Web_WebExtract_Header, LocaleKey.BuiltInChatPlugin_Web_WebExtract_Description)]
+    [DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Web_WebExtract_Header, LocaleKey.BuiltInChatPlugin_Web_WebExtract_Description)]
     private async Task<string> ExtractAsync(
-        [FromKernelServices] IChatPluginDisplaySink displaySink,
+        [FromKernelServices] IChatPluginUserInterface userInterface,
         [Description("An array of URLs to fetch content from. Maximum 10.")] IReadOnlyList<string> urls,
         CancellationToken cancellationToken = default)
     {
+        var displaySink = userInterface.DisplaySink;
+
         switch (urls.Count)
         {
             case 0:
@@ -215,49 +207,71 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
             }
         }
 
-        var extractions = await Task.WhenAll(
-            urls.DistinctBy(u => u.Trim()).Select(async url =>
-            {
-                displaySink.AppendDynamicResourceKey(
-                    new FormattedDynamicResourceKey(
-                        LocaleKey.BuiltInChatPlugin_Web_WebExtract_Visiting,
-                        new DirectResourceKey(url)));
+        // Uri equality normalizes the scheme and host without incorrectly treating the path as
+        // case-insensitive. Some HTTP servers distinguish /Page from /page, so a string comparer
+        // would be too aggressive here.
+        var validatedUrls = urls
+            .AsValueEnumerable()
+            .Select(url => Uri.TryCreate(url, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https" ?
+                uri :
+                throw new HandledFunctionInvokingException(
+                    HandledFunctionInvokingExceptionType.ArgumentError,
+                    nameof(urls),
+                    new ArgumentException($"Invalid URL format: {url}. Only absolute http/https URLs are allowed.")))
+            .Distinct()
+            .ToArray();
 
+        // The invocation preview contains only validated URIs. Host labels and favicon locations
+        // are derived by the View, where AsyncImageLoader can reuse its normal image cache instead
+        // of making the plugin fetch presentation metadata.
+        userInterface.ActivityPreview = new ChatPluginUrlsActivityPreview(validatedUrls);
+
+        // Keep one compact durable URL block for the explicitly expanded history view. This
+        // replaces the previous per-worker "visiting" text blocks, which were transient status
+        // messages but were unnecessarily serialized as detailed output.
+        displaySink.AppendUrls(
+            validatedUrls
+                .AsValueEnumerable()
+                .Select(uri => new ChatPluginUrl(uri.AbsoluteUri, new DirectLocaleKey(uri.Host)))
+                .ToArray());
+
+        var extractions = await Task.WhenAll(
+            validatedUrls.Select(async uri =>
+            {
+                var absoluteUri = uri.AbsoluteUri;
                 try
                 {
-                    if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) ||
-                        uri.Scheme is not "http" and not "https")
-                    {
-                        throw new HandledFunctionInvokingException(
-                            HandledFunctionInvokingExceptionType.ArgumentError,
-                            nameof(urls),
-                            new ArgumentException("Invalid URL format. Only absolute http/https URLs are allowed."));
-                    }
-
-                    var content = await _webBrowserHost.ExtractAsync(url, cancellationToken);
-                    // ReSharper disable once RedundantCast
-                    return (url, content, error: (string?)null);
+                    var extraction = await _webBrowserHost.ExtractPageAsync(absoluteUri, cancellationToken);
+                    return (absoluteUri, extraction, error: null);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    // A cancellation requested by ChatService belongs to the whole tool
+                    // invocation, not to one URL. Let it escape this per-URL task so Task.WhenAll
+                    // propagates cancellation instead of turning an aborted request into a normal
+                    // extraction error that would be sent back to the model.
+                    throw;
                 }
                 catch (Exception ex)
                 {
                     ex = HandledFunctionInvokingException.Handle(ex);
-                    _logger.LogError(ex, "Failed to extract content from URL: {Url}", url);
-                    // ReSharper disable once RedundantCast
-                    return (url, content: (string?)null, error: ex.Message);
+                    _logger.LogError(ex, "Failed to extract content from URL: {Url}", absoluteUri);
+                    return (absoluteUri, extraction: default(WebPageExtractionResult), error: (string?)ex.Message);
                 }
             }));
 
+        // TODO: implement with PromptNode
         // Dynamic proportional token budget allocation per URL
         const int totalBudget = 40000;
         const int minPerUrl = 500;
-        var desiredTokens = extractions.AsValueEnumerable().Select(e => e.content != null ? TokenHelper.EstimateTokenCount(e.content) : 0).ToList();
+        var desiredTokens = extractions.AsValueEnumerable().Select(e => TokenHelper.EstimateTokenCount(e.extraction.Markdown)).ToArray();
         var allocations = TokenBudget.Allocate(desiredTokens.AsSpan(), totalBudget, minTokensPerItem: minPerUrl);
 
         // Build output with trimmed content
         var resultBuilder = new StringBuilder();
         for (var i = 0; i < extractions.Length; i++)
         {
-            var (url, content, error) = extractions[i];
+            var (url, extraction, error) = extractions[i];
 
             resultBuilder.Append("# Content from ").AppendLine(url).AppendLine();
 
@@ -265,15 +279,46 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
             {
                 resultBuilder.AppendLine("# Failed to extract:").AppendLine(error);
             }
-            else if (content != null)
+            else if (extraction is { Markdown: { } markdown })
             {
+                var confidence = extraction.Selection?.Confidence ?? (extraction.ContentLength > 0 ? 1 : 0);
+                resultBuilder
+                    .Append("Extraction: selected=")
+                    .Append(WebExtractionUtilities.FormatSource(extraction.Source))
+                    .Append(", confidence=")
+                    .Append(confidence.ToString("0.00", CultureInfo.InvariantCulture))
+                    .Append(", length=")
+                    .Append(extraction.ContentLength.ToString(CultureInfo.InvariantCulture))
+                    .AppendLine();
+
+                if (extraction.Selection is { Scores.Count: > 0 } selection)
+                {
+                    resultBuilder.Append("Candidates: ");
+                    for (var j = 0; j < selection.Scores.Count; j++)
+                    {
+                        if (j > 0) resultBuilder.Append(", ");
+
+                        var score = selection.Scores[j];
+                        resultBuilder
+                            .Append(WebExtractionUtilities.FormatSource(score.Source))
+                            .Append('=')
+                            .Append(score.Score.ToString("0.00", CultureInfo.InvariantCulture))
+                            .Append('/')
+                            .Append(score.ContentLength.ToString(CultureInfo.InvariantCulture));
+                    }
+
+                    resultBuilder.AppendLine();
+                }
+
+                resultBuilder.AppendLine();
+
                 if (allocations[i] < desiredTokens[i])
                 {
-                    TokenHelper.OmitTo(content, resultBuilder, allocations[i]);
+                    TokenHelper.OmitTo(markdown, resultBuilder, allocations[i]);
                 }
                 else
                 {
-                    resultBuilder.Append(content);
+                    resultBuilder.Append(markdown);
                 }
             }
 
@@ -282,14 +327,4 @@ public sealed partial class WebPlugin : BuiltInChatPlugin
 
         return resultBuilder.ToString();
     }
-
-    [JsonSerializable(typeof(List<IndexedWebPage>))]
-    private partial class WebPluginJsonSerializerContext : JsonSerializerContext;
-
-    private sealed record IndexedWebPage(
-        [property: JsonPropertyName("index")] int Index,
-        [property: JsonPropertyName("name")] string? Name,
-        [property: JsonPropertyName("url")] string? Url,
-        [property: JsonPropertyName("snippet")] string Snippet
-    );
 }

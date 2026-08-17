@@ -1,7 +1,4 @@
-﻿using Avalonia.Controls;
-using Avalonia.Controls.Metadata;
-using Avalonia.Controls.Primitives;
-using Avalonia.Interactivity;
+﻿using Avalonia.Controls.Primitives;
 using Everywhere.AI;
 using Everywhere.AI.Configurator;
 
@@ -10,38 +7,57 @@ namespace Everywhere.Views;
 /// <summary>
 /// A control selects <see cref="AssistantConfiguratorType"/> for a given <see cref="Assistant"/>
 /// </summary>
-[TemplatePart(ListBoxPartName, typeof(ListBox), IsRequired = true)]
 public class AssistantConfiguratorSelector : TemplatedControl
 {
-    private const string ListBoxPartName = "PART_ListBox";
-
     public record ConfiguratorModel(
         AssistantConfiguratorType Type,
-        IDynamicResourceKey HeaderKey,
-        IDynamicResourceKey DescriptionKey
+        IDynamicLocaleKey HeaderKey,
+        IDynamicLocaleKey DescriptionKey
     );
 
     public sealed record OfficialConfiguratorModel(
         AssistantConfiguratorType Type,
-        IDynamicResourceKey HeaderKey,
-        IDynamicResourceKey DescriptionKey
+        IDynamicLocaleKey HeaderKey,
+        IDynamicLocaleKey DescriptionKey
     ) : ConfiguratorModel(Type, HeaderKey, DescriptionKey);
 
     public IReadOnlyList<ConfiguratorModel> ConfiguratorModels { get; } =
     [
         new OfficialConfiguratorModel(
             AssistantConfiguratorType.Official,
-            new DynamicResourceKey(LocaleKey.AssistantConfiguratorSelector_OfficialConfiguratorModel_Header),
-            new DynamicResourceKey(LocaleKey.AssistantConfiguratorSelector_OfficialConfiguratorModel_Description)),
+            new DynamicLocaleKey(LocaleKey.AssistantConfiguratorSelector_OfficialConfiguratorModel_Header),
+            new DynamicLocaleKey(LocaleKey.AssistantConfiguratorSelector_OfficialConfiguratorModel_Description)),
         new(
             AssistantConfiguratorType.PresetBased,
-            new DynamicResourceKey(LocaleKey.AssistantConfiguratorSelector_PresetBasedConfiguratorModel_Header),
-            new DynamicResourceKey(LocaleKey.AssistantConfiguratorSelector_PresetBasedConfiguratorModel_Description)),
+            new DynamicLocaleKey(LocaleKey.AssistantConfiguratorSelector_PresetBasedConfiguratorModel_Header),
+            new DynamicLocaleKey(LocaleKey.AssistantConfiguratorSelector_PresetBasedConfiguratorModel_Description)),
         new(
             AssistantConfiguratorType.Advanced,
-            new DynamicResourceKey(LocaleKey.AssistantConfiguratorSelector_AdvancedConfiguratorModel_Header),
-            new DynamicResourceKey(LocaleKey.AssistantConfiguratorSelector_AdvancedConfiguratorModel_Description)),
+            new DynamicLocaleKey(LocaleKey.AssistantConfiguratorSelector_AdvancedConfiguratorModel_Header),
+            new DynamicLocaleKey(LocaleKey.AssistantConfiguratorSelector_AdvancedConfiguratorModel_Description)),
     ];
+
+    public static readonly DirectProperty<AssistantConfiguratorSelector, ConfiguratorModel?> SelectedConfiguratorModelProperty =
+        AvaloniaProperty.RegisterDirect<AssistantConfiguratorSelector, ConfiguratorModel?>(
+            nameof(SelectedConfiguratorModel),
+            o => o.SelectedConfiguratorModel,
+            (o, v) => o.SelectedConfiguratorModel = v);
+
+    public ConfiguratorModel? SelectedConfiguratorModel
+    {
+        get;
+        set
+        {
+            if (!SetAndRaise(SelectedConfiguratorModelProperty, ref field, value)) return;
+            if (_isAssistantChanging) return;
+            if (Assistant is not { } assistant) return;
+            if (value is null) return;
+
+            assistant.Configurator.Backup();
+            assistant.ConfiguratorType = value.Type;
+            assistant.Configurator.Apply();
+        }
+    }
 
     public static readonly DirectProperty<AssistantConfiguratorSelector, Assistant?> AssistantProperty =
         AvaloniaProperty.RegisterDirect<AssistantConfiguratorSelector, Assistant?>(
@@ -58,7 +74,9 @@ public class AssistantConfiguratorSelector : TemplatedControl
             try
             {
                 SetAndRaise(AssistantProperty, ref field, value);
-                _listBox?.SelectedValue = value?.ConfiguratorType;
+                SelectedConfiguratorModel = ConfiguratorModels
+                    .AsValueEnumerable()
+                    .FirstOrDefault(m => m.Type == (value?.ConfiguratorType ?? AssistantConfiguratorType.Official));
             }
             finally
             {
@@ -85,32 +103,4 @@ public class AssistantConfiguratorSelector : TemplatedControl
     }
 
     private bool _isAssistantChanging;
-    private ListBox? _listBox;
-    private IDisposable? _listBoxSelectionChangedSubscription;
-
-    protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
-    {
-        base.OnApplyTemplate(e);
-
-        _listBoxSelectionChangedSubscription?.Dispose();
-
-        _listBox = e.NameScope.Find<ListBox>(ListBoxPartName);
-        _listBoxSelectionChangedSubscription = _listBox?.AddDisposableHandler(SelectingItemsControl.SelectionChangedEvent, HandleSelectionChanged);
-    }
-
-    private void HandleSelectionChanged(object? sender, SelectionChangedEventArgs e)
-    {
-        if (Assistant is not { } assistant) return;
-        if (_isAssistantChanging) return;
-
-        if (e.RemovedItems is [ConfiguratorModel oldModel, ..])
-        {
-            assistant.GetConfigurator(oldModel.Type).Backup();
-        }
-
-        if (e.AddedItems is [ConfiguratorModel newModel, ..])
-        {
-            assistant.GetConfigurator(newModel.Type).Apply();
-        }
-    }
 }

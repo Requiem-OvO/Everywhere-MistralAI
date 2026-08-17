@@ -112,7 +112,7 @@
     <data name="WebSearchEngineProvider_EndPoint_Description" xml:space="preserve">
         <value>如果你不确定这是什么，请保持默认值。必须以“http(s)://”开头。</value>
     </data>
-    <data name="ChatInputArea_Watermark" xml:space="preserve">
+    <data name="ChatInputArea_PlaceholderText" xml:space="preserve">
         <value>向 Everywhere 提问，或是随便聊聊</value>
     </data>
     <data name="ChatInputArea_AddAttachmentMenuItem_ToolTip" xml:space="preserve">
@@ -139,8 +139,53 @@
     <data name="ChatInputArea_CancelButton_ToolTip" xml:space="preserve">
         <value>取消</value>
     </data>
+    <data name="ChatInputArea_ContextUsage_Header" xml:space="preserve">
+        <value>上下文使用情况</value>
+    </data>
+    <data name="ChatInputArea_ContextUsage_UsedPercentage" xml:space="preserve">
+        <value>已用 {0}%</value>
+    </data>
+    <data name="ChatInputArea_ContextUsage_Tokens" xml:space="preserve">
+        <value>已用 {0}，共 {1}</value>
+    </data>
+    <data name="ChatInputArea_ContextUsage_ReportedTokens" xml:space="preserve">
+        <value>已报告用量：{0}</value>
+    </data>
+    <data name="ChatInputArea_ContextUsage_CachedTokens" xml:space="preserve">
+        <value>缓存输入：{0}</value>
+    </data>
+    <data name="ChatInputArea_ContextUsage_Unavailable" xml:space="preserve">
+        <value>尚未获得上下文用量</value>
+    </data>
+    <data name="ChatInputArea_ContextUsage_Estimated" xml:space="preserve">
+        <value>切换模型后的估算值</value>
+    </data>
+    <data name="ChatInputArea_ContextUsage_Compacted" xml:space="preserve">
+        <value>上下文已压缩，等待下次测量</value>
+    </data>
+    <data name="ChatInputArea_ContextUsage_CompactButton" xml:space="preserve">
+        <value>压缩上下文</value>
+    </data>
     <data name="ActionChatMessage_Header_AnalyzingContext" xml:space="preserve">
         <value>分析上下文</value>
+    </data>
+    <data name="ContextCompression_Status_Compressing" xml:space="preserve">
+        <value>正在压缩上下文</value>
+    </data>
+    <data name="ContextCompression_Status_Compressed" xml:space="preserve">
+        <value>上下文已压缩</value>
+    </data>
+    <data name="ContextCompression_Status_Failed" xml:space="preserve">
+        <value>上下文压缩失败</value>
+    </data>
+    <data name="ContextCompression_Error_EmptyResponse" xml:space="preserve">
+        <value>模型返回了空的上下文摘要。</value>
+    </data>
+    <data name="ContextCompression_Error_NoHistory" xml:space="preserve">
+        <value>没有可压缩的对话历史。</value>
+    </data>
+    <data name="ContextCompression_Error_ToolCallNotAllowed" xml:space="preserve">
+        <value>模型在压缩上下文时尝试调用工具。</value>
     </data>
     <data name="ActionChatMessage_Header_WebSearching" xml:space="preserve">
         <value>搜索网络</value>
@@ -159,6 +204,24 @@
     </data>
     <data name="ChatWindow_History_ToolTip" xml:space="preserve">
         <value>对话历史 (Ctrl+H)</value>
+    </data>
+    <data name="ChatWindow_History_SearchBox_PlaceholderText" xml:space="preserve">
+        <value>搜索历史记录</value>
+    </data>
+    <data name="ChatWindow_History_IncludeContentToggleButton_ToolTip" xml:space="preserve">
+        <value>包括内容</value>
+    </data>
+    <data name="ChatWindow_TextSearch_PlaceholderText" xml:space="preserve">
+        <value>在当前对话中查找</value>
+    </data>
+    <data name="ChatWindow_TextSearch_Previous_ToolTip" xml:space="preserve">
+        <value>上一个结果 (Shift+Enter)</value>
+    </data>
+    <data name="ChatWindow_TextSearch_Next_ToolTip" xml:space="preserve">
+        <value>下一个结果 (Enter)</value>
+    </data>
+    <data name="ChatWindow_TextSearch_Close_ToolTip" xml:space="preserve">
+        <value>关闭搜索 (Esc)</value>
     </data>
     <data name="ChatWindow_CreateNew_ToolTip" xml:space="preserve">
         <value>创建新对话 (Ctrl+N)</value>
@@ -193,7 +256,7 @@
     <data name="ChatWindowViewModel_QuickActions_Summarize" xml:space="preserve">
         <value>总结</value>
     </data>
-    <data name="KeyboardShortcutInputBox_Watermark" xml:space="preserve">
+    <data name="KeyboardShortcutInputBox_PlaceholderText" xml:space="preserve">
         <value>点击设置快捷键</value>
     </data>
     <data name="KeyboardShortcutInputBox_SettingWatermark" xml:space="preserve">
@@ -630,10 +693,10 @@
         <value>用于 API 调用的模型标识，例如 gpt-4o。</value>
     </data>
     <data name="ChatPluginPage_Title" xml:space="preserve">
-        <value>聊天工具</value>
+        <value>工具</value>
     </data>
     <data name="ChatPluginPage_Description" xml:space="preserve">
-        <value>聊天插件包括内置插件和 MCP 插件，支持工具调用的大语言模型 (LLMs) 会在合适的时机使用这些插件 (如搜索网络、访问本地文件等) 以获得更强大的功能。</value>
+        <value>聊天工具包括内置工具和 MCP 服务器，支持工具调用的大语言模型会在合适的时机使用这些工具 (如搜索网络、访问本地文件等) 以获得更强大的功能。</value>
     </data>
     <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
         <value>网络搜索引擎提供方</value>
@@ -654,13 +717,22 @@
         <value>网页</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
-        <value>提供浏览网页的能力。各家大模型在发布之后的知识往往已固定且在处理时效性问题时容易出现幻觉。此插件允许助手实时浏览网页内容从而提高助手能力。</value>
+        <value>提供浏览网页的能力，允许助手实时浏览网页内容从而提高助手能力。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Header" xml:space="preserve">
         <value>文件系统</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Description" xml:space="preserve">
         <value>提供访问系统文件的能力, 如枚举、创建、删除、重命名、读取或写入文件等。</value>
+    </data>
+    <data name="FileSystemSettings_ApprovalPaths_Header" xml:space="preserve">
+        <value>已批准的路径</value>
+    </data>
+    <data name="FileSystemSettings_ApprovalPaths_Description" xml:space="preserve">
+        <value>匹配这些绝对路径 glob 的文件系统操作无需再次请求路径批准。使用 ** 表示任意深度的目录，例如 C:\** 或 D:\**\3rd。</value>
+    </data>
+    <data name="FileSystemSettings_ApprovalPaths_Pattern_PlaceholderText" xml:space="preserve">
+        <value>绝对 glob 路径，例如 C:\Source\Everywhere\**</value>
     </data>
     <data name="FriendlyExceptionMessage_InvalidOperation" xml:space="preserve">
         <value>无效的操作。</value>
@@ -675,7 +747,7 @@
         <value>设置</value>
     </data>
     <data name="ChatPluginPage_TabItem_Functions_Header" xml:space="preserve">
-        <value>功能</value>
+        <value>工具</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_Header" xml:space="preserve">
         <value>视觉上下文</value>
@@ -756,7 +828,7 @@
     <data name="WelcomeView_AssistantStep_PresetBased_Message4" xml:space="preserve">
         <value>完成选择后，请点击“测试助手可用性“，我会检查配置是否正确。</value>
     </data>
-    <data name="WelcomeView_ApiKeyTextBox_Watermark" xml:space="preserve">
+    <data name="WelcomeView_ApiKeyTextBox_PlaceholderText" xml:space="preserve">
         <value>在此处输入 API 密钥...</value>
     </data>
     <data name="WelcomeView_AssistantStep_PresetBased_Message5" xml:space="preserve">
@@ -803,6 +875,9 @@
     </data>
     <data name="ChatMessageControl_ChatStatisticsTextBlock_TotalTokenCountRun" xml:space="preserve">
         <value>总计</value>
+    </data>
+    <data name="ChatMessageControl_ChatStatisticsTextBlock_CachedInputHitRateRun" xml:space="preserve">
+        <value>缓存命中</value>
     </data>
     <data name="ChatMessageControl_ChatStatisticsTextBlock_ElapsedRun" xml:space="preserve">
         <value>总用时</value>
@@ -957,23 +1032,22 @@
     <data name="CustomAssistantPage_CreateNewCustomAssistantButton_Content" xml:space="preserve">
         <value>创建</value>
     </data>
-    <data name="CustomAssistant_EmptyName_Watermark" xml:space="preserve">
+    <data name="CustomAssistant_EmptyName_PlaceholderText" xml:space="preserve">
         <value>名称</value>
     </data>
     <data name="CustomAssistant_Name_Description" xml:space="preserve">
         <value>指定助手的名称，仅用于显示和区分。</value>
     </data>
-    <data name="CustomAssistant_EmptyDescription_Watermark" xml:space="preserve">
+    <data name="CustomAssistant_EmptyDescription_PlaceholderText" xml:space="preserve">
         <value>描述</value>
     </data>
     <data name="CustomAssistant_Description_Description" xml:space="preserve">
         <value>指定助手的描述，仅用于显示和区分。</value>
     </data>
-    <data name="CustomAssistant_SystemPrompt_Description" xml:space="preserve">
-        <value>系统提示词会在对话的开头发送给模型，每次发送消息时都会保持最新。
-提示词中可以使用占位符，包含在 {} 中，在发送给模型前会被替换成对应的内容。</value>
+    <data name="AssistantPromptSelector_ComboBox_Label" xml:space="preserve">
+        <value>选择系统提示词</value>
     </data>
-    <data name="CustomAssistant_SystemPrompt_Header" xml:space="preserve">
+    <data name="CustomAssistant_PromptSelector_Header" xml:space="preserve">
         <value>系统提示词</value>
     </data>
     <data name="CustomAssistantPage_DeleteCustomAssistantButton_Content" xml:space="preserve">
@@ -1151,50 +1225,113 @@
     <data name="TextDifferenceEditor_AcceptButton_Content" xml:space="preserve">
         <value>接受</value>
     </data>
-    <data name="TextDifferenceEditor_RevertButton_Content" xml:space="preserve">
-        <value>重置</value>
+    <data name="TextDifferenceEditor_RejectButton_Content" xml:space="preserve">
+        <value>拒绝</value>
+    </data>
+    <data name="TextDifferenceEditor_CommentButton_Content" xml:space="preserve">
+        <value>添加批注</value>
+    </data>
+    <data name="TextDifferenceEditor_CommentTextBox_PlaceholderText" xml:space="preserve">
+        <value>在当前行添加批注来引导助手…</value>
+    </data>
+    <data name="TextDifferenceEditor_AcceptAllButton_Content" xml:space="preserve">
+        <value>全部接受</value>
+    </data>
+    <data name="TextDifferenceEditor_RejectAllButton_Content" xml:space="preserve">
+        <value>全部拒绝</value>
+    </data>
+    <data name="TextDifferenceEditor_ConfirmButton_Content" xml:space="preserve">
+        <value>确认</value>
+    </data>
+    <data name="TextDifferenceEditor_ConfirmButton_ToolTip" xml:space="preserve">
+        <value>应用已接受的修改并继续</value>
+    </data>
+    <data name="Common_TextDifference_ChangeSelectionSummary" xml:space="preserve">
+        <value>共 {0} 个修改，接受了 {1} 个</value>
+    </data>
+    <data name="TextDifferenceEditor_WindowTitle" xml:space="preserve">
+        <value>审阅更改</value>
+    </data>
+    <data name="TextDifferenceEditor_OmittedLineButton_Content" xml:space="preserve">
+        <value>{0} 行未修改内容</value>
+    </data>
+    <data name="TextDifferenceEditor_LoadErrorTextBlock_Text" xml:space="preserve">
+        <value>无法加载详细差异预览。</value>
     </data>
     <data name="TextDifferenceSummaryView_AddedLineCountTextRun_Text" xml:space="preserve">
-        <value> 行添加</value>
+        <value>新增 {0} 行</value>
     </data>
     <data name="TextDifferenceSummaryView_RemovedLineCountTextRun_Text" xml:space="preserve">
-        <value> 行删除</value>
+        <value>删除 {0} 行</value>
     </data>
-    <data name="TextDifferenceSummaryView_AcceptAllButton_Content" xml:space="preserve">
-        <value>接受所有</value>
+    <data name="TextDifferenceSummaryView_UpdateHeader" xml:space="preserve">
+        <value>修改 {0}</value>
     </data>
-    <data name="TextDifferenceSummaryView_EditButton_Content" xml:space="preserve">
-        <value>编辑</value>
+    <data name="TextDifferenceSummaryView_CreateHeader" xml:space="preserve">
+        <value>新建 {0}</value>
     </data>
-    <data name="TextDifferenceSummaryView_DiscardAllButton_Content" xml:space="preserve">
-        <value>拒绝所有</value>
+    <data name="TextDifferenceSummaryView_DeleteHeader" xml:space="preserve">
+        <value>删除 {0}</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_DeleteFiles_DeletionConsent_Header" xml:space="preserve">
-        <value>即将删除 {0} 个文件或文件夹</value>
+    <data name="TextDifferenceSummaryView_MoveAndUpdateHeader" xml:space="preserve">
+        <value>移动并修改 {0} → {1}</value>
+    </data>
+    <data name="TextDifferenceSummaryView_MoveHeader" xml:space="preserve">
+        <value>移动 {0} → {1}</value>
+    </data>
+    <data name="TextDifferenceSummaryView_ReviewChangesButton_Content" xml:space="preserve">
+        <value>审阅差异</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_DeletePaths_DeletionConsent_Header" xml:space="preserve">
+        <value>删除明确选择的 {0} 个文件或文件夹？</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_MoveFile_MoveConsent_Header" xml:space="preserve">
         <value>允许移动文件？</value>
     </data>
+    <data name="BuiltInChatPlugin_FileSystem_TransferPath_CopyConsent_Header" xml:space="preserve">
+        <value>将 {0} 复制到 {1}？</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_TransferPath_MoveConsent_Header" xml:space="preserve">
+        <value>将 {0} 移动到 {1}？</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_TransferPath_Consent_From" xml:space="preserve">
+        <value>从</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_TransferPath_CopyTo" xml:space="preserve">
+        <value>复制到</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_TransferPath_MoveTo" xml:space="preserve">
+        <value>移动到</value>
+    </data>
     <data name="BuiltInChatPlugin_FileSystem_CreateDirectory_CreateConsent_Header" xml:space="preserve">
-        <value>允许创建目录？</value>
+        <value>新建文件夹 {0}？</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_WriteToFile_WriteConsent_Header" xml:space="preserve">
-        <value>允许写入文件？</value>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_FileOperationReview_Header" xml:space="preserve">
+        <value>允许执行此文件操作？</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_WriteToFile_CreateConsent_Description" xml:space="preserve">
-        <value>创建此文件。</value>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_CreateFileReview_Header" xml:space="preserve">
+        <value>新建 {0}？</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_WriteToFile_AppendConsent_Description" xml:space="preserve">
-        <value>追加到此文件。</value>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_UpdateFileReview_Header" xml:space="preserve">
+        <value>更新 {0}？</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_WriteToFile_OverwriteConsent_Description" xml:space="preserve">
-        <value>覆盖此文件。</value>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_DeleteFileReview_Header" xml:space="preserve">
+        <value>删除 {0}？</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_DeleteFiles_SystemFile_DeletionConsent_Header" xml:space="preserve">
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_MoveFileReview_Header" xml:space="preserve">
+        <value>将 {0} 移动到 {1}？</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowExactPaths" xml:space="preserve">
+        <value>总是允许上述路径</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowParentDirectories" xml:space="preserve">
+        <value>总是允许 {0}</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowCustomDirectory" xml:space="preserve">
+        <value>总是允许选择的文件夹…</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_DeletePaths_SystemFile_DeletionConsent_Header" xml:space="preserve">
         <value>即将删除系统文件或文件夹</value>
-    </data>
-    <data name="TextDifferenceEditor_DiscardButton_Content" xml:space="preserve">
-        <value>拒绝</value>
     </data>
     <data name="ChatPluginConsentRequest_Common_Header" xml:space="preserve">
         <value>是否允许“{0}”执行？它需要“{1}”权限。</value>
@@ -1221,7 +1358,7 @@
         <value>临时聊天模式</value>
     </data>
     <data name="ChatWindowSettings_TemporaryChatMode_Description" xml:space="preserve">
-        <value>新建聊天时是否使用临时聊天。</value>
+        <value>创建聊天时是否使用临时聊天。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_SearchFiles_Header" xml:space="preserve">
         <value>查找文件</value>
@@ -1238,17 +1375,17 @@
     <data name="BuiltInChatPlugin_FileSystem_MoveFile_Header" xml:space="preserve">
         <value>移动或重命名文件</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_DeleteFiles_Header" xml:space="preserve">
-        <value>删除一个或多个文件</value>
+    <data name="BuiltInChatPlugin_FileSystem_TransferPath_Header" xml:space="preserve">
+        <value>复制或移动路径</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_DeletePaths_Header" xml:space="preserve">
+        <value>删除路径</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_CreateDirectory_Header" xml:space="preserve">
         <value>创建文件夹</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_WriteToFile_Header" xml:space="preserve">
-        <value>写到文件</value>
-    </data>
-    <data name="BuiltInChatPlugin_FileSystem_ReplaceFileContent_Header" xml:space="preserve">
-        <value>修改文件内容</value>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Header" xml:space="preserve">
+        <value>应用 Patch</value>
     </data>
     <data name="BuiltInChatPlugin_Web_WebSearch_Searching" xml:space="preserve">
         <value>🔎 {0}</value>
@@ -1334,41 +1471,41 @@
     <data name="BuiltInChatPlugin_FileSystem_MoveFile_Description" xml:space="preserve">
         <value>移动或重命名文件或文件夹。</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_DeleteFiles_Description" xml:space="preserve">
-        <value>删除指定路径的文件或文件夹。</value>
+    <data name="BuiltInChatPlugin_FileSystem_TransferPath_Description" xml:space="preserve">
+        <value>复制或移动文件或文件夹，但不修改其内容。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_DeletePaths_Description" xml:space="preserve">
+        <value>删除明确列出的文件或文件夹。非空文件夹需要 recursive=true。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_CreateDirectory_Description" xml:space="preserve">
         <value>在指定路径下创建文件夹。</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_WriteToFile_Description" xml:space="preserve">
-        <value>将内容写入指定路径下的文本文件。</value>
-    </data>
-    <data name="BuiltInChatPlugin_FileSystem_ReplaceFileContent_Description" xml:space="preserve">
-        <value>替换指定文本文件中的内容。</value>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Description" xml:space="preserve">
+        <value>使用 Codex 风格 patch 新增、更新、删除或移动本地文本文件。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage" xml:space="preserve">
-        <value>文件大小超过 10 MB，无法读取。</value>
+        <value>文件大小超过 {0} MB，无法读取。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_MoveFile_CreateDirectory_ErrorMessage" xml:space="preserve">
         <value>无法创建文件夹。</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_DeleteFiles_RootDirectory_Deletion_ErrorMessage" xml:space="preserve">
+    <data name="BuiltInChatPlugin_FileSystem_DeletePaths_RootDirectory_Deletion_ErrorMessage" xml:space="preserve">
         <value>无法删除根目录。</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_DeleteFiles_SystemFile_Deletion_ErrorMessage" xml:space="preserve">
+    <data name="BuiltInChatPlugin_FileSystem_DeletePaths_WorkingDirectory_Deletion_ErrorMessage" xml:space="preserve">
+        <value>无法删除聊天工作目录。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_DeletePaths_SystemFile_Deletion_ErrorMessage" xml:space="preserve">
         <value>无法删除系统文件或文件夹。</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_WriteToFile_BinaryFile_Write_ErrorMessage" xml:space="preserve">
-        <value>无法写入二进制文件。</value>
+    <data name="BuiltInChatPlugin_FileSystem_DeletePaths_NonEmptyDirectory_ErrorMessage" xml:space="preserve">
+        <value>文件夹不为空。请设置 recursive=true 以删除其中的内容。</value>
     </data>
     <data name="HandledFunctionInvokingException_ArgumentError" xml:space="preserve">
         <value>模型为参数“{0}”提供了无效值，这可能是由模型幻觉导致的。</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_ReplaceFileContent_FileTooLarge_ErrorMessage" xml:space="preserve">
-        <value>文件大小超过 10 MB，无法替换内容。</value>
-    </data>
-    <data name="BuiltInChatPlugin_FileSystem_ReplaceFileContent_BinaryFile_ErrorMessage" xml:space="preserve">
-        <value>无法替换二进制文件内容。</value>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_ErrorMessage" xml:space="preserve">
+        <value>无法应用 patch。请检查 patch 后重试。</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_EnsureDirectoryInfo_PathIsFile_ErrorMessage" xml:space="preserve">
         <value>指定的路径是文件，而非文件夹。</value>
@@ -1398,19 +1535,19 @@
         <value>提取网页的主要内容。这会在后台通过 Puppeteer 运行一个隐藏的网络浏览器，并通过此浏览器访问网页。出于兼容性考虑，首次打开可能会自动下载网络浏览器，视网络情况可能需要较长的时间。</value>
     </data>
     <data name="BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage" xml:space="preserve">
-        <value>未选择网页搜索引擎，请在插件设置中的网络浏览器配置搜索引擎。</value>
+        <value>未选择网页搜索引擎，请在工具设置中的网络浏览器配置搜索引擎。</value>
     </data>
     <data name="BuiltInChatPlugin_Web_InvalidWebSearchEngineEndpoint_ErrorMessage" xml:space="preserve">
         <value>提供的端点地址无效，请检查是否为完整的 URI</value>
     </data>
     <data name="BuiltInChatPlugin_Web_GoogleSearchEngineIdNotSet_ErrorMessage" xml:space="preserve">
-        <value>未设置谷歌搜索引擎 ID，请在插件设置中配置。</value>
+        <value>未设置谷歌搜索引擎 ID，请在工具设置中配置。</value>
     </data>
     <data name="BuiltInChatPlugin_Web_UnsupportedWebSearchEngineProvider_ErrorMessage" xml:space="preserve">
-        <value>不支持的搜索引擎提供商，请在插件设置中更换。</value>
+        <value>不支持的搜索引擎提供商，请在工具设置中更换。</value>
     </data>
     <data name="BuiltInChatPlugin_Web_WebSearchEngineApiKeyNotSet_ErrorMessage" xml:space="preserve">
-        <value>未设置 API 密钥，请在插件设置中配置。</value>
+        <value>未设置 API 密钥，请在工具设置中配置。</value>
     </data>
     <data name="BuiltInChatPlugin_Web_PuppeteerBrowserDownloadConnectionError_ErrorMessage" xml:space="preserve">
         <value>无法连接到 Puppeteer 浏览器下载地址。</value>
@@ -1454,6 +1591,12 @@
     </data>
     <data name="Assistant_RequestTimeoutSeconds_Header" xml:space="preserve">
         <value>请求超时时长</value>
+    </data>
+    <data name="Assistant_ContextCompressionThreshold_Description" xml:space="preserve">
+        <value>当已报告的上下文用量达到模型声明上下文长度的此百分比时，自动压缩对话上下文。</value>
+    </data>
+    <data name="Assistant_ContextCompressionThreshold_Header" xml:space="preserve">
+        <value>上下文压缩阈值</value>
     </data>
     <data name="DynamicWebProxy_ApplyProxySettings_EndpointRequired_ErrorMessage" xml:space="preserve">
         <value>代理服务器地址缺失。</value>
@@ -1525,7 +1668,10 @@
         <value>不能和已存在的重复。</value>
     </data>
     <data name="ChatPluginConsentRequest_MCP_Header" xml:space="preserve">
-        <value>“{0}”是一个 MCP 工具，Everywhere 无法确认其所需权限，请确保它来自受信来源，且 Everywhere 不对其后果负责。</value>
+        <value>“{0}”是一个 MCP 工具，请确保它来自受信来源，Everywhere 无法确认其所需权限，也不对其后果负责。</value>
+    </data>
+    <data name="ChatPluginConsentRequest_MCP_BypassServerApproval_Header" xml:space="preserve">
+        <value>总是允许来自“{0}”的所有工具</value>
     </data>
     <data name="ValidationErrorMessage_DuplicateKey" xml:space="preserve">
         <value>不得包含重复项。</value>
@@ -1578,20 +1724,20 @@
     <data name="McpTransportConfigurationForm_HeadersDataList_Label" xml:space="preserve">
         <value>请求头</value>
     </data>
-    <data name="McpTransportConfigurationForm_KeyTextBox_Watermark" xml:space="preserve">
+    <data name="McpTransportConfigurationForm_KeyTextBox_PlaceholderText" xml:space="preserve">
         <value>* 键</value>
     </data>
-    <data name="McpTransportConfigurationForm_ValueTextBox_Watermark" xml:space="preserve">
+    <data name="McpTransportConfigurationForm_ValueTextBox_PlaceholderText" xml:space="preserve">
         <value>* 值</value>
     </data>
-    <data name="McpTransportConfigurationForm_OptionalValueTextBox_Watermark" xml:space="preserve">
+    <data name="McpTransportConfigurationForm_OptionalValueTextBox_PlaceholderText" xml:space="preserve">
         <value>值</value>
     </data>
     <data name="ChatPluginPageViewModel_EditMcpPlugin_DialogTitle" xml:space="preserve">
-        <value>编辑 MCP 插件 (带 * 的为必填项)</value>
+        <value>编辑 MCP 服务器 (带 * 的为必填项)</value>
     </data>
     <data name="ChatPluginPageViewModel_AddMcpPlugin_DialogTitle" xml:space="preserve">
-        <value>添加 MCP 插件 (带 * 的为必填项)</value>
+        <value>添加 MCP 服务器 (带 * 的为必填项)</value>
     </data>
     <data name="ChatPluginPageViewModel_RemoveMcpPlugin_ConfirmationMessage" xml:space="preserve">
         <value>你确定要移除 "{0}" 吗？</value>
@@ -1609,7 +1755,7 @@
         <value>MCP 配置不正确。</value>
     </data>
     <data name="ChatPluginManager_Common_FailedToStartMcpPlugin" xml:space="preserve">
-        <value>无法启动 MCP 插件 "{0}"</value>
+        <value>无法启动 MCP "{0}"</value>
     </data>
     <data name="ChatPluginManager_McpPluginMissingRuntime_Warning" xml:space="preserve">
         <value>这个 MCP 服务器需要 {0}，但 Everywhere 没有找到它。</value>
@@ -1648,7 +1794,7 @@
         <value>正在启动 MCP</value>
     </data>
     <data name="ChatContext_BusyMessage_CallingTools" xml:space="preserve">
-        <value>正在生成工具调用</value>
+        <value>准备工具调用</value>
     </data>
     <data name="ChatWindowViewModel_ExportMarkdown_FailedToLoadChatContext" xml:space="preserve">
         <value>加载聊天内容失败。</value>
@@ -1773,8 +1919,8 @@
     <data name="AskQuestionCard_PreviousButton_Content" xml:space="preserve">
         <value>上一个</value>
     </data>
-    <data name="AskQuestionCard_FreeformTextBox_Watermark" xml:space="preserve">
-        <value>输入你的回答…</value>
+    <data name="AskQuestionCard_FreeformTextBox_PlaceholderText" xml:space="preserve">
+        <value>输入你的回答...</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_SearchFiles_OperationStarted_Message" xml:space="preserve">
         <value>📂 {0}</value>
@@ -1787,6 +1933,12 @@
     </data>
     <data name="ApiKeyComboBox_ManageApiKey" xml:space="preserve">
         <value>管理 API 密钥</value>
+    </data>
+    <data name="AssistantPromptSelector_NewPrompt" xml:space="preserve">
+        <value>创建提示词</value>
+    </data>
+    <data name="AssistantPromptSelector_ManagePrompts" xml:space="preserve">
+        <value>管理提示词</value>
     </data>
     <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
         <value>你确定要删除 {0} 个 API 密钥吗？此操作无法撤销！</value>
@@ -1864,7 +2016,7 @@
         <value>(空)</value>
     </data>
     <data name="ChatWindowSettings_AlwaysStartNewChat_Header" xml:space="preserve">
-        <value>始终开启新对话</value>
+        <value>总是开启新对话</value>
     </data>
     <data name="ChatWindowSettings_AlwaysStartNewChat_Description" xml:space="preserve">
         <value>使用快捷键唤起应用时，将自动忽略上次对话并开启全新会话。</value>
@@ -1873,7 +2025,7 @@
         <value>从 JSON 导入</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_DialogTitle" xml:space="preserve">
-        <value>导入 MCP 插件</value>
+        <value>导入 MCP 服务器</value>
     </data>
     <data name="McpImportForm_Description" xml:space="preserve">
         <value>请将 MCP 配置的 JSON 内容粘贴至下方，或直接从本地文件导入。</value>
@@ -1882,10 +2034,10 @@
         <value>打开</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_SuccessToast_Title" xml:space="preserve">
-        <value>导入了 {0} 个 MCP 插件</value>
+        <value>导入了 {0} 个 MCP 服务器</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_FailedToast_Title" xml:space="preserve">
-        <value>导入 MCP 插件失败</value>
+        <value>导入 MCP 服务器失败</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_NotFoundToast_Title" xml:space="preserve">
         <value>未找到有效的 MCP 配置</value>
@@ -1894,7 +2046,7 @@
         <value>MCP 服务器</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_PartialSuccessToast_Title" xml:space="preserve">
-        <value>成功导入了 {0} 个 MCP 插件，但有 {1} 个失败</value>
+        <value>成功导入了 {0} 个 MCP 服务器，但有 {1} 个失败</value>
     </data>
     <data name="MainTrayIcon_Menu_OpenChatWindow" xml:space="preserve">
         <value>打开聊天窗口</value>
@@ -2014,8 +2166,14 @@
     <data name="ChatPluginPage_FunctionsTabItem_EnabledDataGridTemplateColumn_Header" xml:space="preserve">
         <value>启用</value>
     </data>
-    <data name="ChatPluginPage_FunctionsTabItem_AutoApproveDataGridTemplateColumn_Header" xml:space="preserve">
-        <value>自动批准</value>
+    <data name="ChatPluginPage_FunctionsTabItem_BypassApprovalDataGridTemplateColumn_Header" xml:space="preserve">
+        <value>绕过审批</value>
+    </data>
+    <data name="ChatPluginPage_McpBypassApproval_Header" xml:space="preserve">
+        <value>所有工具均绕过审批</value>
+    </data>
+    <data name="ChatPluginPage_McpBypassApproval_Description" xml:space="preserve">
+        <value>如果你信任此 MCP 服务器，开启选项后，下列所有工具在执行时不再请求审批。</value>
     </data>
     <data name="PreviewEndpointTextBox_Hint" xml:space="preserve">
         <value>预览: {0}</value>
@@ -2441,7 +2599,7 @@
     <data name="ChatContext_TemporaryToggleButton_ToolTip" xml:space="preserve">
         <value>临时聊天：开启后当前聊天不会被保存，切换或新建对话时即删除。</value>
     </data>
-    <data name="ChatInputArea_Watermark_StrategyArgumentHint" xml:space="preserve">
+    <data name="ChatInputArea_PlaceholderText_StrategyArgumentHint" xml:space="preserve">
         <value>(可选) {0}</value>
     </data>
     <data name="ChangeLogView_UpdateButton_Content" xml:space="preserve">
@@ -2489,7 +2647,7 @@
     <data name="Common_Submit" xml:space="preserve">
         <value>提交</value>
     </data>
-    <data name="ConsentDecisionCard_ReasonTextBox_Watermark" xml:space="preserve">
+    <data name="ConsentDecisionCard_ReasonTextBox_PlaceholderText" xml:space="preserve">
         <value>输入拒绝原因</value>
     </data>
     <data name="HandledChatException_TemperatureNotSupport" xml:space="preserve">
@@ -2507,7 +2665,7 @@
     <data name="ChatPluginPage_EmptyContent_SelectInstruction" xml:space="preserve">
         <value>在左侧选择一个项目查看详情</value>
     </data>
-    <data name="IconEditor_SearchBox_Watermark" xml:space="preserve">
+    <data name="IconEditor_SearchBox_PlaceholderText" xml:space="preserve">
         <value>搜索...</value>
     </data>
     <data name="UserProfilePresenter_ErrorTextBlock_Text" xml:space="preserve">
@@ -2551,6 +2709,12 @@
     </data>
     <data name="BuiltInChatPlugin_Essential_ManageTodoList_Reset" xml:space="preserve">
         <value>设置了 {0} 条待办事项</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ManageTodoList_Update" xml:space="preserve">
+        <value>更新了 {0} 条待办事项</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ManageTodoList_Clear" xml:space="preserve">
+        <value>清空了待办列表</value>
     </data>
     <data name="BuiltInChatPlugin_ListWindows_WindowCount" xml:space="preserve">
         <value>找到 {0} 个窗口</value>
@@ -2690,17 +2854,20 @@
     <data name="Greetings_Tip6" xml:space="preserve">
         <value>💡欢迎在关于页面加入官方社群与我们交流互动~</value>
     </data>
-    <data name="TerminalPluginSettings_AutoApprove_WarningToast_Content" xml:space="preserve">
-        <value>终端工具的自动批准已开启，助手的不当调用可能会造成严重的系统崩溃或者不可恢复的文件丢失，请自行承担风险。</value>
+    <data name="TerminalPluginSettings_BypassesApproval_WarningToast_Content" xml:space="preserve">
+        <value>所有终端调用都会绕过审批，助手的不当调用可能会造成严重的系统崩溃或者不可恢复的文件丢失，请自行承担风险。</value>
     </data>
-    <data name="TerminalPluginSettings_AutoApprove_Header" xml:space="preserve">
-        <value>自动批准</value>
+    <data name="TerminalPluginSettings_BypassApproval_Header" xml:space="preserve">
+        <value>绕过审批</value>
     </data>
-    <data name="TerminalPluginSettings_AutoApprove_Description" xml:space="preserve">
-        <value>开启后，所有终端操作将自动放行，无需手动批准。助手的不当调用可能会造成严重的系统崩溃或者不可恢复的文件丢失。开启此选项意味着你已评估并愿意自行承担风险。</value>
+    <data name="TerminalPluginSettings_BypassApproval_Description" xml:space="preserve">
+        <value>开启后，所有终端操作将自动放行，无需手动审批。助手的不当调用可能会造成严重的系统崩溃或者不可恢复的文件丢失。开启此选项意味着你已评估并愿意自行承担风险。</value>
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
         <value>在终端中执行</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Preview" xml:space="preserve">
+        <value>正在运行 {0}</value>
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
         <value>脚本执行失败: {0}</value>
@@ -2774,8 +2941,8 @@
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>命令于 {0} 开始执行，{1} 秒后失败，退出代码为 {2}</value>
     </data>
-    <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Description" xml:space="preserve">
-        <value>使用 Everything 搜索文件。</value>
+    <data name="Assistant_ConfiguratorSelector_Advanced" xml:space="preserve">
+        <value>高级</value>
     </data>
     <data name="Common_Advanced" xml:space="preserve">
         <value>高级</value>
@@ -2796,28 +2963,28 @@
         <value>打开文档</value>
     </data>
     <data name="Assistant_OpenAIOptions_Header" xml:space="preserve">
-        <value>OpenAI 兼容选项</value>
+        <value>OpenAI Chat Completions 设置</value>
     </data>
     <data name="Assistant_OpenAIOptions_Description" xml:space="preserve">
-        <value>配置 OpenAI 兼容提供商的 Chat Completions 参数。</value>
+        <value>配置 OpenAI Chat Completions API 的参数。</value>
     </data>
     <data name="Assistant_OpenAIResponsesOptions_Header" xml:space="preserve">
-        <value>OpenAI Responses 选项</value>
+        <value>OpenAI Responses 设置</value>
     </data>
     <data name="Assistant_OpenAIResponsesOptions_Description" xml:space="preserve">
-        <value>配置 Responses API 的推理参数。</value>
+        <value>配置 OpenAI Responses API 的参数。</value>
     </data>
     <data name="Assistant_AnthropicOptions_Header" xml:space="preserve">
-        <value>Anthropic 选项</value>
+        <value>Anthropic Messages 设置</value>
     </data>
     <data name="Assistant_AnthropicOptions_Description" xml:space="preserve">
-        <value>配置 Anthropic Messages API 的思考与缓存行为。</value>
+        <value>配置 Anthropic Messages API 的参数。</value>
     </data>
     <data name="Assistant_GoogleOptions_Header" xml:space="preserve">
-        <value>Google Gemini 选项</value>
+        <value>Google Gemini 设置</value>
     </data>
     <data name="Assistant_GoogleOptions_Description" xml:space="preserve">
-        <value>配置 Gemini 思考参数。</value>
+        <value>配置 Google Gemini API 的参数。</value>
     </data>
     <data name="OpenAIOptions_IncludeReasoningContent_Header" xml:space="preserve">
         <value>保留 reasoning_content</value>
@@ -2949,34 +3116,34 @@
         <value>对于后续的每个令牌，仅从排名前 K 的选项中进行采样。</value>
     </data>
     <data name="SkillPage_Title" xml:space="preserve">
-        <value>Skills</value>
+        <value>技能</value>
     </data>
     <data name="SkillPage_Description" xml:space="preserve">
-        <value>管理和配置 Everywhere 可以使用的 Skills。</value>
+        <value>管理和配置 Everywhere 可以使用的技能。</value>
     </data>
     <data name="SkillPage_RescanButton_ToolTip" xml:space="preserve">
-        <value>重新扫描 Skills</value>
+        <value>重新扫描技能</value>
     </data>
     <data name="SkillPage_SourceFilter_All" xml:space="preserve">
         <value>全部来源</value>
     </data>
-    <data name="SkillPage_SearchBox_Watermark" xml:space="preserve">
-        <value>搜索 Skills...</value>
+    <data name="SkillPage_SearchBox_PlaceholderText" xml:space="preserve">
+        <value>搜索技能...</value>
     </data>
     <data name="SkillPage_ClearSearchButton_ToolTip" xml:space="preserve">
         <value>清空搜索</value>
     </data>
     <data name="SkillPage_CountText" xml:space="preserve">
-        <value>共 {0} 个 Skill</value>
+        <value>共 {0} 个技能</value>
     </data>
     <data name="SkillPage_EnableSwitch_ToolTip" xml:space="preserve">
         <value>启用或禁用此 Skill。这只会影响 Everywhere 自身的行为。</value>
     </data>
     <data name="SkillPage_NoMatchingSkills" xml:space="preserve">
-        <value>没有匹配的 Skills</value>
+        <value>没有匹配的技能</value>
     </data>
     <data name="SkillPage_NoSkillsFound" xml:space="preserve">
-        <value>没有找到 Skills</value>
+        <value>没有找到技能</value>
     </data>
     <data name="SkillPage_OpenButton_Content" xml:space="preserve">
         <value>打开</value>
@@ -2988,7 +3155,7 @@
         <value>打开来源文件夹</value>
     </data>
     <data name="SkillPage_SourceGroupNoSkills" xml:space="preserve">
-        <value>此来源中没有 Skills。打开文件夹即可添加。</value>
+        <value>此来源中没有技能。打开文件夹即可添加。</value>
     </data>
     <data name="SkillPage_Status_Enabled" xml:space="preserve">
         <value>已启用</value>
@@ -3051,10 +3218,10 @@
         <value>版本</value>
     </data>
     <data name="SkillPage_RescanSuccessToast_Title" xml:space="preserve">
-        <value>Skills 已重新扫描。</value>
+        <value>技能已重新扫描。</value>
     </data>
     <data name="SkillPage_RescanFailedToast_Title" xml:space="preserve">
-        <value>无法重新扫描 Skills。</value>
+        <value>无法重新扫描技能。</value>
     </data>
     <data name="SkillPage_OpenFileLocationFailedToast_Title" xml:space="preserve">
         <value>无法打开文件位置。</value>
@@ -3174,7 +3341,7 @@
         <value>内置工具</value>
     </data>
     <data name="HomePage_Skills" xml:space="preserve">
-        <value>Skills</value>
+        <value>技能</value>
     </data>
     <data name="HomePage_QuickConfiguration" xml:space="preserve">
         <value>快速配置</value>
@@ -3191,13 +3358,13 @@
     <data name="HomePage_OutputTokensToolTip" xml:space="preserve">
         <value>输出 Token: {0}</value>
     </data>
-    <data name="HomePage_HeatmapWeekdayMondayShort" xml:space="preserve">
+    <data name="StatisticsHeatmap_MondayShort" xml:space="preserve">
         <value>周一</value>
     </data>
-    <data name="HomePage_HeatmapWeekdayWednesdayShort" xml:space="preserve">
+    <data name="StatisticsHeatmap_WednesdayShort" xml:space="preserve">
         <value>周三</value>
     </data>
-    <data name="HomePage_HeatmapWeekdayFridayShort" xml:space="preserve">
+    <data name="StatisticsHeatmap_FridayShort" xml:space="preserve">
         <value>周五</value>
     </data>
     <data name="HomePage_HeatmapDayToolTip" xml:space="preserve">
@@ -3220,5 +3387,528 @@
     </data>
     <data name="HomeNotification_StatisticsBackfilled" xml:space="preserve">
         <value>首次统计数据来自历史聊天数据分析，可能存在误差。</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_WriteObservedPathFailed" xml:space="preserve">
+        <value>写入设置路径“{0}”失败。</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_UnsupportedPropertyKind" xml:space="preserve">
+        <value>设置属性“{1}”的类型“{0}”暂不支持。</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_SerializedSubtreeNotWritable" xml:space="preserve">
+        <value>序列化子树“{0}”无法替换，因为该属性不可写。</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ExpectedJsonArrayForList" xml:space="preserve">
+        <value>设置列表“{0}”需要 JSON 数组。</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ListNotMutable" xml:space="preserve">
+        <value>设置列表“{0}”不可变，无法替换。</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ExpectedJsonObjectForDictionary" xml:space="preserve">
+        <value>设置字典“{0}”需要 JSON 对象。</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_DictionaryNotMutable" xml:space="preserve">
+        <value>设置字典“{0}”不可变，无法替换。</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ExpectedJsonObjectForObject" xml:space="preserve">
+        <value>设置对象“{0}”需要 JSON 对象。</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ObjectCannotBeCreated" xml:space="preserve">
+        <value>设置对象“{0}”为空，且无法创建。</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_UnknownMember" xml:space="preserve">
+        <value>未知设置成员“{0}”。</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_NullForNonNullable" xml:space="preserve">
+        <value>无法把 null 分配给不可为空的设置值“{0}”。</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_PropertyCannotBeSetToNull" xml:space="preserve">
+        <value>设置值“{0}”允许为 null，但其属性不可写，无法清空。</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ReadValueFailed" xml:space="preserve">
+        <value>无法将设置值“{0}”读取为“{1}”。</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_DictionaryKeyFailed" xml:space="preserve">
+        <value>无法将设置字典键“{0}”读取为“{1}”。</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ParseFailure" xml:space="preserve">
+        <value>解析设置文档“{0}”失败，已创建新的内存文档。</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_WriteFileFailed" xml:space="preserve">
+        <value>写入设置 JSON 到“{0}”失败（第 {1} 次尝试，内容长度 {2} 字节）。</value>
+    </data>
+    <data name="PromptPage_Title" xml:space="preserve">
+        <value>提示词</value>
+    </data>
+    <data name="PromptPage_SearchBox_PlaceholderText" xml:space="preserve">
+        <value>搜索提示词</value>
+    </data>
+    <data name="PromptPage_CountText" xml:space="preserve">
+        <value>{0} 个提示词</value>
+    </data>
+    <data name="PromptPage_DefaultPrompt_DisplayName" xml:space="preserve">
+        <value>默认提示词</value>
+    </data>
+    <data name="PromptPage_UntitledPrompt_DisplayName" xml:space="preserve">
+        <value>未命名提示词</value>
+    </data>
+    <data name="PromptPage_Source_BuiltInDefault" xml:space="preserve">
+        <value>内置默认</value>
+    </data>
+    <data name="PromptPage_BuiltInBadge_Content" xml:space="preserve">
+        <value>内置</value>
+    </data>
+    <data name="PromptPage_CopyRenderedButton_ToolTip" xml:space="preserve">
+        <value>复制预览内容</value>
+    </data>
+    <data name="PromptPage_NewPromptButton_Content" xml:space="preserve">
+        <value>创建</value>
+    </data>
+    <data name="PromptPage_NewPromptButton_ToolTip" xml:space="preserve">
+        <value>创建提示词</value>
+    </data>
+    <data name="PromptPage_EditPromptButton_Content" xml:space="preserve">
+        <value>编辑</value>
+    </data>
+    <data name="PromptPage_EditPromptButton_ToolTip" xml:space="preserve">
+        <value>编辑提示词</value>
+    </data>
+    <data name="PromptPage_DeletePromptButton_ToolTip" xml:space="preserve">
+        <value>删除提示词</value>
+    </data>
+    <data name="PromptPage_DeletePrompt_Dialog_Message" xml:space="preserve">
+        <value>确定要永久删除此提示词吗？
+“{0}”将会被移除。</value>
+    </data>
+    <data name="PromptPage_DeletePromptUsedByAssistant_Dialog_Message" xml:space="preserve">
+        <value>已有 1 个助手正在使用此提示词。
+删除后，该助手会改用默认提示词，直到重新选择提示词。
+
+仍要永久删除“{0}”吗？</value>
+    </data>
+    <data name="PromptPage_DeletePromptUsedByAssistants_Dialog_Message" xml:space="preserve">
+        <value>已有 {0} 个助手正在使用此提示词。
+删除后，这些助手会改用默认提示词，直到重新选择提示词。
+
+仍要永久删除“{1}”吗？</value>
+    </data>
+    <data name="PromptPage_NoMatchingPrompts" xml:space="preserve">
+        <value>没有匹配的提示词</value>
+    </data>
+    <data name="PromptPage_Tab_Preview" xml:space="preserve">
+        <value>预览</value>
+    </data>
+    <data name="PromptPage_Tab_Raw" xml:space="preserve">
+        <value>原始</value>
+    </data>
+    <data name="PromptPage_AssistantsUsingPromptTitle" xml:space="preserve">
+        <value>使用此提示词的助手（{0}）</value>
+    </data>
+    <data name="PromptPage_NoAssistantsUsingPrompt" xml:space="preserve">
+        <value>没有助手使用此提示词</value>
+    </data>
+    <data name="PromptPage_EmptyContent_SelectInstruction" xml:space="preserve">
+        <value>选择一个提示词以查看预览</value>
+    </data>
+    <data name="PromptPage_CopyFailedToast_Title" xml:space="preserve">
+        <value>复制失败</value>
+    </data>
+    <data name="PromptPage_NavigationWarning_Title" xml:space="preserve">
+        <value>无法打开提示词</value>
+    </data>
+    <data name="PromptPage_InvalidRoutePrompt_Content" xml:space="preserve">
+        <value>提示词链接无效：{0}</value>
+    </data>
+    <data name="PromptPage_MissingRoutePrompt_Content" xml:space="preserve">
+        <value>找不到提示词：{0}</value>
+    </data>
+    <data name="PromptPage_UnnamedAssistant" xml:space="preserve">
+        <value>未命名助手</value>
+    </data>
+    <data name="PromptPage_NoModelSelected" xml:space="preserve">
+        <value>未选择模型</value>
+    </data>
+    <data name="PromptEditor_CreateTitle" xml:space="preserve">
+        <value>创建提示词</value>
+    </data>
+    <data name="PromptEditor_EditTitle" xml:space="preserve">
+        <value>编辑提示词</value>
+    </data>
+    <data name="PromptEditor_SaveButton_Content" xml:space="preserve">
+        <value>保存</value>
+    </data>
+    <data name="PromptEditor_NameLabel" xml:space="preserve">
+        <value>名称（仅用于区分）</value>
+    </data>
+    <data name="PromptEditor_NamePlaceholder" xml:space="preserve">
+        <value>可选</value>
+    </data>
+    <data name="PromptEditor_TemplateLabel" xml:space="preserve">
+        <value>提示词内容</value>
+    </data>
+    <data name="PromptEditor_PlaceholderReferencesTitle" xml:space="preserve">
+        <value>可用占位符</value>
+    </data>
+    <data name="PromptEditor_PreviewLabel" xml:space="preserve">
+        <value>预览</value>
+    </data>
+    <data name="PromptEditor_OpenFailedToast_Title" xml:space="preserve">
+        <value>无法编辑提示词</value>
+    </data>
+    <data name="PromptEditor_OpenFailedToast_Content" xml:space="preserve">
+        <value>该提示词不存在或不可编辑。</value>
+    </data>
+    <data name="PromptEditor_SaveFailedToast_Title" xml:space="preserve">
+        <value>保存提示词失败</value>
+    </data>
+    <data name="PromptEditor_Placeholder_DefaultSystemPrompt_Description" xml:space="preserve">
+        <value>Everywhere 默认系统说明</value>
+    </data>
+    <data name="PromptEditor_Placeholder_SkillsPrompt_Description" xml:space="preserve">
+        <value>已启用技能的指导</value>
+    </data>
+    <data name="PromptEditor_Placeholder_Date_Description" xml:space="preserve">
+        <value>当前日期</value>
+    </data>
+    <data name="PromptEditor_Placeholder_Time_Description" xml:space="preserve">
+        <value>当前时间</value>
+    </data>
+    <data name="PromptEditor_Placeholder_OS_Description" xml:space="preserve">
+        <value>操作系统</value>
+    </data>
+    <data name="PromptEditor_Placeholder_SystemLanguage_Description" xml:space="preserve">
+        <value>系统语言</value>
+    </data>
+    <data name="PromptEditor_Placeholder_WorkingDirectory_Description" xml:space="preserve">
+        <value>工作目录</value>
+    </data>
+    <data name="PromptDiagnostic_EmptyTemplate" xml:space="preserve">
+        <value>提示词内容不能为空。</value>
+    </data>
+    <data name="PromptDiagnostic_UnknownPlaceholder" xml:space="preserve">
+        <value>未知占位符：{0}。</value>
+    </data>
+    <data name="PromptDiagnostic_MissingSkillsPrompt" xml:space="preserve">
+        <value>此提示词既没有包含 {DefaultSystemPrompt}，也没有包含 {SkillsPrompt}，因此助手可能无法正确使用技能。</value>
+    </data>
+    <data name="PromptDiagnostic_MissingDate" xml:space="preserve">
+        <value>缺少 {Date}，提示词可能缺少时效性上下文。</value>
+    </data>
+    <data name="PromptDiagnostic_TimeMayReduceCacheHitRate" xml:space="preserve">
+        <value>{Time} 精确到秒，可能会降低缓存命中率，提高使用成本。如非必要，请使用 {Date}。</value>
+    </data>
+    <data name="PromptDiagnostic_UnresolvedReference" xml:space="preserve">
+        <value>找不到提示词：{0}。将改用默认提示词。</value>
+    </data>
+    <data name="PromptSource_Blank" xml:space="preserve">
+        <value>手动创建</value>
+    </data>
+    <data name="PromptSource_Guided" xml:space="preserve">
+        <value>引导创建</value>
+    </data>
+    <data name="PromptSource_Copy" xml:space="preserve">
+        <value>复制创建</value>
+    </data>
+    <data name="PromptSource_Migration" xml:space="preserve">
+        <value>从旧设置迁移</value>
+    </data>
+    <data name="PromptSource_Import" xml:space="preserve">
+        <value>导入创建</value>
+    </data>
+    <data name="PromptEditor_CopyToClipboardButton_ToolTip" xml:space="preserve">
+        <value>复制占位符</value>
+    </data>
+    <data name="PromptCreate_Title" xml:space="preserve">
+        <value>创建提示词</value>
+    </data>
+    <data name="PromptCreate_CreateButton_Content" xml:space="preserve">
+        <value>保存</value>
+    </data>
+    <data name="PromptCreate_QuickMode_Description" xml:space="preserve">
+        <value>快速配置会根据几个选择生成一份可用的提示词。</value>
+    </data>
+    <data name="PromptCreate_AdvancedMode_Description" xml:space="preserve">
+        <value>高级编辑可以直接控制完整提示词内容。</value>
+    </data>
+    <data name="PromptCreate_SwitchToAdvanced_Content" xml:space="preserve">
+        <value>切换到高级编辑</value>
+    </data>
+    <data name="PromptCreate_SwitchToQuick_Content" xml:space="preserve">
+        <value>返回快速配置</value>
+    </data>
+    <data name="PromptCreate_PersonaLabel" xml:space="preserve">
+        <value>人设</value>
+    </data>
+    <data name="PromptCreate_PreferredUserNameLabel" xml:space="preserve">
+        <value>希望助手如何称呼你？</value>
+    </data>
+    <data name="PromptCreate_PreferredUserNamePlaceholder" xml:space="preserve">
+        <value>可选</value>
+    </data>
+    <data name="PromptCreate_ScenarioLabel" xml:space="preserve">
+        <value>工作场景（最多 3 个）</value>
+    </data>
+    <data name="PromptCreate_ScenarioHint" xml:space="preserve">
+        <value>最多选择 3 个场景。</value>
+    </data>
+    <data name="PromptCreate_ToneLabel" xml:space="preserve">
+        <value>语气风格</value>
+    </data>
+    <data name="PromptCreate_DetailLabel" xml:space="preserve">
+        <value>回答详略</value>
+    </data>
+    <data name="PromptCreate_OrganizationLabel" xml:space="preserve">
+        <value>组织方式</value>
+    </data>
+    <data name="PromptCreate_AdditionalRequirementsLabel" xml:space="preserve">
+        <value>额外要求</value>
+    </data>
+    <data name="PromptCreate_AdditionalRequirementsPlaceholder" xml:space="preserve">
+        <value>（可选）补充此提示词需要遵守的限制、参考资料或偏好。</value>
+    </data>
+    <data name="PromptCreate_LivePreviewTitle" xml:space="preserve">
+        <value>实时预览</value>
+    </data>
+    <data name="PromptCreate_LivePreviewDescription" xml:space="preserve">
+        <value>预览会实时渲染当前日期、时间等占位符内容。</value>
+    </data>
+    <data name="PromptCreate_DiscardAdvanced_DialogTitle" xml:space="preserve">
+        <value>放弃高级编辑内容？</value>
+    </data>
+    <data name="PromptCreate_DiscardAdvanced_DialogMessage" xml:space="preserve">
+        <value>返回快速配置会根据当前选择重新生成提示词内容，并放弃手动编辑。</value>
+    </data>
+    <data name="PromptCreate_DiscardAdvanced_DialogPrimary" xml:space="preserve">
+        <value>放弃编辑</value>
+    </data>
+    <data name="PromptRecipe_Persona_General" xml:space="preserve">
+        <value>🤝 通用助手</value>
+    </data>
+    <data name="PromptRecipe_Persona_ProfessionalAdvisor" xml:space="preserve">
+        <value>💼 专业顾问</value>
+    </data>
+    <data name="PromptRecipe_Persona_ProgrammingAssistant" xml:space="preserve">
+        <value>💻 编程助手</value>
+    </data>
+    <data name="PromptRecipe_Persona_WritingEditor" xml:space="preserve">
+        <value>✍️ 写作编辑</value>
+    </data>
+    <data name="PromptRecipe_Persona_TranslationAssistant" xml:space="preserve">
+        <value>🌐 翻译助手</value>
+    </data>
+    <data name="PromptRecipe_Persona_ResearchAssistant" xml:space="preserve">
+        <value>🔎 研究助手</value>
+    </data>
+    <data name="PromptRecipe_Persona_LearningMentor" xml:space="preserve">
+        <value>🎓 学习导师</value>
+    </data>
+    <data name="PromptRecipe_Persona_ProductStrategyPartner" xml:space="preserve">
+        <value>🧩 产品与策略伙伴</value>
+    </data>
+    <data name="PromptRecipe_Scenario_GeneralQA" xml:space="preserve">
+        <value>通用问答</value>
+    </data>
+    <data name="PromptRecipe_Scenario_ProgrammingDevelopment" xml:space="preserve">
+        <value>编程开发</value>
+    </data>
+    <data name="PromptRecipe_Scenario_CodeReview" xml:space="preserve">
+        <value>代码审查</value>
+    </data>
+    <data name="PromptRecipe_Scenario_WritingEditing" xml:space="preserve">
+        <value>写作编辑</value>
+    </data>
+    <data name="PromptRecipe_Scenario_DataAnalysis" xml:space="preserve">
+        <value>数据分析</value>
+    </data>
+    <data name="PromptRecipe_Scenario_LearningEducation" xml:space="preserve">
+        <value>学习教育</value>
+    </data>
+    <data name="PromptRecipe_Scenario_TranslationLanguage" xml:space="preserve">
+        <value>翻译语言</value>
+    </data>
+    <data name="PromptRecipe_Scenario_ProductPlanning" xml:space="preserve">
+        <value>产品规划</value>
+    </data>
+    <data name="PromptRecipe_Scenario_Troubleshooting" xml:space="preserve">
+        <value>问题排查</value>
+    </data>
+    <data name="PromptRecipe_Scenario_ResearchPlanning" xml:space="preserve">
+        <value>研究规划</value>
+    </data>
+    <data name="PromptRecipe_Tone_ProfessionalRigorous" xml:space="preserve">
+        <value>专业严谨</value>
+    </data>
+    <data name="PromptRecipe_Tone_FriendlyPatient" xml:space="preserve">
+        <value>友好耐心</value>
+    </data>
+    <data name="PromptRecipe_Tone_ConciseDirect" xml:space="preserve">
+        <value>简洁直接</value>
+    </data>
+    <data name="PromptRecipe_Tone_SocraticGuiding" xml:space="preserve">
+        <value>启发式引导</value>
+    </data>
+    <data name="PromptRecipe_Tone_FormalBusiness" xml:space="preserve">
+        <value>正式商务</value>
+    </data>
+    <data name="PromptRecipe_Tone_CreativeExploratory" xml:space="preserve">
+        <value>创意探索</value>
+    </data>
+    <data name="PromptRecipe_Detail_Concise" xml:space="preserve">
+        <value>简短</value>
+    </data>
+    <data name="PromptRecipe_Detail_Balanced" xml:space="preserve">
+        <value>均衡</value>
+    </data>
+    <data name="PromptRecipe_Detail_Detailed" xml:space="preserve">
+        <value>详细</value>
+    </data>
+    <data name="PromptRecipe_Organization_Automatic" xml:space="preserve">
+        <value>结构化</value>
+    </data>
+    <data name="PromptRecipe_Organization_ConclusionFirst" xml:space="preserve">
+        <value>结论先行</value>
+    </data>
+    <data name="PromptRecipe_Organization_StepByStep" xml:space="preserve">
+        <value>步骤说明</value>
+    </data>
+    <data name="PromptRecipe_Organization_KeyPoints" xml:space="preserve">
+        <value>要点列表</value>
+    </data>
+    <data name="PromptRecipe_Organization_CompareOptions" xml:space="preserve">
+        <value>对比选项</value>
+    </data>
+    <data name="PromptRecipe_Organization_ExamplesFirst" xml:space="preserve">
+        <value>示例优先</value>
+    </data>
+    <data name="PromptRecipe_Organization_NaturalConversation" xml:space="preserve">
+        <value>自然对话</value>
+    </data>
+    <data name="CustomAssistantPage_InvalidRouteAssistant_Content" xml:space="preserve">
+        <value>路由中的助手 ID 无效：{0}</value>
+    </data>
+    <data name="CustomAssistantPage_MissingRouteAssistant_Content" xml:space="preserve">
+        <value>未找到该助手：{0}</value>
+    </data>
+    <data name="Assistant_AdvancedSettings" xml:space="preserve">
+        <value>高级设置</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_ReasoningCount" xml:space="preserve">
+        <value>思考 {0} 次</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_ToolCallCount" xml:space="preserve">
+        <value>工具调用 {0} 次</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_SubagentCount" xml:space="preserve">
+        <value>子助手 {0} 个</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_NoResponse" xml:space="preserve">
+        <value>本轮未生成回复。</value>
+    </data>
+    <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
+        <value>查看子助手</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_CompletedActivities" xml:space="preserve">
+        <value>已完成 {0} 项活动</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_Working" xml:space="preserve">
+        <value>进行中</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_InputRequired" xml:space="preserve">
+        <value>需要你的操作</value>
+    </data>
+    <data name="LiveElapsedConverters_SecondsFormat" xml:space="preserve">
+        <value>{0:0.0} 秒</value>
+    </data>
+    <data name="LiveElapsedConverters_MinutesSecondsFormat" xml:space="preserve">
+        <value>{0} 分 {1} 秒</value>
+    </data>
+    <data name="LiveElapsedConverters_HoursMinutesFormat" xml:space="preserve">
+        <value>{0} 小时 {1} 分</value>
+    </data>
+    <data name="LiveElapsedConverters_DaysHoursFormat" xml:space="preserve">
+        <value>{0} 天 {1} 小时</value>
+    </data>
+    <data name="ChatPresentation_GenericActivity" xml:space="preserve">
+        <value>正在处理</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_Completed" xml:space="preserve">
+        <value>已完成</value>
+    </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Description" xml:space="preserve">
+        <value>允许读取、编辑和自动化处理 Word、Excel 和 PowerPoint 文件，而无需安装 Office。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_UnsupportedOperation_ErrorMessage" xml:space="preserve">
+        <value>这种文件不支持所请求的操作。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_InvalidPath_ErrorMessage" xml:space="preserve">
+        <value>文件路径无效，请检查后重试。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_UnsupportedResource_ErrorMessage" xml:space="preserve">
+        <value>无法打开这种类型的资源。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ReadFile_BinaryFile_ErrorMessage" xml:space="preserve">
+        <value>无法将此文件作为文本读取。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_PdfNoText_ErrorMessage" xml:space="preserve">
+        <value>此 PDF 中没有可读取的文本，它可能包含扫描页面。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_PdfEncrypted_ErrorMessage" xml:space="preserve">
+        <value>此 PDF 受密码保护，无法打开。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_PdfDamaged_ErrorMessage" xml:space="preserve">
+        <value>无法打开此 PDF，它可能已损坏或使用了不受支持的格式。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_SkillResourceUnavailable_ErrorMessage" xml:space="preserve">
+        <value>找不到或无法打开所请求的技能文件。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_LocalPathOnly_ErrorMessage" xml:space="preserve">
+        <value>此操作仅适用于本设备上的文件。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ConsentDenied_ErrorMessage" xml:space="preserve">
+        <value>文件操作未获允许。</value>
+    </data>
+    <data name="FileSystemSettings_InvalidApprovalPath_ErrorMessage" xml:space="preserve">
+        <value>请输入带有有效 glob 模式的完整路径。</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_InvalidPattern_ErrorMessage" xml:space="preserve">
+        <value>搜索模式无效。</value>
+    </data>
+    <data name="FontFamilyPicker_PlaceholderText" xml:space="preserve">
+        <value>搜索字体</value>
+    </data>
+    <data name="DisplaySettings_Font_Header" xml:space="preserve">
+        <value>字体</value>
+    </data>
+    <data name="DisplaySettings_Font_Description" xml:space="preserve">
+        <value>选择应用界面使用的主要字体族。</value>
+    </data>
+    <data name="FontFamilyPicker_NotInstalled" xml:space="preserve">
+        <value>当前系统未安装此字体，预览将使用默认字体。</value>
+    </data>
+    <data name="FontFamilyPicker_NotInstalledFormat" xml:space="preserve">
+        <value>{0}（未安装）</value>
+    </data>
+    <data name="FontFamilyPicker_PreviewUnavailable" xml:space="preserve">
+        <value>无法加载此字体的预览，当前显示默认字体。</value>
+    </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Header" xml:space="preserve">
+        <value>Office 办公套件</value>
+    </data>
+    <data name="AssistantToolSettings_FollowGlobal_Header" xml:space="preserve">
+        <value>跟随全局工具设置</value>
+    </data>
+    <data name="AssistantToolSettings_FollowingGlobal_Content" xml:space="preserve">
+        <value>当前助手跟随全局工具设置。关闭上方开关后可单独配置。</value>
+    </data>
+    <data name="AssistantToolSettings_ToolCallDisabled_Content" xml:space="preserve">
+        <value>此助手已关闭工具调用。请在上方启用后配置可用工具。</value>
+    </data>
+    <data name="AskQuestionCard_PageDisplay" xml:space="preserve">
+        <value>第 {0} 个，共 {1} 个</value>
+    </data>
+    <data name="AskQuestionCard_OptionalFreeformTextBox_PlaceholderText" xml:space="preserve">
+        <value>可选：输入补充回答…</value>
+    </data>
+    <data name="TextDifferenceEditor_OmittedLineButton_ToolTip" xml:space="preserve">
+        <value>点击展开</value>
     </data>
 </root>

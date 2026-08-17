@@ -201,7 +201,7 @@
               Margin="-10,-6"
               Background="{DynamicResource TransparentColor}"
               BorderThickness="0"
-              Shortcut="{Binding ViewModel.Settings.Shortcut.ChatWindow, Mode=TwoWay}"/>
+              Shortcut="{Binding ViewModel.Settings.Shortcut.ChatWindow.Main, Mode=TwoWay}"/>
             <TextBlock
               Classes="Muted"
               Text="{I18N {x:Static LocaleKey.WelcomeView_ShortcutStep_Message2}}"/>
