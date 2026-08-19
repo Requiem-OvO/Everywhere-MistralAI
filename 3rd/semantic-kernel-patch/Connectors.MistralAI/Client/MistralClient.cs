@@ -713,6 +713,12 @@ internal sealed class MistralClient
             DocumentPageLimit = executionSettings.DocumentPageLimit
         };
 
+        // Transfer reasoning_effort configuration from ExtensionData to request
+        if (executionSettings.ExtensionData is not null && executionSettings.ExtensionData.TryGetValue("reasoning_effort", out var reasoningEffort))
+        {
+            request.ReasoningEffort = reasoningEffort?.ToString();
+        }
+
         executionSettings.ToolCallBehavior?.ConfigureRequest(kernel, request);
 
         return request;
@@ -901,7 +907,14 @@ internal sealed class MistralClient
 
     private ChatMessageContent ToChatMessageContent(string modelId, ChatCompletionResponse response, MistralChatChoice chatChoice)
     {
-        var message = new ChatMessageContent(new AuthorRole(chatChoice.Message!.Role!), chatChoice.Message!.Content?.ToString(), modelId, chatChoice, Encoding.UTF8, GetChatChoiceMetadata(response, chatChoice));
+        var message = new ChatMessageContent(new AuthorRole(chatChoice.Message!.Role!), chatChoice.Message.GetTextContent(), modelId, chatChoice, Encoding.UTF8, GetChatChoiceMetadata(response, chatChoice));
+        var reasoningContent = chatChoice.Message.GetReasoningContent();
+        if (!string.IsNullOrEmpty(reasoningContent))
+        {
+#pragma warning disable SKEXP0110 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+            message.Items.Add(new ReasoningContent(reasoningContent));
+#pragma warning restore SKEXP0110
+        }
 
         if (chatChoice.IsToolCall)
         {
@@ -916,7 +929,7 @@ internal sealed class MistralClient
 
     private ChatMessageContent ToChatMessageContent(string modelId, string streamedRole, MistralChatCompletionChunk chunk, MistralChatCompletionChoice chatChoice)
     {
-        var message = new ChatMessageContent(new AuthorRole(streamedRole), chatChoice.Delta!.Content?.ToString(), modelId, chatChoice, Encoding.UTF8, GetChatChoiceMetadata(chunk, chatChoice));
+        var message = new ChatMessageContent(new AuthorRole(streamedRole), chatChoice.Delta!.GetTextContent(), modelId, chatChoice, Encoding.UTF8, GetChatChoiceMetadata(chunk, chatChoice));
 
         if (chatChoice.IsToolCall)
         {

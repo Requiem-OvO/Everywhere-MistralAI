@@ -69,9 +69,9 @@ internal sealed class ChatCompletionRequest
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? DocumentPageLimit { get; set; }
 
-    [JsonPropertyName("thinking")]
+    [JsonPropertyName("reasoning_effort")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public object? Thinking { get; set; }
+    public string? ReasoningEffort { get; set; }
 
     /// <summary>
     /// Construct an instance of <see cref="ChatCompletionRequest"/>.

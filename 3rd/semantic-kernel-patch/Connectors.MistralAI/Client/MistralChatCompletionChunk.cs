@@ -43,9 +43,9 @@ internal sealed class MistralChatCompletionChunk
 
     internal string? GetRole(int index) => this.Choices?[index]?.Delta?.Role;
 
-    internal string? GetContent(int index) => this.Choices?[index]?.Delta?.Content?.ToString();
+    internal string? GetContent(int index) => this.Choices?[index]?.Delta?.GetTextContent();
 
-    internal string? GetReasoningContent(int index) => this.Choices?[index]?.Delta?.ReasoningContent;
+    internal string? GetReasoningContent(int index) => this.Choices?[index]?.Delta?.GetReasoningContent();
 
     internal int GetChoiceIndex(int index) => this.Choices?[index]?.Index ?? -1;
 
