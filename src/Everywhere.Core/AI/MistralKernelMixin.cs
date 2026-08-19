@@ -57,7 +57,7 @@ public sealed class MistralKernelMixin : KernelMixin
         // https://docs.mistral.ai/capabilities/reasoning/
         settings.ExtensionData = new Dictionary<string, object>
         {
-            ["reasoning_effort"] = _options.IncludeReasoningContent ? "high" : "none"
+            ["reasoning_effort"] = _options.IncludeReasoningContent ? _options.ReasoningEffort ?? "high" : "none"
         };
 
         return settings;

@@ -13,6 +13,16 @@ public sealed partial class MistralOptions : ObservableObject
     [SettingsItem(Group = "_", DocumentUrl = "https://docs.mistral.ai/capabilities/reasoning")]
     public partial bool IncludeReasoningContent { get; set; } = true;
 
+    [ObservableProperty]
+    [DynamicResourceKey(
+        LocaleKey.MistralOptions_ReasoningEffort_Header,
+        LocaleKey.MistralOptions_ReasoningEffort_Description)]
+    [SettingsItem(
+        Group = "_",
+        IsEnabledBindingPath = nameof(IncludeReasoningContent),
+        DocumentUrl = "https://docs.mistral.ai/capabilities/reasoning")]
+    public partial string? ReasoningEffort { get; set; } = "high";
+
     [DynamicResourceKey(
         LocaleKey.Assistant_Temperature_Header,
         LocaleKey.Assistant_Temperature_Description)]

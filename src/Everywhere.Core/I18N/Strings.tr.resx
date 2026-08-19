@@ -3231,4 +3231,16 @@ Yayın tarihi: {2}</value>
     <data name="MistralOptions_IncludeReasoningContent_Description" xml:space="preserve">
         <value>Yanıtta muhakeme/düşünme içeriğini dahil et</value>
     </data>
+    <data name="MistralOptions_ReasoningEffort_Header" xml:space="preserve">
+        <value>Akıl yürütme yoğunluğu</value>
+    </data>
+    <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
+        <value>Modelin ne kadar yoğun akıl yürüttüğünü kontrol eder. “Akıl yürütmeyi dahil et” kapatılırsa bu ayardan bağımsız olarak akıl yürütme devre dışı bırakılır.</value>
+    </data>
+    <data name="MistralOptions_ReasoningEffort_Header" xml:space="preserve">
+        <value>Akıl yürütme yoğunluğu</value>
+    </data>
+    <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
+        <value>Modelin ne kadar yoğun akıl yürüttüğünü kontrol eder. “Akıl yürütmeyi dahil et” kapatılırsa bu ayardan bağımsız olarak akıl yürütme devre dışı bırakılır.</value>
+    </data>
 </root>

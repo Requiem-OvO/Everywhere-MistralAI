@@ -3232,4 +3232,16 @@ Fecha de lanzamiento: {2}</value>
     <data name="MistralOptions_IncludeReasoningContent_Description" xml:space="preserve">
         <value>Incluir contenido de razonamiento/pensamiento en la respuesta</value>
     </data>
+    <data name="MistralOptions_ReasoningEffort_Header" xml:space="preserve">
+        <value>Intensidad de razonamiento</value>
+    </data>
+    <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
+        <value>Controla cuánto razonamiento realiza el modelo. Si se desactiva «Incluir razonamiento», el razonamiento se deshabilita independientemente de este ajuste.</value>
+    </data>
+    <data name="MistralOptions_ReasoningEffort_Header" xml:space="preserve">
+        <value>Intensidad de razonamiento</value>
+    </data>
+    <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
+        <value>Controla cuánto razonamiento realiza el modelo. Si se desactiva «Incluir razonamiento», el razonamiento se deshabilita independientemente de este ajuste.</value>
+    </data>
 </root>

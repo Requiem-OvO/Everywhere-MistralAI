@@ -3232,4 +3232,16 @@ Date de publication : {2}</value>
     <data name="MistralOptions_IncludeReasoningContent_Description" xml:space="preserve">
         <value>Inclure le contenu de raisonnement/réflexion dans la réponse</value>
     </data>
+    <data name="MistralOptions_ReasoningEffort_Header" xml:space="preserve">
+        <value>Intensité du raisonnement</value>
+    </data>
+    <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
+        <value>Contrôle l’intensité du raisonnement effectué par le modèle. Désactiver « Inclure le raisonnement » désactive le raisonnement quel que soit ce réglage.</value>
+    </data>
+    <data name="MistralOptions_ReasoningEffort_Header" xml:space="preserve">
+        <value>Intensité du raisonnement</value>
+    </data>
+    <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
+        <value>Contrôle l’intensité du raisonnement effectué par le modèle. Désactiver « Inclure le raisonnement » désactive le raisonnement quel que soit ce réglage.</value>
+    </data>
 </root>

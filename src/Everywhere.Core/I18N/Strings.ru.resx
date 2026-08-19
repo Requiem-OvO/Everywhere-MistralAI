@@ -3232,4 +3232,16 @@
     <data name="MistralOptions_IncludeReasoningContent_Description" xml:space="preserve">
         <value>Включить содержание рассуждений/мыслей в ответ</value>
     </data>
+    <data name="MistralOptions_ReasoningEffort_Header" xml:space="preserve">
+        <value>Интенсивность рассуждений</value>
+    </data>
+    <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
+        <value>Управляет интенсивностью рассуждений модели. Если отключить «Включать рассуждения», рассуждения будут отключены независимо от этой настройки.</value>
+    </data>
+    <data name="MistralOptions_ReasoningEffort_Header" xml:space="preserve">
+        <value>Интенсивность рассуждений</value>
+    </data>
+    <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
+        <value>Управляет интенсивностью рассуждений модели. Если отключить «Включать рассуждения», рассуждения будут отключены независимо от этой настройки.</value>
+    </data>
 </root>

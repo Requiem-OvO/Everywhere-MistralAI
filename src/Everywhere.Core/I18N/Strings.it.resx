@@ -3232,4 +3232,16 @@ Data di rilascio: {2}</value>
     <data name="MistralOptions_IncludeReasoningContent_Description" xml:space="preserve">
         <value>Includi contenuto di ragionamento/pensiero nella risposta</value>
     </data>
+    <data name="MistralOptions_ReasoningEffort_Header" xml:space="preserve">
+        <value>Intensità di ragionamento</value>
+    </data>
+    <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
+        <value>Controlla l’intensità del ragionamento eseguito dal modello. Disattivando «Includi ragionamento», il ragionamento viene disabilitato indipendentemente da questa impostazione.</value>
+    </data>
+    <data name="MistralOptions_ReasoningEffort_Header" xml:space="preserve">
+        <value>Intensità di ragionamento</value>
+    </data>
+    <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
+        <value>Controlla l’intensità del ragionamento eseguito dal modello. Disattivando «Includi ragionamento», il ragionamento viene disabilitato indipendentemente da questa impostazione.</value>
+    </data>
 </root>
