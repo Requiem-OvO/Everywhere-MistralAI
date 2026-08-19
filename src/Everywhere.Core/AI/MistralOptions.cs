@@ -3,6 +3,18 @@ using Everywhere.Configuration;
 
 namespace Everywhere.AI;
 
+public enum MistralReasoningEffort
+{
+    [DynamicResourceKey(LocaleKey.MistralReasoningEffort_None)]
+    None = 0,
+    [DynamicResourceKey(LocaleKey.MistralReasoningEffort_Low)]
+    Low = 1,
+    [DynamicResourceKey(LocaleKey.MistralReasoningEffort_Medium)]
+    Medium = 2,
+    [DynamicResourceKey(LocaleKey.MistralReasoningEffort_High)]
+    High = 3
+}
+
 [GeneratedSettingsItems]
 public sealed partial class MistralOptions : ObservableObject
 {
@@ -12,6 +24,16 @@ public sealed partial class MistralOptions : ObservableObject
         LocaleKey.MistralOptions_IncludeReasoningContent_Description)]
     [SettingsItem(Group = "_", DocumentUrl = "https://docs.mistral.ai/capabilities/reasoning")]
     public partial bool IncludeReasoningContent { get; set; } = true;
+
+    [ObservableProperty]
+    [DynamicResourceKey(
+        LocaleKey.MistralOptions_ReasoningEffort_Header,
+        LocaleKey.MistralOptions_ReasoningEffort_Description)]
+    [SettingsItem(
+        Group = "_",
+        IsEnabledBindingPath = nameof(IncludeReasoningContent),
+        DocumentUrl = "https://docs.mistral.ai/capabilities/reasoning")]
+    public partial MistralReasoningEffort ReasoningEffort { get; set; } = MistralReasoningEffort.High;
 
     [DynamicResourceKey(
         LocaleKey.Assistant_Temperature_Header,

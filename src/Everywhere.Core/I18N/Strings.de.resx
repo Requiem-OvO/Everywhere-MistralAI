@@ -3231,4 +3231,22 @@ Veröffentlichungsdatum: {2}</value>
     <data name="MistralOptions_IncludeReasoningContent_Description" xml:space="preserve">
         <value>Schlussfolgerungs-/Denkinhalte in die Antwort einbeziehen</value>
     </data>
+    <data name="MistralOptions_ReasoningEffort_Header" xml:space="preserve">
+        <value>Denkintensität</value>
+    </data>
+    <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
+        <value>Steuert, wie intensiv das Modell schlussfolgert. Wenn „Schlussfolgerungen einbeziehen“ deaktiviert ist, wird das Schlussfolgern unabhängig von dieser Einstellung abgeschaltet.</value>
+    </data>
+    <data name="MistralReasoningEffort_None" xml:space="preserve">
+        <value>Keine</value>
+    </data>
+    <data name="MistralReasoningEffort_Low" xml:space="preserve">
+        <value>Niedrig</value>
+    </data>
+    <data name="MistralReasoningEffort_Medium" xml:space="preserve">
+        <value>Mittel</value>
+    </data>
+    <data name="MistralReasoningEffort_High" xml:space="preserve">
+        <value>Hoch</value>
+    </data>
 </root>

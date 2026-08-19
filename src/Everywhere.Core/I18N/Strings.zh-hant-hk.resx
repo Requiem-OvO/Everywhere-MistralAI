@@ -3232,4 +3232,22 @@
     <data name="MistralOptions_IncludeReasoningContent_Description" xml:space="preserve">
         <value>在回應中包含推理/思考內容</value>
     </data>
+    <data name="MistralOptions_ReasoningEffort_Header" xml:space="preserve">
+        <value>思考強度</value>
+    </data>
+    <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
+        <value>控制模型進行推理的強度。關閉「包含推理」將一律停用推理。</value>
+    </data>
+    <data name="MistralReasoningEffort_None" xml:space="preserve">
+        <value>無</value>
+    </data>
+    <data name="MistralReasoningEffort_Low" xml:space="preserve">
+        <value>低</value>
+    </data>
+    <data name="MistralReasoningEffort_Medium" xml:space="preserve">
+        <value>中</value>
+    </data>
+    <data name="MistralReasoningEffort_High" xml:space="preserve">
+        <value>高</value>
+    </data>
 </root>

@@ -3232,4 +3232,22 @@
     <data name="MistralOptions_IncludeReasoningContent_Description" xml:space="preserve">
         <value>レスポンスに推論/思考内容を含める</value>
     </data>
+    <data name="MistralOptions_ReasoningEffort_Header" xml:space="preserve">
+        <value>思考強度</value>
+    </data>
+    <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
+        <value>モデルが行う推論の強度を制御します。「推論を含める」をオフにすると、この設定に関係なく推論は無効になります。</value>
+    </data>
+    <data name="MistralReasoningEffort_None" xml:space="preserve">
+        <value>なし</value>
+    </data>
+    <data name="MistralReasoningEffort_Low" xml:space="preserve">
+        <value>低</value>
+    </data>
+    <data name="MistralReasoningEffort_Medium" xml:space="preserve">
+        <value>中</value>
+    </data>
+    <data name="MistralReasoningEffort_High" xml:space="preserve">
+        <value>高</value>
+    </data>
 </root>
