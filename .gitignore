@@ -467,13 +467,3 @@ $RECYCLE.BIN/
 tools/sync_i18n/sync_i18n_config.ps1
 tools/sync_i18n/i18n_validation_report.json
 .vscode/launch.json
-/.trae
-AGENTS.md
-/.zed
-/.claude
-
-.codebase-memory/config.json
-.github/copilot-instructions.md
-.github/instructions/codebase-workflow.instructions.md
-/.cursor
-/.agents
