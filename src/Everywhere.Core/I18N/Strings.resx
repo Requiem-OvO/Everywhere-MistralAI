@@ -3238,16 +3238,10 @@ Release date: {2}</value>
     <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
         <value>Controls how much reasoning the model performs. Disable “Include reasoning” to turn reasoning off regardless of this setting.</value>
     </data>
-    <data name="MistralReasoningEffort_None" xml:space="preserve">
-        <value>None</value>
+    <data name="MistralOptions_ReasoningEffort_Header" xml:space="preserve">
+        <value>Reasoning effort</value>
     </data>
-    <data name="MistralReasoningEffort_Low" xml:space="preserve">
-        <value>Low</value>
-    </data>
-    <data name="MistralReasoningEffort_Medium" xml:space="preserve">
-        <value>Medium</value>
-    </data>
-    <data name="MistralReasoningEffort_High" xml:space="preserve">
-        <value>High</value>
+    <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
+        <value>Controls how much reasoning the model performs. Disable “Include reasoning” to turn reasoning off regardless of this setting.</value>
     </data>
 </root>

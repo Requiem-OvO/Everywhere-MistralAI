@@ -3238,16 +3238,10 @@ Fecha de lanzamiento: {2}</value>
     <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
         <value>Controla cuánto razonamiento realiza el modelo. Si se desactiva «Incluir razonamiento», el razonamiento se deshabilita independientemente de este ajuste.</value>
     </data>
-    <data name="MistralReasoningEffort_None" xml:space="preserve">
-        <value>Ninguna</value>
+    <data name="MistralOptions_ReasoningEffort_Header" xml:space="preserve">
+        <value>Intensidad de razonamiento</value>
     </data>
-    <data name="MistralReasoningEffort_Low" xml:space="preserve">
-        <value>Baja</value>
-    </data>
-    <data name="MistralReasoningEffort_Medium" xml:space="preserve">
-        <value>Media</value>
-    </data>
-    <data name="MistralReasoningEffort_High" xml:space="preserve">
-        <value>Alta</value>
+    <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
+        <value>Controla cuánto razonamiento realiza el modelo. Si se desactiva «Incluir razonamiento», el razonamiento se deshabilita independientemente de este ajuste.</value>
     </data>
 </root>
