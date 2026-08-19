@@ -2,7 +2,6 @@
 
 using System.Collections.Generic;
 using System.Text;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Microsoft.SemanticKernel.Connectors.MistralAI.Client;
@@ -44,35 +43,9 @@ internal sealed class MistralChatCompletionChunk
 
     internal string? GetRole(int index) => this.Choices?[index]?.Delta?.Role;
 
-    internal string? GetContent(int index) => this.Choices?[index]?.Delta?.Content?.ToString();
+    internal string? GetContent(int index) => this.Choices?[index]?.Delta?.GetTextContent();
 
-    internal string? GetReasoningContent(int index)
-    {
-        var content = this.Choices?[index]?.Delta?.Content;
-        if (content is JsonElement element && element.ValueKind == JsonValueKind.Array)
-        {
-            foreach (var item in element.EnumerateArray())
-            {
-                if (item.TryGetProperty("type", out var typeProp) && typeProp.GetString() == "thinking")
-                {
-                    if (item.TryGetProperty("thinking", out var thinkingProp) && thinkingProp.ValueKind == JsonValueKind.Array)
-                    {
-                        var sb = new StringBuilder();
-                        foreach (var textChunk in thinkingProp.EnumerateArray())
-                        {
-                            if (textChunk.TryGetProperty("type", out var chunkType) && chunkType.GetString() == "text" &&
-                                textChunk.TryGetProperty("text", out var textProp))
-                            {
-                                sb.Append(textProp.GetString());
-                            }
-                        }
-                        return sb.Length > 0 ? sb.ToString() : null;
-                    }
-                }
-            }
-        }
-        return null;
-    }
+    internal string? GetReasoningContent(int index) => this.Choices?[index]?.Delta?.GetReasoningContent();
 
     internal int GetChoiceIndex(int index) => this.Choices?[index]?.Index ?? -1;
 
