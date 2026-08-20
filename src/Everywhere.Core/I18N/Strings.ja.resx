@@ -3220,22 +3220,4 @@
     <data name="HomeNotification_StatisticsBackfilled" xml:space="preserve">
         <value>最初の統計データは過去のチャットデータ分析に基づいており、誤差がある可能性があります。</value>
     </data>
-    <data name="Assistant_MistralOptions_Header" xml:space="preserve">
-        <value>Mistral オプション</value>
-    </data>
-    <data name="Assistant_MistralOptions_Description" xml:space="preserve">
-        <value>Mistral AI モデルの設定オプション</value>
-    </data>
-    <data name="MistralOptions_IncludeReasoningContent_Header" xml:space="preserve">
-        <value>推論を含める</value>
-    </data>
-    <data name="MistralOptions_IncludeReasoningContent_Description" xml:space="preserve">
-        <value>レスポンスに推論/思考内容を含める</value>
-    </data>
-    <data name="MistralOptions_ReasoningEffort_Header" xml:space="preserve">
-        <value>思考強度</value>
-    </data>
-    <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>モデルが行う推論の強度を制御します（例：none、low、medium、high）。「推論を含める」をオフにすると、推論は常に無効になります。</value>
-    </data>
 </root>
