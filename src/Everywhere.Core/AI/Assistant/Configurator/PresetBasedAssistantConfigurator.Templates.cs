@@ -394,7 +394,7 @@ partial class PresetBasedAssistantConfigurator
                     SupportsToolCall = true,
                     InputModalities = Modalities.Text | Modalities.Image,
                     OutputModalities = Modalities.Text,
-                    ContextLimit = 128_000,
+                    ContextLimit = 256_000,
                     OutputLimit = 128_000,
                     IsDefault = true
                 },
@@ -405,7 +405,7 @@ partial class PresetBasedAssistantConfigurator
                     SupportsToolCall = true,
                     InputModalities = Modalities.Text | Modalities.Image,
                     OutputModalities = Modalities.Text,
-                    ContextLimit = 128_000,
+                    ContextLimit = 256_000,
                     OutputLimit = 128_000
                 },
                 new ModelDefinitionTemplate
@@ -415,7 +415,7 @@ partial class PresetBasedAssistantConfigurator
                     SupportsToolCall = true,
                     InputModalities = Modalities.Text,
                     OutputModalities = Modalities.Text,
-                    ContextLimit = 128_000,
+                    ContextLimit = 256_000,
                     OutputLimit = 128_000
                 }
             ]
