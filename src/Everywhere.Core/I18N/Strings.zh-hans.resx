@@ -3239,10 +3239,4 @@
     <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
         <value>控制模型进行推理的强度，例如：none、low、medium、high。关闭“包含推理”将始终禁用推理。</value>
     </data>
-    <data name="MistralOptions_ReasoningEffort_Header" xml:space="preserve">
-        <value>思考强度</value>
-    </data>
-    <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>控制模型进行推理的强度，例如：none、low、medium、high。关闭“包含推理”将始终禁用推理。</value>
-    </data>
 </root>

@@ -13,10 +13,17 @@ namespace Everywhere.AI;
 /// </summary>
 public sealed class MistralKernelMixin : KernelMixin
 {
+    /// <inheritdoc/>
     public override IChatCompletionService ChatCompletionService { get; }
 
     private readonly MistralOptions _options;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MistralKernelMixin"/> class.
+    /// </summary>
+    /// <param name="assistant">The assistant that owns the Mistral configuration.</param>
+    /// <param name="connection">The model connection used to access the Mistral API.</param>
+    /// <param name="loggerFactory">The logger factory used by the Mistral connector.</param>
     public MistralKernelMixin(
         Assistant assistant,
         ModelConnection connection,
@@ -36,8 +43,10 @@ public sealed class MistralKernelMixin : KernelMixin
         ChatCompletionService = new OptimizedMistralChatCompletionService(service);
     }
 
+    /// <inheritdoc/>
     public override bool IsPersistentMessageMetadataKey(string key) => key is "reasoningSignature";
 
+    /// <inheritdoc/>
     public override PromptExecutionSettings GetPromptExecutionSettings(FunctionChoiceBehavior? functionChoiceBehavior = null)
     {
         // Convert FunctionChoiceBehavior to MistralAIToolCallBehavior

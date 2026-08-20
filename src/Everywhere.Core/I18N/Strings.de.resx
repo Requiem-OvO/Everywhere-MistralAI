@@ -3235,12 +3235,6 @@ Veröffentlichungsdatum: {2}</value>
         <value>Denkintensität</value>
     </data>
     <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>Steuert, wie intensiv das Modell schlussfolgert. Wenn „Schlussfolgerungen einbeziehen“ deaktiviert ist, wird das Schlussfolgern unabhängig von dieser Einstellung abgeschaltet.</value>
-    </data>
-    <data name="MistralOptions_ReasoningEffort_Header" xml:space="preserve">
-        <value>Denkintensität</value>
-    </data>
-    <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>Steuert, wie intensiv das Modell schlussfolgert. Wenn „Schlussfolgerungen einbeziehen“ deaktiviert ist, wird das Schlussfolgern unabhängig von dieser Einstellung abgeschaltet.</value>
+        <value>Steuert die Intensität der Schlussfolgerungen des Modells, zum Beispiel: none, low, medium, high. Wenn „Schlussfolgerungen einbeziehen“ deaktiviert ist, wird das Schlussfolgern immer deaktiviert.</value>
     </data>
 </root>

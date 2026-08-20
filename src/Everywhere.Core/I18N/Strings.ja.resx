@@ -3236,12 +3236,6 @@
         <value>思考強度</value>
     </data>
     <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>モデルが行う推論の強度を制御します。「推論を含める」をオフにすると、この設定に関係なく推論は無効になります。</value>
-    </data>
-    <data name="MistralOptions_ReasoningEffort_Header" xml:space="preserve">
-        <value>思考強度</value>
-    </data>
-    <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>モデルが行う推論の強度を制御します。「推論を含める」をオフにすると、この設定に関係なく推論は無効になります。</value>
+        <value>モデルが行う推論の強度を制御します（例：none、low、medium、high）。「推論を含める」をオフにすると、推論は常に無効になります。</value>
     </data>
 </root>

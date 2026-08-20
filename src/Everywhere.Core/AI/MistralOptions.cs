@@ -3,9 +3,15 @@ using Everywhere.Configuration;
 
 namespace Everywhere.AI;
 
+/// <summary>
+/// Provides configurable options for Mistral AI chat completion models.
+/// </summary>
 [GeneratedSettingsItems]
 public sealed partial class MistralOptions : ObservableObject
 {
+    /// <summary>
+    /// Gets or sets a value indicating whether reasoning content is included in responses.
+    /// </summary>
     [ObservableProperty]
     [DynamicResourceKey(
         LocaleKey.MistralOptions_IncludeReasoningContent_Header,
@@ -13,6 +19,9 @@ public sealed partial class MistralOptions : ObservableObject
     [SettingsItem(Group = "_", DocumentUrl = "https://docs.mistral.ai/capabilities/reasoning")]
     public partial bool IncludeReasoningContent { get; set; } = true;
 
+    /// <summary>
+    /// Gets or sets the amount of reasoning effort requested from the model.
+    /// </summary>
     [ObservableProperty]
     [DynamicResourceKey(
         LocaleKey.MistralOptions_ReasoningEffort_Header,
@@ -23,12 +32,18 @@ public sealed partial class MistralOptions : ObservableObject
         DocumentUrl = "https://docs.mistral.ai/capabilities/reasoning")]
     public partial string? ReasoningEffort { get; set; } = "high";
 
+    /// <summary>
+    /// Gets or sets the sampling temperature passed to the model.
+    /// </summary>
     [DynamicResourceKey(
         LocaleKey.Assistant_Temperature_Header,
         LocaleKey.Assistant_Temperature_Description)]
     [SettingsItem(Group = "_", DocumentUrl = "https://docs.mistral.ai/api#tag/chat/operation/chat_completion_v1_chat_completions_post")]
     public string? Temperature { get; set; }
 
+    /// <summary>
+    /// Gets or sets the nucleus sampling probability passed to the model.
+    /// </summary>
     [DynamicResourceKey(
         LocaleKey.Assistant_TopP_Header,
         LocaleKey.Assistant_TopP_Description)]

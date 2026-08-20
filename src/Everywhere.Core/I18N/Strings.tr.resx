@@ -3235,12 +3235,6 @@ Yayın tarihi: {2}</value>
         <value>Akıl yürütme yoğunluğu</value>
     </data>
     <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>Modelin ne kadar yoğun akıl yürüttüğünü kontrol eder. “Akıl yürütmeyi dahil et” kapatılırsa bu ayardan bağımsız olarak akıl yürütme devre dışı bırakılır.</value>
-    </data>
-    <data name="MistralOptions_ReasoningEffort_Header" xml:space="preserve">
-        <value>Akıl yürütme yoğunluğu</value>
-    </data>
-    <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>Modelin ne kadar yoğun akıl yürüttüğünü kontrol eder. “Akıl yürütmeyi dahil et” kapatılırsa bu ayardan bağımsız olarak akıl yürütme devre dışı bırakılır.</value>
+        <value>Modelin muhakeme yoğunluğunu kontrol eder; örneğin: none, low, medium, high. “Muhakemeyi dahil et” seçeneğinin kapatılması muhakemeyi her zaman devre dışı bırakır.</value>
     </data>
 </root>

@@ -3236,12 +3236,6 @@
         <value>추론 강도</value>
     </data>
     <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>모델이 수행하는 추론의 강도를 제어합니다. “추론 포함”을 끄면 이 설정과 관계없이 추론이 비활성화됩니다.</value>
-    </data>
-    <data name="MistralOptions_ReasoningEffort_Header" xml:space="preserve">
-        <value>추론 강도</value>
-    </data>
-    <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>모델이 수행하는 추론의 강도를 제어합니다. “추론 포함”을 끄면 이 설정과 관계없이 추론이 비활성화됩니다.</value>
+        <value>모델이 수행하는 추론의 강도를 제어합니다(예: none, low, medium, high). “추론 포함”을 끄면 추론이 항상 비활성화됩니다.</value>
     </data>
 </root>

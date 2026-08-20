@@ -3236,12 +3236,6 @@ Data di rilascio: {2}</value>
         <value>Intensità di ragionamento</value>
     </data>
     <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>Controlla l’intensità del ragionamento eseguito dal modello. Disattivando «Includi ragionamento», il ragionamento viene disabilitato indipendentemente da questa impostazione.</value>
-    </data>
-    <data name="MistralOptions_ReasoningEffort_Header" xml:space="preserve">
-        <value>Intensità di ragionamento</value>
-    </data>
-    <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>Controlla l’intensità del ragionamento eseguito dal modello. Disattivando «Includi ragionamento», il ragionamento viene disabilitato indipendentemente da questa impostazione.</value>
+        <value>Controlla l’intensità del ragionamento del modello, ad esempio: none, low, medium, high. Disattivando «Includi ragionamento», il ragionamento viene sempre disabilitato.</value>
     </data>
 </root>
