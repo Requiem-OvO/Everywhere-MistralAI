@@ -3237,12 +3237,6 @@ Data de lançamento: {2}</value>
         <value>Intensidade do raciocínio</value>
     </data>
     <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>Controla a intensidade do raciocínio realizado pelo modelo. Desativar “Incluir raciocínio” desativa o raciocínio independentemente desta configuração.</value>
-    </data>
-    <data name="MistralOptions_ReasoningEffort_Header" xml:space="preserve">
-        <value>Intensidade do raciocínio</value>
-    </data>
-    <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>Controla a intensidade do raciocínio realizado pelo modelo. Desativar “Incluir raciocínio” desativa o raciocínio independentemente desta configuração.</value>
+        <value>Controla a intensidade do raciocínio realizado pelo modelo, por exemplo: none, low, medium, high. Desativar “Incluir raciocínio” sempre desativa o raciocínio.</value>
     </data>
 </root>

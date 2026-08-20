@@ -3236,12 +3236,6 @@ Date de publication : {2}</value>
         <value>Intensité du raisonnement</value>
     </data>
     <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>Contrôle l’intensité du raisonnement effectué par le modèle. Désactiver « Inclure le raisonnement » désactive le raisonnement quel que soit ce réglage.</value>
-    </data>
-    <data name="MistralOptions_ReasoningEffort_Header" xml:space="preserve">
-        <value>Intensité du raisonnement</value>
-    </data>
-    <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>Contrôle l’intensité du raisonnement effectué par le modèle. Désactiver « Inclure le raisonnement » désactive le raisonnement quel que soit ce réglage.</value>
+        <value>Contrôle l’intensité du raisonnement du modèle, par exemple : none, low, medium, high. Désactiver « Inclure le raisonnement » désactive toujours le raisonnement.</value>
     </data>
 </root>

@@ -121,6 +121,9 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
 
     public bool IsGoogle => Schema == ModelProviderSchema.Google;
 
+    /// <summary>
+    /// Gets a value indicating whether this assistant uses the Mistral provider schema.
+    /// </summary>
     public bool IsMistral => Schema == ModelProviderSchema.Mistral;
 
     [DynamicResourceKey(
@@ -130,6 +133,9 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
     [SettingsItems(IsExpanded = false)]
     public GoogleOptions GoogleOptions { get; } = new();
 
+    /// <summary>
+    /// Gets the Mistral-specific options for this assistant.
+    /// </summary>
     [DynamicResourceKey(
         LocaleKey.Assistant_MistralOptions_Header,
         LocaleKey.Assistant_MistralOptions_Description)]

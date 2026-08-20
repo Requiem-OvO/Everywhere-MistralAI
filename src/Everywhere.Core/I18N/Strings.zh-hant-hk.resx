@@ -3236,12 +3236,6 @@
         <value>思考強度</value>
     </data>
     <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>控制模型進行推理的強度。關閉「包含推理」將一律停用推理。</value>
-    </data>
-    <data name="MistralOptions_ReasoningEffort_Header" xml:space="preserve">
-        <value>思考強度</value>
-    </data>
-    <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>控制模型進行推理的強度。關閉「包含推理」將一律停用推理。</value>
+        <value>控制模型進行推理的強度，例如：none、low、medium、high。關閉「包含推理」將一律停用推理。</value>
     </data>
 </root>
