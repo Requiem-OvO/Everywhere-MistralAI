@@ -70,7 +70,7 @@ public sealed class MistralKernelMixin : KernelMixin
 
         settings.ExtensionData = new Dictionary<string, object>
         {
-            ["reasoning_effort"] = reasoningEffort
+            ["reasoning_effort"] = reasoningEffort!
         };
 
         return settings;
