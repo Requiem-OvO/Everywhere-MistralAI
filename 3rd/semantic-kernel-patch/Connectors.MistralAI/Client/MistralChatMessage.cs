@@ -22,7 +22,7 @@ internal sealed class MistralChatMessage
 
     internal string? GetTextContent() => GetContent(this.Content).Text;
 
-    internal string? GetReasoningContent() => GetContent(this.Content).Reasoning;
+    internal string? GetReasoningContent() => GetContent(this.Content).Reasoning ?? this.ReasoningContent;
 
     internal static (string? Text, string? Reasoning) GetContent(object? content)
     {
@@ -90,6 +90,10 @@ internal sealed class MistralChatMessage
     [JsonPropertyName("tool_calls")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IList<MistralToolCall>? ToolCalls { get; set; }
+
+    [JsonPropertyName("reasoning_content")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ReasoningContent { get; set; }
 
     /// <summary>
     /// Construct an instance of <see cref="MistralChatMessage"/>.
