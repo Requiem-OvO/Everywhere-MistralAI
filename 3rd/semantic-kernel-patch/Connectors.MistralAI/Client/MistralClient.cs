@@ -738,13 +738,17 @@ internal sealed class MistralClient
             DocumentPageLimit = executionSettings.DocumentPageLimit
         };
 
-        // Transfer reasoning_effort configuration from ExtensionData to request
+        // Transfer reasoning_effort configuration from ExtensionData to request.
+        // Programmatic settings store the value as a string, while deserialized settings use JsonElement.
         if (executionSettings.ExtensionData is not null &&
-            executionSettings.ExtensionData.TryGetValue("reasoning_effort", out var reasoningEffort) &&
-            reasoningEffort is JsonElement { ValueKind: JsonValueKind.String } reasoningEffortElement &&
-            reasoningEffortElement.GetString() is { Length: > 0 } reasoningEffortValue)
+            executionSettings.ExtensionData.TryGetValue("reasoning_effort", out var reasoningEffort))
         {
-            request.ReasoningEffort = reasoningEffortValue;
+            request.ReasoningEffort = reasoningEffort switch
+            {
+                string { Length: > 0 } value => value,
+                JsonElement { ValueKind: JsonValueKind.String } element => element.GetString(),
+                _ => null
+            };
         }
 
         executionSettings.ToolCallBehavior?.ConfigureRequest(kernel, request);
