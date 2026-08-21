@@ -551,22 +551,23 @@ internal sealed class MistralClient
                     currentRole ??= chunk.GetRole(i);
 
                     var streamingContent = new StreamingChatMessageContent(role: new AuthorRole(currentRole ?? "assistant"),
-                        content: chunk.GetContent(i),
+                        content: null,
                         choiceIndex: i,
                         modelId: modelId,
                         encoding: chunk.GetEncoding(),
                         innerContent: chunk,
                         metadata: chunk.GetMetadata());
 
-                    // Extract reasoning content if available
+                    // Preserve the provider's reasoning-before-answer order in the item collection.
                     var reasoningContent = chunk.GetReasoningContent(i);
-                    if (!string.IsNullOrEmpty(reasoningContent))
+                    if (!string.IsNullOrWhiteSpace(reasoningContent))
                     {
 #pragma warning disable SKEXP0110 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
                         streamingContent.Items.Add(new StreamingReasoningContent(reasoningContent));
 #pragma warning restore SKEXP0110
                     }
 
+                    streamingContent.Content = chunk.GetContent(i);
                     yield return streamingContent;
                 }
             }
