@@ -714,9 +714,12 @@ internal sealed class MistralClient
         };
 
         // Transfer reasoning_effort configuration from ExtensionData to request
-        if (executionSettings.ExtensionData is not null && executionSettings.ExtensionData.TryGetValue("reasoning_effort", out var reasoningEffort))
+        if (executionSettings.ExtensionData is not null &&
+            executionSettings.ExtensionData.TryGetValue("reasoning_effort", out var reasoningEffort) &&
+            reasoningEffort is JsonElement { ValueKind: JsonValueKind.String } reasoningEffortElement &&
+            reasoningEffortElement.GetString() is { Length: > 0 } reasoningEffortValue)
         {
-            request.ReasoningEffort = reasoningEffort?.ToString();
+            request.ReasoningEffort = reasoningEffortValue;
         }
 
         executionSettings.ToolCallBehavior?.ConfigureRequest(kernel, request);

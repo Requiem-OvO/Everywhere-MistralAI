@@ -41,8 +41,8 @@ internal sealed class MistralChatMessage
             return (null, null);
         }
 
-        StringBuilder? text = null;
-        StringBuilder? reasoning = null;
+        var text = (StringBuilder?)null;
+        var reasoning = (StringBuilder?)null;
         foreach (var item in element.EnumerateArray())
         {
             if (!item.TryGetProperty("type", out var typeProperty))

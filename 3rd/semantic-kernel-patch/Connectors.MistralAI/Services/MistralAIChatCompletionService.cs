@@ -30,11 +30,16 @@ public sealed class MistralAIChatCompletionService : IChatCompletionService
     /// <param name="skipHttpClientProvider">If true, uses the provided HttpClient as-is without wrapping it through HttpClientProvider.</param>
     public MistralAIChatCompletionService(string modelId, string apiKey, Uri? endpoint = null, HttpClient? httpClient = null, ILoggerFactory? loggerFactory = null, bool skipHttpClientProvider = false)
     {
+        if (skipHttpClientProvider && httpClient is null)
+        {
+            throw new ArgumentNullException(nameof(httpClient));
+        }
+
         this.Client = new MistralClient(
             modelId: modelId,
             endpoint: endpoint ?? httpClient?.BaseAddress,
             apiKey: apiKey,
-            httpClient: skipHttpClientProvider ? httpClient! : HttpClientProvider.GetHttpClient(httpClient),
+            httpClient: skipHttpClientProvider ? httpClient : HttpClientProvider.GetHttpClient(httpClient),
             logger: loggerFactory?.CreateLogger(this.GetType()) ?? NullLogger.Instance
         );
 
