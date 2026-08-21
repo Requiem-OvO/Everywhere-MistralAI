@@ -567,6 +567,24 @@ internal sealed class MistralClient
 #pragma warning restore SKEXP0110
                     }
 
+                    var toolCalls = chunk.Choices?[i].ToolCalls;
+                    if (toolCalls is { Count: > 0 })
+                    {
+                        for (var toolCallIndex = 0; toolCallIndex < toolCalls.Count; toolCallIndex++)
+                        {
+                            var toolCall = toolCalls[toolCallIndex];
+                            streamingContent.Items.Add(new StreamingFunctionCallUpdateContent(
+                                callId: toolCall.Id,
+                                name: toolCall.Function?.Name,
+                                arguments: toolCall.Function?.Arguments,
+                                functionCallIndex: toolCall.Index ?? toolCallIndex)
+                            {
+                                ChoiceIndex = i,
+                                InnerContent = toolCall
+                            });
+                        }
+                    }
+
                     streamingContent.Content = chunk.GetContent(i);
                     yield return streamingContent;
                 }
