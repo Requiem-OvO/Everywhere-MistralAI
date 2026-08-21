@@ -39,7 +39,7 @@ public sealed class MistralAIChatCompletionService : IChatCompletionService
             modelId: modelId,
             endpoint: endpoint ?? httpClient?.BaseAddress,
             apiKey: apiKey,
-            httpClient: skipHttpClientProvider ? httpClient : HttpClientProvider.GetHttpClient(httpClient),
+            httpClient: skipHttpClientProvider ? httpClient! : HttpClientProvider.GetHttpClient(httpClient),
             logger: loggerFactory?.CreateLogger(this.GetType()) ?? NullLogger.Instance
         );
 
