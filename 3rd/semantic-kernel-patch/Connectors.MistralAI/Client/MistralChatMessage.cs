@@ -22,7 +22,7 @@ internal sealed class MistralChatMessage
 
     internal string? GetTextContent() => GetContent(this.Content).Text;
 
-    internal string? GetReasoningContent() => GetContent(this.Content).Reasoning;
+    internal string? GetReasoningContent() => GetContent(this.Content).Reasoning ?? this.ReasoningContent;
 
     internal static (string? Text, string? Reasoning) GetContent(object? content)
     {
@@ -41,8 +41,8 @@ internal sealed class MistralChatMessage
             return (null, null);
         }
 
-        StringBuilder? text = null;
-        StringBuilder? reasoning = null;
+        var text = (StringBuilder?)null;
+        var reasoning = (StringBuilder?)null;
         foreach (var item in element.EnumerateArray())
         {
             if (!item.TryGetProperty("type", out var typeProperty))
@@ -50,17 +50,24 @@ internal sealed class MistralChatMessage
                 continue;
             }
 
+            if (typeProperty.ValueKind != JsonValueKind.String)
+            {
+                continue;
+            }
+
             switch (typeProperty.GetString())
             {
-                case "text" when item.TryGetProperty("text", out var textProperty):
+                case "text" when item.TryGetProperty("text", out var textProperty) && textProperty.ValueKind == JsonValueKind.String:
                     (text ??= new StringBuilder()).Append(textProperty.GetString());
                     break;
                 case "thinking" when item.TryGetProperty("thinking", out var thinkingProperty) && thinkingProperty.ValueKind == JsonValueKind.Array:
                     foreach (var thinkingItem in thinkingProperty.EnumerateArray())
                     {
                         if (thinkingItem.TryGetProperty("type", out var thinkingTypeProperty) &&
+                            thinkingTypeProperty.ValueKind == JsonValueKind.String &&
                             thinkingTypeProperty.GetString() == "text" &&
-                            thinkingItem.TryGetProperty("text", out var reasoningTextProperty))
+                            thinkingItem.TryGetProperty("text", out var reasoningTextProperty) &&
+                            reasoningTextProperty.ValueKind == JsonValueKind.String)
                         {
                             (reasoning ??= new StringBuilder()).Append(reasoningTextProperty.GetString());
                         }
@@ -83,6 +90,10 @@ internal sealed class MistralChatMessage
     [JsonPropertyName("tool_calls")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IList<MistralToolCall>? ToolCalls { get; set; }
+
+    [JsonPropertyName("reasoning_content")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ReasoningContent { get; set; }
 
     /// <summary>
     /// Construct an instance of <see cref="MistralChatMessage"/>.

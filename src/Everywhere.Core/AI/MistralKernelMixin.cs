@@ -64,9 +64,13 @@ public sealed class MistralKernelMixin : KernelMixin
         };
 
         // https://docs.mistral.ai/capabilities/reasoning/
+        var reasoningEffort = _options.IncludeReasoningContent
+            ? _options.ReasoningEffort
+            : "none";
+
         settings.ExtensionData = new Dictionary<string, object>
         {
-            ["reasoning_effort"] = _options.IncludeReasoningContent ? _options.ReasoningEffort ?? "high" : "none"
+            ["reasoning_effort"] = reasoningEffort!
         };
 
         return settings;
@@ -80,13 +84,14 @@ public sealed class MistralKernelMixin : KernelMixin
     {
         public IReadOnlyDictionary<string, object?> Attributes => innerService.Attributes;
 
-        public Task<IReadOnlyList<ChatMessageContent>> GetChatMessageContentsAsync(
+        public async Task<IReadOnlyList<ChatMessageContent>> GetChatMessageContentsAsync(
             ChatHistory chatHistory,
             PromptExecutionSettings? executionSettings = null,
             Kernel? kernel = null,
             CancellationToken cancellationToken = default)
         {
-            return innerService.GetChatMessageContentsAsync(chatHistory, executionSettings, kernel, cancellationToken);
+            var contents = await innerService.GetChatMessageContentsAsync(chatHistory, executionSettings, kernel, cancellationToken);
+            return contents.Select(ConvertUsageMetadata).ToArray();
         }
 
         public async IAsyncEnumerable<StreamingChatMessageContent> GetStreamingChatMessageContentsAsync(
@@ -101,43 +106,72 @@ public sealed class MistralKernelMixin : KernelMixin
                                kernel,
                                cancellationToken))
             {
-                // Inject Usage metadata for consistent handling in ChatService
-                if (content.Metadata?.TryGetValue("Usage", out var usageObj) is true &&
-                    usageObj is MistralUsage usage)
-                {
-                    var usageDetails = new UsageDetails
-                    {
-                        InputTokenCount = usage.PromptTokens,
-                        OutputTokenCount = usage.CompletionTokens,
-                        TotalTokenCount = usage.TotalTokens
-                    };
-
-                    var newMetadata = new Dictionary<string, object?>();
-                    if (content.Metadata is not null)
-                    {
-                        foreach (var (key, value) in content.Metadata)
-                        {
-                            newMetadata[key] = value;
-                        }
-                    }
-                    newMetadata["Usage"] = usageDetails;
-
-                    yield return new StreamingChatMessageContent(
-                        content.Role,
-                        content.Content,
-                        content.InnerContent,
-                        content.ChoiceIndex,
-                        content.ModelId,
-                        content.Encoding,
-                        newMetadata)
-                    {
-                        Items = content.Items
-                    };
-                    continue;
-                }
-
-                yield return content;
+                yield return ConvertUsageMetadata(content);
             }
+        }
+
+        private static ChatMessageContent ConvertUsageMetadata(ChatMessageContent content)
+        {
+            if (!TryConvertUsageMetadata(content.Metadata, out var metadata))
+            {
+                return content;
+            }
+
+            return new ChatMessageContent(
+                content.Role,
+                content.Content,
+                content.ModelId,
+                content.InnerContent,
+                content.Encoding,
+                metadata)
+            {
+                AuthorName = content.AuthorName,
+                Items = content.Items
+            };
+        }
+
+        private static StreamingChatMessageContent ConvertUsageMetadata(StreamingChatMessageContent content)
+        {
+            if (!TryConvertUsageMetadata(content.Metadata, out var metadata))
+            {
+                return content;
+            }
+
+            return new StreamingChatMessageContent(
+                content.Role,
+                content.Content,
+                content.InnerContent,
+                content.ChoiceIndex,
+                content.ModelId,
+                content.Encoding,
+                metadata)
+            {
+                AuthorName = content.AuthorName,
+                Items = content.Items
+            };
+        }
+
+        private static bool TryConvertUsageMetadata(
+            IReadOnlyDictionary<string, object?>? source,
+            out IReadOnlyDictionary<string, object?> metadata)
+        {
+            if (source?.TryGetValue("Usage", out var usageObj) is not true || usageObj is not MistralUsage usage)
+            {
+                metadata = source ?? new Dictionary<string, object?>();
+                return false;
+            }
+
+            var converted = new Dictionary<string, object?>(source)
+            {
+                ["Usage"] = new UsageDetails
+                {
+                    InputTokenCount = usage.PromptTokens,
+                    OutputTokenCount = usage.CompletionTokens,
+                    TotalTokenCount = usage.TotalTokens
+                }
+            };
+            metadata = converted;
+            return true;
         }
     }
 }
