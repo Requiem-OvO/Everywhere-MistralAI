@@ -129,7 +129,7 @@ internal sealed class MistralClient
             }
             if (this._logger.IsEnabled(LogLevel.Trace))
             {
-                this._logger.LogTrace("Function call requests: {Requests}", string.Join(", ", chatChoice.ToolCalls!.Select(tc => $"{tc.Function?.Name}({tc.Function?.Parameters})")));
+                this._logger.LogTrace("Function call requests: {Requests}", string.Join(", ", chatChoice.ToolCalls!.Select(tc => tc.Function?.Name)));
             }
 
             Debug.Assert(kernel is not null);
@@ -279,6 +279,9 @@ internal sealed class MistralClient
 
             // Reset state
             toolCalls?.Clear();
+            MistralChatCompletionChunk? toolCallChunk = null;
+            MistralChatCompletionChoice? toolCallChoice = null;
+            string? streamedRole = null;
 
             // Stream the responses
             using (var activity = ModelDiagnostics.StartCompletionActivity(this._endpoint, this._modelId, ModelProvider, chatHistory, mistralExecutionSettings))
@@ -297,7 +300,6 @@ internal sealed class MistralClient
 
                 var responseEnumerator = response.ConfigureAwait(false).GetAsyncEnumerator();
                 List<StreamingKernelContent>? streamedContents = activity is not null ? [] : null;
-                string? streamedRole = null;
                 try
                 {
                     while (true)
@@ -327,13 +329,12 @@ internal sealed class MistralClient
 
                             MistralChatCompletionChoice chatChoice = completionChunk!.Choices![0]; // TODO Handle multiple choices
                             streamedRole ??= chatChoice.Delta!.Role;
-                            if (chatChoice.IsToolCall)
+                            if (chatChoice.ToolCalls is { Count: > 0 } chunkToolCalls)
                             {
-                                // Create a copy of the tool calls to avoid modifying the original list
-                                toolCalls = new List<MistralToolCall>(chatChoice.ToolCalls!);
-
-                                // Add the result message to the caller's chat history; this is required for the service to understand the tool call responses.
-                                chatHistory.Add(this.ToChatMessageContent(modelId, streamedRole!, completionChunk, chatChoice));
+                                toolCalls ??= [];
+                                MergeToolCalls(toolCalls, chunkToolCalls);
+                                toolCallChunk = completionChunk;
+                                toolCallChoice = chatChoice;
                             }
                         }
 
@@ -346,6 +347,25 @@ internal sealed class MistralClient
                     activity?.EndStreaming(streamedContents);
                     await responseEnumerator.DisposeAsync();
                 }
+            }
+
+            if (autoInvoke &&
+                toolCalls is { Count: > 0 } &&
+                toolCallChunk is not null &&
+                toolCallChoice is not null)
+            {
+                var toolCallMessage = new ChatMessageContent(
+                    new AuthorRole(streamedRole ?? "assistant"),
+                    content: null,
+                    modelId,
+                    toolCallChoice,
+                    Encoding.UTF8,
+                    GetChatChoiceMetadata(toolCallChunk, toolCallChoice));
+                foreach (var toolCall in toolCalls)
+                {
+                    this.AddFunctionCallContent(toolCallMessage, toolCall);
+                }
+                chatHistory.Add(toolCallMessage);
             }
 
             // If we don't have a function to invoke, we're done.
@@ -361,7 +381,7 @@ internal sealed class MistralClient
             // Log the requests
             if (this._logger.IsEnabled(LogLevel.Trace))
             {
-                this._logger.LogTrace("Function call requests: {Requests}", string.Join(", ", toolCalls.Select(mtc => $"{mtc.Function?.Name}({mtc.Function?.Parameters})")));
+                this._logger.LogTrace("Function call requests: {Requests}", string.Join(", ", toolCalls.Select(mtc => mtc.Function?.Name)));
             }
             else if (this._logger.IsEnabled(LogLevel.Debug))
             {
@@ -576,8 +596,12 @@ internal sealed class MistralClient
         using var httpRequestMessage = this.CreatePost(request, endpoint, this._apiKey, false);
 
         var response = await this.SendRequestAsync<TextEmbeddingResponse>(httpRequestMessage, cancellationToken).ConfigureAwait(false);
+        if (response.Data is null || response.Data.Any(item => item.Embedding is null))
+        {
+            throw new KernelException("Embedding response did not contain embedding data.");
+        }
 
-        return response.Data!.Select(item => new ReadOnlyMemory<float>([.. item.Embedding!])).ToList();
+        return response.Data.Select(item => new ReadOnlyMemory<float>([.. item.Embedding!])).ToList();
     }
 
     #region private
@@ -691,9 +715,10 @@ internal sealed class MistralClient
     {
         if (this._logger.IsEnabled(LogLevel.Trace))
         {
-            this._logger.LogTrace("ChatHistory: {ChatHistory}, Settings: {Settings}",
-                JsonSerializer.Serialize(chatHistory, JsonOptionsCache.ChatHistory),
-                JsonSerializer.Serialize(executionSettings));
+            this._logger.LogTrace(
+                "Creating chat completion request for {ModelId} with {MessageCount} messages.",
+                modelId,
+                chatHistory.Count);
         }
 
         var request = new ChatCompletionRequest(modelId)
@@ -896,10 +921,7 @@ internal sealed class MistralClient
         }
         catch (JsonException exc)
         {
-            throw new KernelException("Unexpected response from model", exc)
-            {
-                Data = { { "ResponseData", body } },
-            };
+            throw new KernelException("Unexpected response from model", exc);
         }
     }
 
@@ -943,6 +965,50 @@ internal sealed class MistralClient
         }
 
         return message;
+    }
+
+    internal static void MergeToolCalls(List<MistralToolCall> accumulated, IList<MistralToolCall> updates)
+    {
+        for (int index = 0; index < updates.Count; index++)
+        {
+            var update = updates[index];
+            MistralToolCall? target = null;
+            if (!string.IsNullOrEmpty(update.Id))
+            {
+                target = accumulated.FirstOrDefault(item => item.Id == update.Id);
+            }
+            if (target is null && index < accumulated.Count)
+            {
+                target = accumulated[index];
+            }
+
+            if (target is null)
+            {
+                target = new MistralToolCall();
+                accumulated.Add(target);
+            }
+
+            target.Id ??= update.Id;
+            if (!string.IsNullOrEmpty(update.Type))
+            {
+                target.Type = update.Type;
+            }
+
+            if (update.Function is null)
+            {
+                continue;
+            }
+
+            if (target.Function is null)
+            {
+                target.Function = new MistralFunction(
+                    update.Function.Name,
+                    update.Function.Description ?? string.Empty,
+                    update.Function.Parameters);
+            }
+
+            target.Function.Arguments += update.Function.Arguments;
+        }
     }
 
     private void AddFunctionCallContent(ChatMessageContent message, MistralToolCall toolCall)

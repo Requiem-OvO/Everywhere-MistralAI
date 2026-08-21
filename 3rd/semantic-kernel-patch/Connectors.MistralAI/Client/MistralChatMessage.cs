@@ -50,17 +50,24 @@ internal sealed class MistralChatMessage
                 continue;
             }
 
+            if (typeProperty.ValueKind != JsonValueKind.String)
+            {
+                continue;
+            }
+
             switch (typeProperty.GetString())
             {
-                case "text" when item.TryGetProperty("text", out var textProperty):
+                case "text" when item.TryGetProperty("text", out var textProperty) && textProperty.ValueKind == JsonValueKind.String:
                     (text ??= new StringBuilder()).Append(textProperty.GetString());
                     break;
                 case "thinking" when item.TryGetProperty("thinking", out var thinkingProperty) && thinkingProperty.ValueKind == JsonValueKind.Array:
                     foreach (var thinkingItem in thinkingProperty.EnumerateArray())
                     {
                         if (thinkingItem.TryGetProperty("type", out var thinkingTypeProperty) &&
+                            thinkingTypeProperty.ValueKind == JsonValueKind.String &&
                             thinkingTypeProperty.GetString() == "text" &&
-                            thinkingItem.TryGetProperty("text", out var reasoningTextProperty))
+                            thinkingItem.TryGetProperty("text", out var reasoningTextProperty) &&
+                            reasoningTextProperty.ValueKind == JsonValueKind.String)
                         {
                             (reasoning ??= new StringBuilder()).Append(reasoningTextProperty.GetString());
                         }
