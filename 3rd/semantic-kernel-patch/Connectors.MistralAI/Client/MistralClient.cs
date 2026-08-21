@@ -982,7 +982,13 @@ internal sealed class MistralClient
             {
                 target = accumulated.FirstOrDefault(item => item.Id == update.Id);
             }
-            if (target is null && index < accumulated.Count)
+
+            if (target is null && update.Index is int toolCallIndex)
+            {
+                target = accumulated.FirstOrDefault(item => item.Index == toolCallIndex);
+            }
+
+            if (target is null && update.Index is null && index < accumulated.Count)
             {
                 target = accumulated[index];
             }
@@ -994,6 +1000,7 @@ internal sealed class MistralClient
             }
 
             target.Id ??= update.Id;
+            target.Index ??= update.Index;
             if (!string.IsNullOrEmpty(update.Type))
             {
                 target.Type = update.Type;

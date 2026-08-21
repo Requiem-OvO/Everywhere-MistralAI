@@ -65,12 +65,8 @@ public sealed class MistralKernelMixin : KernelMixin
 
         // https://docs.mistral.ai/capabilities/reasoning/
         var reasoningEffort = _options.IncludeReasoningContent
-            ? _options.ReasoningEffort?.ToLowerInvariant()
+            ? _options.ReasoningEffort
             : "none";
-        if (reasoningEffort is not ("none" or "low" or "medium" or "high"))
-        {
-            reasoningEffort = "high";
-        }
 
         settings.ExtensionData = new Dictionary<string, object>
         {
