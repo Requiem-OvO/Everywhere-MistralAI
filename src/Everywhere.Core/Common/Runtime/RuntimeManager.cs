@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
-using Everywhere.Configuration;
 using Everywhere.Interop;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -599,8 +598,8 @@ public sealed class RuntimeManager(
 
     private static string GetSingleRootOrSelf(string extractionPath)
     {
-        var entries = Directory.EnumerateFileSystemEntries(extractionPath).ToList();
-        return entries.Count == 1 && Directory.Exists(entries[0]) ? entries[0] : extractionPath;
+        var entries = Directory.EnumerateFileSystemEntries(extractionPath).ToArray();
+        return entries.Length == 1 && Directory.Exists(entries[0]) ? entries[0] : extractionPath;
     }
 
     private static string FindRequiredFile(string root, string fileName)

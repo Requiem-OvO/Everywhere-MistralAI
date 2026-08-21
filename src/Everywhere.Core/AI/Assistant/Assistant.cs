@@ -72,11 +72,16 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
 
     [JsonIgnore]
     [SettingsItemIgnore]
-    public AssistantConfigurator Configurator => GetConfigurator(ConfiguratorType);
+    public AssistantConfigurator Configurator => ConfiguratorType switch
+    {
+        AssistantConfiguratorType.Official => _officialConfigurator,
+        AssistantConfiguratorType.PresetBased => _presetBasedConfigurator,
+        _ => _advancedConfigurator
+    };
 
     [JsonIgnore]
-    [DynamicResourceKey(LocaleKey.Assistant_ConfiguratorSelector_Header)]
-    [SettingsItem(Classes = ["Ghost"])]
+    [DynamicLocaleKey(LocaleKey.Assistant_ConfiguratorSelector_Header)]
+    [SettingsItem(Classes = ["Ghost"], Index = 0)]
     protected SettingsControl<AssistantConfiguratorSelector> ConfiguratorSelector => new(
         new AssistantConfiguratorSelector
         {
@@ -84,47 +89,51 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
         });
 
     [ObservableProperty]
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.Assistant_RequestTimeoutSeconds_Header,
         LocaleKey.Assistant_RequestTimeoutSeconds_Description)]
-    [SettingsItem(Group = LocaleKey.Common_Advanced)]
+    [SettingsItem(Group = LocaleKey.Assistant_AdvancedSettings, Index = 0)]
     [SettingsIntegerItem(IsSliderVisible = false)]
     [DefaultValue(20)]
     public partial int RequestTimeoutSeconds { get; set; } = 20;
 
+    [JsonIgnore]
     public bool IsOpenAI => Schema == ModelProviderSchema.OpenAI;
 
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.Assistant_OpenAIOptions_Header,
         LocaleKey.Assistant_OpenAIOptions_Description)]
-    [SettingsItem(IsVisibleBindingPath = nameof(IsOpenAI), Group = LocaleKey.Common_Advanced)]
+    [SettingsItem(IsVisibleBindingPath = nameof(IsOpenAI), Group = LocaleKey.Assistant_AdvancedSettings, Index = int.MaxValue)]
     [SettingsItems(IsExpanded = false)]
     public OpenAIOptions OpenAIOptions { get; } = new();
 
+    [JsonIgnore]
     public bool IsOpenAIResponses => Schema == ModelProviderSchema.OpenAIResponses;
 
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.Assistant_OpenAIResponsesOptions_Header,
         LocaleKey.Assistant_OpenAIResponsesOptions_Description)]
-    [SettingsItem(IsVisibleBindingPath = nameof(IsOpenAIResponses), Group = LocaleKey.Common_Advanced)]
+    [SettingsItem(IsVisibleBindingPath = nameof(IsOpenAIResponses), Group = LocaleKey.Assistant_AdvancedSettings, Index = int.MaxValue)]
     [SettingsItems(IsExpanded = false)]
     public OpenAIResponsesOptions OpenAIResponsesOptions { get; } = new();
 
+    [JsonIgnore]
     public bool IsAnthropic => Schema == ModelProviderSchema.Anthropic;
 
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.Assistant_AnthropicOptions_Header,
         LocaleKey.Assistant_AnthropicOptions_Description)]
-    [SettingsItem(IsVisibleBindingPath = nameof(IsAnthropic), Group = LocaleKey.Common_Advanced)]
+    [SettingsItem(IsVisibleBindingPath = nameof(IsAnthropic), Group = LocaleKey.Assistant_AdvancedSettings, Index = int.MaxValue)]
     [SettingsItems(IsExpanded = false)]
     public AnthropicOptions AnthropicOptions { get; } = new();
 
+    [JsonIgnore]
     public bool IsGoogle => Schema == ModelProviderSchema.Google;
 
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.Assistant_GoogleOptions_Header,
         LocaleKey.Assistant_GoogleOptions_Description)]
-    [SettingsItem(IsVisibleBindingPath = nameof(IsGoogle), Group = LocaleKey.Common_Advanced)]
+    [SettingsItem(IsVisibleBindingPath = nameof(IsGoogle), Group = LocaleKey.Assistant_AdvancedSettings, Index = int.MaxValue)]
     [SettingsItems(IsExpanded = false)]
     public GoogleOptions GoogleOptions { get; } = new();
 
@@ -153,13 +162,6 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
         _presetBasedConfigurator = new PresetBasedAssistantConfigurator(this);
         _advancedConfigurator = new AdvancedAssistantConfigurator(this);
     }
-
-    public AssistantConfigurator GetConfigurator(AssistantConfiguratorType type) => type switch
-    {
-        AssistantConfiguratorType.Official => _officialConfigurator,
-        AssistantConfiguratorType.PresetBased => _presetBasedConfigurator,
-        _ => _advancedConfigurator
-    };
 
     public void ApplyTemplate(ModelProviderTemplate? modelProviderTemplate)
     {

@@ -6,7 +6,6 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using CommunityToolkit.Mvvm.Input;
 using Everywhere.Collections;
-using Everywhere.Common;
 using Everywhere.Configuration;
 using ShadUI;
 
@@ -64,8 +63,8 @@ public sealed partial class ApiKeyComboBox : TemplatedControl
     private async Task AddApiKeyAsync(CancellationToken cancellationToken)
     {
         var form = new CreateApiKeyForm(DefaultName);
-        var result = await ServiceLocator.Resolve<DialogManager>()
-            .CreateDialog(form, LocaleResolver.ApiKeyComboBox_AddApiKey)
+        var result = await DialogManager
+            .CreateDialog(form, LocaleResolver.ApiKeyComboBox_AddApiKey, TopLevel.GetTopLevel(this))
             .WithPrimaryButton(
                 LocaleResolver.Common_OK,
                 (_, e) => e.Cancel = !form.ApiKey.ValidateAndSave())
@@ -82,8 +81,8 @@ public sealed partial class ApiKeyComboBox : TemplatedControl
     private async Task ManageApiKeyAsync(CancellationToken cancellationToken)
     {
         using var form = new ManageApiKeyForm(_itemsSource, DefaultName);
-        await ServiceLocator.Resolve<DialogManager>()
-            .CreateDialog(form, LocaleResolver.ApiKeyComboBox_ManageApiKey)
+        await DialogManager
+            .CreateDialog(form, LocaleResolver.ApiKeyComboBox_ManageApiKey, TopLevel.GetTopLevel(this))
             .WithPrimaryButton(LocaleResolver.Common_OK)
             .ShowAsync(cancellationToken);
     }

@@ -14,7 +14,7 @@ public class OfficialModelDefinitionTests
         assistant.ContextLimit = 4096;
         assistant.DeprecationDate = new DateOnly(2026, 6, 1);
 
-        var result = OfficialModelDefinitionForm.Reconcile(assistant, assistant.ModelId, null, []);
+        var result = OfficialModelDefinitionSelector.Reconcile(assistant, assistant.ModelId, null, []);
 
         using (Assert.EnterMultipleScope())
         {
@@ -33,7 +33,7 @@ public class OfficialModelDefinitionTests
         assistant.SupportsToolCall = false;
         var latestModel = CreateModel("model-a", contextLimit: 2000, supportsToolCall: true);
 
-        var result = OfficialModelDefinitionForm.Reconcile(
+        var result = OfficialModelDefinitionSelector.Reconcile(
             assistant,
             assistant.ModelId,
             null,
@@ -54,7 +54,7 @@ public class OfficialModelDefinitionTests
         var assistant = CreateAssistant("old-model");
         var replacement = CreateModel("new-model");
 
-        var result = OfficialModelDefinitionForm.Reconcile(
+        var result = OfficialModelDefinitionSelector.Reconcile(
             assistant,
             assistant.ModelId,
             null,
@@ -74,7 +74,7 @@ public class OfficialModelDefinitionTests
         var assistant = CreateAssistant("model-a");
         var latestModel = CreateModel("model-a", contextLimit: 3000);
 
-        var result = OfficialModelDefinitionForm.Reconcile(
+        var result = OfficialModelDefinitionSelector.Reconcile(
             assistant,
             "model-a",
             null,

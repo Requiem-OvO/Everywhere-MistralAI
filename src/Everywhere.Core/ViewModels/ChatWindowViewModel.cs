@@ -8,10 +8,7 @@ using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using DynamicData;
-using DynamicData.Binding;
 using Everywhere.Chat;
-using Everywhere.Chat.Plugins;
 using Everywhere.Collections;
 using Everywhere.Common;
 using Everywhere.Common.Notification;
@@ -23,7 +20,6 @@ using Everywhere.StrategyEngine;
 using Everywhere.Utilities;
 using Everywhere.Views;
 using Microsoft.Extensions.Logging;
-using ZLinq;
 
 namespace Everywhere.ViewModels;
 
@@ -37,6 +33,8 @@ public sealed partial class ChatWindowViewModel :
     public PersistentState PersistentState { get; }
 
     public IChatContextManager ChatContextManager { get; }
+
+    public ChatTextSearchViewModel TextSearch { get; }
 
     public bool IsOpened
     {
@@ -66,15 +64,13 @@ public sealed partial class ChatWindowViewModel :
 
     public IReadOnlyBindableList<ChatAttachment> ChatAttachments { get; }
 
-    public IReadOnlyBindableList<ChatPlugin> ChatPlugins { get; }
-
     public IReadOnlyBindableList<DynamicNotification> Notifications => _notificationService.Notifications;
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(EditCommand))]
-    public partial ChatMessageNode? EditingUserMessageNode { get; private set; }
+    [NotifyCanExecuteChangedFor(nameof(EditMessageNodeCommand))]
+    public partial ChatMessageNode? EditingMessageNode { get; private set; }
 
-    public bool CanEdit => !IsBusy && EditingUserMessageNode is null;
+    public bool CanEdit => !IsBusy && EditingMessageNode is null;
 
     [ObservableProperty]
     public partial Strategy? SelectedStrategy { get; set; }
@@ -91,7 +87,7 @@ public sealed partial class ChatWindowViewModel :
         {
             value = value.SafeSubstring(0, ChatInputAreaTextMaxLength);
             if (!SetProperty(ref field, value)) return;
-            if (EditingUserMessageNode is null) PersistentState.ChatInputAreaText = value;
+            if (EditingMessageNode is null) PersistentState.ChatInputAreaText = value;
         }
     }
 
@@ -100,7 +96,7 @@ public sealed partial class ChatWindowViewModel :
     /// Can be set to one of greetings or instructions based on the chat context, or a default value.
     /// </summary>
     [ObservableProperty]
-    public partial IDynamicResourceKey? ChatInputAreaWatermarkKey { get; private set; }
+    public partial IDynamicLocaleKey? ChatInputAreaWatermarkKey { get; private set; }
 
     public ISoftwareUpdater SoftwareUpdater { get; }
 
@@ -112,7 +108,7 @@ public sealed partial class ChatWindowViewModel :
     private readonly IChatWindowNotificationService _notificationService;
     private readonly ILogger<ChatWindowViewModel> _logger;
 
-    private readonly DynamicResourceKey _defaultWatermarkKey = new(LocaleKey.ChatInputArea_Watermark);
+    private readonly DynamicLocaleKey _defaultWatermarkKey = new(LocaleKey.ChatInputArea_PlaceholderText);
     private readonly SourceList<ChatAttachment> _chatAttachmentsSource = new();
 
     private readonly Meter _meter = new(typeof(ChatWindowViewModel).FullName.NotNull(), App.Version);
@@ -124,7 +120,6 @@ public sealed partial class ChatWindowViewModel :
         Settings settings,
         PersistentState persistentState,
         IChatContextManager chatContextManager,
-        IChatPluginManager chatPluginManager,
         IChatWindowNotificationService notificationService,
         ISoftwareUpdater softwareUpdater,
         IChatService chatService,
@@ -137,6 +132,8 @@ public sealed partial class ChatWindowViewModel :
         Settings = settings;
         PersistentState = persistentState;
         ChatContextManager = chatContextManager;
+        TextSearch = new ChatTextSearchViewModel(chatContextManager);
+        LifetimeDisposables.Add(TextSearch);
         SoftwareUpdater = softwareUpdater;
 
         _chatService = chatService;
@@ -148,16 +145,6 @@ public sealed partial class ChatWindowViewModel :
         _logger = logger;
 
         _activeChatWindowsGauge = _meter.CreateGauge<int>("app.active_chat_windows");
-
-        // Initialize chat plugins from both built-in and MCP
-        ChatPlugins = chatPluginManager.BuiltInPlugins
-            .ToObservableChangeSet<IReadOnlyBindableList<BuiltInChatPlugin>, BuiltInChatPlugin>()
-            .Transform(ChatPlugin (x) => x, transformOnRefresh: true)
-            .Or(
-                chatPluginManager.McpPlugins
-                    .ToObservableChangeSet<IReadOnlyBindableList<McpChatPlugin>, McpChatPlugin>()
-                    .Transform(ChatPlugin (x) => x, transformOnRefresh: true))
-            .BindEx(LifetimeDisposables);
 
         // Initialize chat attachments
         ChatAttachments = _chatAttachmentsSource
@@ -187,6 +174,20 @@ public sealed partial class ChatWindowViewModel :
                 .Switch()
                 .ObserveOnAvaloniaDispatcher()
                 .Subscribe(HandleCurrentChatContextIsBusyChanged)
+        );
+        LifetimeDisposables.Add(
+            Settings.Model.WhenValueChanged(x => x.SelectedCustomAssistant)
+                .Select(assistant => assistant is null ?
+                    Observable.Return(0) :
+                    assistant.WhenValueChanged(x => x.ModelId).Select(_ => 0).Merge(assistant.WhenValueChanged(x => x.ContextLimit).Select(_ => 0)))
+                .Switch()
+                .ObserveOnAvaloniaDispatcher()
+                .Subscribe(_ => UpdateCurrentContextUsageModel())
+        );
+        LifetimeDisposables.Add(
+            ChatContextManager.WhenValueChanged(x => x.Current)
+                .ObserveOnAvaloniaDispatcher()
+                .Subscribe(_ => UpdateCurrentContextUsageModel())
         );
 
         WeakReferenceMessenger.Default.RegisterAll(this);
@@ -408,7 +409,7 @@ public sealed partial class ChatWindowViewModel :
             //     var text = await Clipboard.GetTextAsync();
             //     if (text.IsNullOrEmpty()) return;
             //
-            //     chatAttachments.Add(new ChatTextAttachment(new DirectResourceKey(text.SafeSubstring(0, 10)), text));
+            //     chatAttachments.Add(new ChatTextAttachment(new DirectLocaleKey(text.SafeSubstring(0, 10)), text));
             // }
         }
         catch (OperationCanceledException) { }
@@ -443,14 +444,14 @@ public sealed partial class ChatWindowViewModel :
                                     .Concat(FileUtilities.GetFileExtensionsByCategory(FileTypeCategory.Document))
                                     .Concat(FileUtilities.GetFileExtensionsByCategory(FileTypeCategory.Script))
                                     .Select(x => '*' + x)
-                                    .ToList()
+                                    .ToArray()
                             },
                             new FilePickerFileType(LocaleResolver.ChatWindowViewModel_AddFile_FilePickerFileType_Images)
                             {
                                 Patterns = FileUtilities.GetFileExtensionsByCategory(FileTypeCategory.Image)
                                     .AsValueEnumerable()
                                     .Select(x => '*' + x)
-                                    .ToList()
+                                    .ToArray()
                             },
                             new FilePickerFileType(LocaleResolver.ChatWindowViewModel_AddFile_FilePickerFileType_Documents)
                             {
@@ -458,7 +459,7 @@ public sealed partial class ChatWindowViewModel :
                                     .AsValueEnumerable()
                                     .Concat(FileUtilities.GetFileExtensionsByCategory(FileTypeCategory.Script))
                                     .Select(x => '*' + x)
-                                    .ToList()
+                                    .ToArray()
                             },
                             new FilePickerFileType(LocaleResolver.FilePickerFileType_AllFiles)
                             {
@@ -549,11 +550,11 @@ public sealed partial class ChatWindowViewModel :
     private async Task<FileAttachment> CreateFromBitmapAsync(Bitmap bitmap, CancellationToken cancellationToken)
     {
         using var memoryStream = new MemoryStream();
-        bitmap.Save(memoryStream, 100);
+        bitmap.Save(memoryStream, PngBitmapEncoderOptions.Default);
 
         var blob = await _blobStorage.StorageBlobAsync(memoryStream, "image/png", cancellationToken: cancellationToken);
         return new FileAttachment(
-            new DynamicResourceKey(string.Empty),
+            new DynamicLocaleKey(string.Empty),
             blob.LocalPath,
             blob.Sha256,
             blob.MimeType);
@@ -591,7 +592,7 @@ public sealed partial class ChatWindowViewModel :
             userMessage = new UserChatMessage(message, attachments!);
         }
 
-        if (EditingUserMessageNode is { } oldNode)
+        if (EditingMessageNode is { } oldNode)
         {
             CancelEditing();
             _chatService.Edit(oldNode, userMessage);
@@ -603,14 +604,14 @@ public sealed partial class ChatWindowViewModel :
     }
 
     [RelayCommand(CanExecute = nameof(CanEdit))]
-    private void Edit(ChatMessageNode userChatMessageNode)
+    private void EditMessageNode(ChatMessageNode userChatMessageNode)
     {
         if (userChatMessageNode is not { Message: UserChatMessage userChatMessage }) return;
 
         var textBeforeEdit = ChatInputAreaText;
         var strategyCommandBeforeEdit = SelectedStrategy;
 
-        EditingUserMessageNode = userChatMessageNode;
+        EditingMessageNode = userChatMessageNode;
         ChatInputAreaText = userChatMessage.Content;
         SelectedStrategy = userChatMessage.As<UserStrategyChatMessage>()?.Strategy;
 
@@ -618,7 +619,7 @@ public sealed partial class ChatWindowViewModel :
         {
             _snapshotBeforeEdit = new ChatInputAreaSnapshot(
                 textBeforeEdit,
-                list.Count == 0 ? null : list.ToList(),
+                list.Count == 0 ? null : list.ToArray(),
                 strategyCommandBeforeEdit);
 
             list.Reset(userChatMessage.Attachments.Where(a => a is not VisualElementAttachment { IsElementValid: false }));
@@ -628,9 +629,9 @@ public sealed partial class ChatWindowViewModel :
     [RelayCommand]
     public void CancelEditing()
     {
-        if (EditingUserMessageNode is null) return;
+        if (EditingMessageNode is null) return;
 
-        EditingUserMessageNode = null;
+        EditingMessageNode = null;
         _chatAttachmentsSource.Edit(list =>
         {
             list.Clear();
@@ -645,16 +646,19 @@ public sealed partial class ChatWindowViewModel :
     }
 
     [RelayCommand(CanExecute = nameof(IsNotBusy))]
-    private void Retry(ChatMessageNode chatMessageNode)
+    private void RetryMessageNode(ChatMessageNode chatMessageNode)
     {
         _chatService.Retry(chatMessageNode);
     }
 
     [RelayCommand(CanExecute = nameof(IsNotBusy))]
-    private void Continue(ChatMessageNode chatMessageNode)
+    private void ContinueMessageNode(ChatMessageNode chatMessageNode)
     {
         _chatService.Continue(chatMessageNode);
     }
+
+    [RelayCommand(CanExecute = nameof(IsNotBusy))]
+    private void CompactContext() => _chatService.CompactContext();
 
     [RelayCommand(CanExecute = nameof(IsBusy))]
     private void Cancel()
@@ -663,7 +667,7 @@ public sealed partial class ChatWindowViewModel :
     }
 
     [RelayCommand]
-    private Task CopyAsync(ChatMessage chatMessage)
+    private Task CopyMessageAsync(ChatMessage chatMessage)
     {
         return Clipboard.SetTextAsync(chatMessage.ToString());
     }
@@ -772,12 +776,19 @@ public sealed partial class ChatWindowViewModel :
         IsBusy = isBusy;
     }
 
+    private void UpdateCurrentContextUsageModel()
+    {
+        var assistant = Settings.Model.SelectedCustomAssistant;
+        ChatContextManager.Current.ContextUsage.UpdateModel(assistant?.ModelId, assistant?.ContextLimit ?? 0);
+    }
+
     partial void OnIsBusyChanged(bool value)
     {
         SendMessageCommand.NotifyCanExecuteChanged();
-        EditCommand.NotifyCanExecuteChanged();
-        RetryCommand.NotifyCanExecuteChanged();
-        ContinueCommand.NotifyCanExecuteChanged();
+        CompactContextCommand.NotifyCanExecuteChanged();
+        EditMessageNodeCommand.NotifyCanExecuteChanged();
+        RetryMessageNodeCommand.NotifyCanExecuteChanged();
+        ContinueMessageNodeCommand.NotifyCanExecuteChanged();
         CancelCommand.NotifyCanExecuteChanged();
 
         UpdateWatermark(value, SelectedStrategy);
@@ -798,8 +809,8 @@ public sealed partial class ChatWindowViewModel :
         {
             ChatInputAreaWatermarkKey = selectedStrategy.ArgumentHintKey is null ?
                 selectedStrategy.DescriptionKey :
-                new FormattedDynamicResourceKey(
-                    LocaleKey.ChatInputArea_Watermark_StrategyArgumentHint,
+                new FormattedDynamicLocaleKey(
+                    LocaleKey.ChatInputArea_PlaceholderText_StrategyArgumentHint,
                     selectedStrategy.ArgumentHintKey);
         }
         else
@@ -837,7 +848,7 @@ public sealed partial class ChatWindowViewModel :
     {
         try
         {
-            var context = StrategyContext.FromAttachments(attachments.ToList());
+            var context = StrategyContext.FromAttachments([.. attachments]);
             StrategiesSnapshot = _strategyEngine.GetStrategies(context);
         }
         catch (Exception ex)

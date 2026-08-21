@@ -1,9 +1,10 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.Metrics;
-using System.Reactive.Disposables;
 using System.Text;
 using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.AI;
+using Everywhere.AI.Prompts;
+using Everywhere.Chat.Documents;
 using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins;
 using Everywhere.Common;
@@ -21,10 +22,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
-using ZLinq;
 using ChatMessageContent = Microsoft.SemanticKernel.ChatMessageContent;
 using FunctionCallContent = Microsoft.SemanticKernel.FunctionCallContent;
 using FunctionResultContent = Microsoft.SemanticKernel.FunctionResultContent;
+using PromptTemplateRenderer = Everywhere.AI.Prompts.PromptTemplateRenderer;
 
 namespace Everywhere.Chat;
 
@@ -36,6 +37,7 @@ public sealed partial class ChatService : IChatService
     private readonly IBlobStorage _blobStorage;
     private readonly Settings _settings;
     private readonly PersistentState _persistentState;
+    private readonly IPromptService _promptService;
     private readonly ISkillPromptProvider _skillPromptProvider;
     private readonly IStatisticsRecorder _statisticsRecorder;
     private readonly ILogger<ChatService> _logger;
@@ -60,6 +62,7 @@ public sealed partial class ChatService : IChatService
         IBlobStorage blobStorage,
         Settings settings,
         PersistentState persistentState,
+        IPromptService promptService,
         ISkillPromptProvider skillPromptProvider,
         IStatisticsRecorder statisticsRecorder,
         ILogger<ChatService> logger)
@@ -70,6 +73,7 @@ public sealed partial class ChatService : IChatService
         _blobStorage = blobStorage;
         _settings = settings;
         _persistentState = persistentState;
+        _promptService = promptService;
         _skillPromptProvider = skillPromptProvider;
         _statisticsRecorder = statisticsRecorder;
         _logger = logger;
@@ -260,6 +264,42 @@ public sealed partial class ChatService : IChatService
             _logger.ToExceptionHandler());
     }
 
+    public void CompactContext()
+    {
+        var chatContext = _chatContextManager.Current;
+        var assistant = _settings.Model.SelectedCustomAssistant;
+
+        chatContext.TryExecute(
+            async cancellationToken =>
+            {
+                using var activity = _activitySource.StartActivity();
+                activity?.SetTag("chat.context.id", chatContext.Metadata.Id);
+
+                if (assistant is null)
+                {
+                    chatContext.Add(CreateCustomAssistantNotSelectedErrorAssistantChatMessage());
+                    return;
+                }
+
+                GenerationContext? environment = null;
+                try
+                {
+                    environment = await CreateGenerationEnvironmentAsync(chatContext, assistant, null, cancellationToken);
+                    await CompactContextAsync(
+                        chatContext,
+                        environment,
+                        ContextCompressionTrigger.Manual,
+                        ResolveCompressionBoundary(chatContext),
+                        cancellationToken);
+                }
+                finally
+                {
+                    environment?.KernelMixin.Dispose();
+                }
+            },
+            _logger.ToExceptionHandler());
+    }
+
     /// <summary>
     /// Ensures that a custom assistant is selected. If not, adds an error message to the chat context and throws an exception.
     /// We use an error message instead of throwing an exception so that user's message will not be lost and the user will know what happened in the chat UI.
@@ -268,7 +308,7 @@ public sealed partial class ChatService : IChatService
     private static AssistantChatMessage CreateCustomAssistantNotSelectedErrorAssistantChatMessage() =>
         new()
         {
-            ErrorMessageKey = new DynamicResourceKey(LocaleKey.ChatService_Error_CustomAssistantNotSelected),
+            ErrorMessageKey = new DynamicLocaleKey(LocaleKey.ChatService_Error_CustomAssistantNotSelected),
             FinishedAt = DateTimeOffset.UtcNow,
         };
 
@@ -292,10 +332,9 @@ public sealed partial class ChatService : IChatService
             .Attachments
             .AsValueEnumerable()
             .OfType<VisualElementAttachment>()
-            .ToList();
+            .ToArray();
         RecordImageAttachmentStatistics(chatContext, userChatMessage);
-
-        if (visualElementAttachments.Count == 0) return;
+        if (visualElementAttachments.Length == 0) return;
 
         var analyzingContextMessage = new ActionChatMessage(
             LucideIconKind.TextSearch,
@@ -389,19 +428,31 @@ public sealed partial class ChatService : IChatService
         builder.Services.AddSingleton(chatContext);
         builder.Services.AddSingleton(assistant);
         builder.Services.AddTransient<IChatPluginDisplaySink>(static x =>
-            x.GetRequiredService<ChatContext>().FunctionCallContext.Value?.FunctionCallChatMessage.DisplaySink ??
+            x.GetRequiredService<ChatContext>().FunctionCallContext.Value?.DisplaySink ??
             throw new InvalidOperationException($"No {nameof(IChatPluginDisplaySink)} is available in current function call context."));
         builder.Services.AddTransient<IChatPluginUserInterface>(static x =>
             x.GetRequiredService<ChatContext>().FunctionCallContext.Value ??
             throw new InvalidOperationException($"No {nameof(IChatPluginUserInterface)} is available in current function call context."));
 
-        if (kernelMixin.SupportsToolCall && _persistentState.IsToolCallEnabled)
+        var customAssistant = assistant as CustomAssistant;
+        if (kernelMixin.SupportsToolCall && (customAssistant?.IsToolCallEnabled ?? true))
         {
             var userMessage = chatContext.Read(list => list.AsValueEnumerable().Select(n => n.Message).OfType<UserChatMessage>().LastOrDefault());
-            var strategyToolRulesets = userMessage?.As<UserStrategyChatMessage>()?.Strategy.ToolRulesets;
-            var toolRulesets = new ToolRulesets(1) { { "builtin.web.web_search", _persistentState.IsWebSearchEnabled } }
-                .Union(strategyToolRulesets)
-                .Union(chatContext.ToolRulesets);
+            var strategyToolRulesets = userMessage?.As<UserStrategyChatMessage>()?.Strategy.ToolPatternRulesets;
+            var webSearchRulesets = new ToolPatternRulesets(1)
+            {
+                {
+                    "builtin.web",
+                    new ToolFunctionPatternRulesets { { "web_search", _persistentState.IsWebSearchEnabled } }
+                }
+            };
+            var toolRulesets = new ToolRulesetsPipeline(
+            [
+                customAssistant?.ToolEnablementRulesets,
+                webSearchRulesets,
+                strategyToolRulesets,
+                chatContext.ToolPatternRulesets
+            ]);
 
             var chatPluginScope = await _chatPluginManager.CreateScopeAsync(
                 assistant,
@@ -418,6 +469,56 @@ public sealed partial class ChatService : IChatService
         }
 
         return builder.Build();
+    }
+
+    private async Task<GenerationContext> CreateGenerationEnvironmentAsync(
+        ChatContext chatContext,
+        Assistant assistant,
+        string? systemPromptOverride,
+        CancellationToken cancellationToken)
+    {
+        var kernelMixin = _kernelMixinFactory.Create(assistant);
+        try
+        {
+            var kernel = await BuildKernelAsync(kernelMixin, chatContext, assistant, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var customAssistant = assistant as CustomAssistant;
+            var toolCallStatus = customAssistant?.ToolCallStatus ??
+                (kernelMixin.SupportsToolCall ? ToolCallStatus.Enabled : ToolCallStatus.NotSupported);
+            var promptRenderer = new ScopedPromptRenderer(
+                SystemPromptPlaceholderSource.Instance,
+                new PromptPlaceholderContext(
+                    SkillsPromptResolver: () => _skillPromptProvider.GetPrompt(toolCallStatus),
+                    WorkingDirectoryResolver: chatContext.EnsureWorkingDirectory));
+
+            string systemPromptTemplate;
+            if (systemPromptOverride is null)
+            {
+                var promptId = customAssistant?.SystemPromptId ?? Guid.Empty;
+                var resolvedPrompt = await _promptService.GetPromptAsync(promptId, cancellationToken) ?? _promptService.DefaultPrompt;
+                systemPromptTemplate = resolvedPrompt.Template;
+            }
+            else
+            {
+                systemPromptTemplate = systemPromptOverride;
+            }
+
+            return new GenerationContext(
+                kernel,
+                kernelMixin,
+                promptRenderer,
+                promptRenderer.RenderSystemPrompt(systemPromptTemplate),
+                assistant.InputModalities,
+                customAssistant is not null ?
+                    ContextUsageSnapshot.NormalizeCompressionThresholdPercentage(customAssistant.ContextCompressionThreshold) :
+                    ContextUsageSnapshot.DefaultCompressionThresholdPercentage);
+        }
+        catch
+        {
+            kernelMixin.Dispose();
+            throw;
+        }
     }
 
     /// <summary>
@@ -442,26 +543,35 @@ public sealed partial class ChatService : IChatService
         using var activity = _activitySource.StartChatActivity("chat", assistant);
         activity?.SetTag("id", chatContext.Metadata.Id);
 
-        KernelMixin? kernelMixin = null;
+        GenerationContext? environment = null;
         var previousModelInvocationEventId = _currentModelInvocationEventId.Value;
         try
         {
-            kernelMixin = _kernelMixinFactory.Create(assistant);
-            var kernel = await BuildKernelAsync(kernelMixin, chatContext, assistant, cancellationToken);
+            environment = await CreateGenerationEnvironmentAsync(
+                chatContext,
+                assistant,
+                systemPromptOverride,
+                cancellationToken);
+            var kernel = environment.Kernel;
+            var kernelMixin = environment.KernelMixin;
+            var promptRenderer = environment.PromptRenderer;
+            var systemPrompt = environment.SystemPrompt;
+            var hasAttemptedAutomaticCompaction = false;
+            var hasAttemptedContextLengthRecovery = false;
 
-            cancellationToken.ThrowIfCancellationRequested();
-
-            // Because the custom assistant maybe changed, we need to re-render the system prompt.
-            // But we only do this once per generation, even if the system time may change during function calls.
-            // This can save prompt tokens because they may be cached by LLM providers.
-            var promptVariables = chatContext.GetPromptVariables();
-            promptVariables["SkillsPrompt"] = _skillPromptProvider.GetPrompt;
-            var promptRenderer = new ScopedPromptRenderer(promptVariables);
-            var promptTemplate = systemPromptOverride ??
-                (assistant is ISystemPromptProvider { SystemPrompt: { Length: > 0 } providedSystemPrompt } ?
-                    providedSystemPrompt :
-                    Prompts.DefaultSystemPrompt);
-            var systemPrompt = promptRenderer.RenderSystemPrompt(promptTemplate);
+            if (ResolvePendingAutomaticCompressionTrigger(
+                    chatContext,
+                    environment.ContextCompressionThreshold) is { } pendingCompressionTrigger)
+            {
+                hasAttemptedAutomaticCompaction = true;
+                var compacted = await CompactContextAsync(
+                    chatContext,
+                    environment,
+                    pendingCompressionTrigger,
+                    ResolveCompressionBoundary(chatContext, assistantChatMessage),
+                    cancellationToken);
+                if (!compacted && pendingCompressionTrigger == ContextCompressionTrigger.ContextLengthRecovery) return;
+            }
 
             while (true)
             {
@@ -471,14 +581,10 @@ public sealed partial class ChatService : IChatService
                 var chatHistory = await ChatHistoryBuilder.BuildChatHistoryAsync(
                     promptRenderer,
                     systemPrompt,
-                    chatContext
-                        .Items
-                        .AsValueEnumerable()
-                        .Select(n => n.Message)
-                        .Where(m => m.Role.Label is "assistant" or "user" or "tool")
-                        .ToList(),
+                    chatContext.Items,
                     _persistentState.MaxContextRounds,
                     assistant.InputModalities,
+                    kernelMixin.ContextLimit,
                     cancellationToken);
 
                 if (_settings.ChatWindow.AutomaticallyGenerateTitle &&
@@ -498,24 +604,75 @@ public sealed partial class ChatService : IChatService
 
                 // Process streaming chat message contents (thinking, text, function calls, etc.)
                 // It will return the function call contents for further processing.
-                var functionCallContents = await GetStreamingChatMessageContentsAsync(
-                    kernel,
-                    kernelMixin,
-                    chatContext,
-                    chatHistory,
-                    assistantChatMessage,
-                    purpose,
-                    cancellationToken);
-                if (functionCallContents.Count <= 0) break; // No more function calls, exit the loop.
+                ModelInvocationResult invocationResult;
+                try
+                {
+                    invocationResult = await GetStreamingChatMessageContentsAsync(
+                        kernel,
+                        kernelMixin,
+                        chatContext,
+                        chatHistory,
+                        assistantChatMessage,
+                        purpose,
+                        cancellationToken);
+                }
+                catch (Exception ex) when (!hasAttemptedContextLengthRecovery && IsContextLengthExceeded(ex, kernelMixin))
+                {
+                    hasAttemptedContextLengthRecovery = true;
+                    var compacted = await CompactContextAsync(
+                        chatContext,
+                        environment,
+                        ContextCompressionTrigger.ContextLengthRecovery,
+                        ResolveCompressionBoundary(chatContext, assistantChatMessage),
+                        cancellationToken);
+                    if (!compacted) return;
 
-                // Invoke the functions specified in the function call contents.
-                await InvokeFunctionsAsync(
-                    kernel,
-                    kernelMixin,
-                    chatContext,
-                    assistantChatMessage,
-                    functionCallContents,
-                    cancellationToken);
+                    assistantChatMessage.FinishedAt = DateTimeOffset.UtcNow;
+                    assistantChatMessage.IsBusy = false;
+                    assistantChatMessage = new AssistantChatMessage { IsBusy = true };
+                    chatContext.Add(assistantChatMessage);
+                    continue;
+                }
+                await chatContext.ReportContextUsageAsync(
+                    invocationResult.Usage,
+                    kernelMixin.ModelId,
+                    kernelMixin.ContextLimit);
+
+                if (invocationResult.FunctionCalls.Count > 0)
+                {
+                    await InvokeFunctionsAsync(
+                        kernel,
+                        kernelMixin,
+                        chatContext,
+                        assistantChatMessage,
+                        invocationResult.FunctionCalls,
+                        cancellationToken);
+                }
+
+                var shouldCompact = !hasAttemptedAutomaticCompaction &&
+                    chatContext.ContextUsage.Snapshot.HasReachedCompressionThreshold(
+                        environment.ContextCompressionThreshold);
+                if (shouldCompact)
+                {
+                    hasAttemptedAutomaticCompaction = true;
+                    var compacted = await CompactContextAsync(
+                        chatContext,
+                        environment,
+                        ContextCompressionTrigger.Automatic,
+                        ResolveCompressionBoundary(chatContext, assistantChatMessage),
+                        cancellationToken);
+                    if (!compacted) cancellationToken.ThrowIfCancellationRequested();
+
+                    if (compacted && invocationResult.FunctionCalls.Count > 0)
+                    {
+                        assistantChatMessage.FinishedAt = DateTimeOffset.UtcNow;
+                        assistantChatMessage.IsBusy = false;
+                        assistantChatMessage = new AssistantChatMessage { IsBusy = true };
+                        chatContext.Add(assistantChatMessage);
+                    }
+                }
+
+                if (invocationResult.FunctionCalls.Count <= 0) break;
             }
 
             if (enableNotifications)
@@ -524,7 +681,7 @@ public sealed partial class ChatService : IChatService
         }
         catch (Exception ex)
         {
-            ex = HandledChatException.Handle(ex, kernelMixin);
+            ex = HandledChatException.Handle(ex, environment?.KernelMixin);
             _logger.LogError(ex, "Error generating chat response");
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message.Trim());
 
@@ -543,9 +700,354 @@ public sealed partial class ChatService : IChatService
             assistantChatMessage.FinishedAt = DateTimeOffset.UtcNow;
             assistantChatMessage.IsBusy = false;
 
-            kernelMixin?.Dispose();
+            environment?.KernelMixin.Dispose();
         }
     }
+
+    private async Task<bool> CompactContextAsync(
+        ChatContext chatContext,
+        GenerationContext context,
+        ContextCompressionTrigger trigger,
+        Guid coveredThroughNodeId,
+        CancellationToken cancellationToken)
+    {
+        var usageBefore = chatContext.ContextUsage.Snapshot;
+        var compressionMessage = new ContextCompressionChatMessage(
+            coveredThroughNodeId,
+            context.KernelMixin.ModelId,
+            DateTimeOffset.UtcNow,
+            trigger,
+            usageBefore.TotalTokenCount,
+            context.KernelMixin.ContextLimit > 0 ? context.KernelMixin.ContextLimit : null);
+
+        await using var compactionScope = await chatContext.BeginContextCompactionAsync();
+        chatContext.Add(compressionMessage);
+        var compressionMessageNodeId = FindMessageNode(chatContext, compressionMessage)?.Id
+            ?? throw new InvalidOperationException("The context compression message was not added to the chat context.");
+
+        try
+        {
+            var sourceNodes = SelectCompressionSourceNodes(chatContext.Items, coveredThroughNodeId);
+            if (sourceNodes.Length == 0)
+            {
+                throw new ContextCompressionOutputException(LocaleKey.ContextCompression_Error_NoHistory);
+            }
+
+            var messages = ChatHistoryBuilder
+                .SelectContextMessages(sourceNodes, _persistentState.MaxContextRounds, context.KernelMixin.ContextLimit)
+                .ToList();
+            var wasSourceHistoryTrimmed = false;
+            string summary;
+            while (true)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                try
+                {
+                    summary = await RequestCompressionSummaryAsync(
+                        chatContext,
+                        context,
+                        messages,
+                        compressionMessageNodeId,
+                        cancellationToken);
+                    break;
+                }
+                catch (ContextCompressionOutputException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    var handledException = HandledChatException.Handle(ex, context.KernelMixin);
+                    if (handledException is not HandledChatException
+                        {
+                            ExceptionType: HandledChatExceptionType.ContextLengthExceeded
+                        } || !TryTrimOldestConversationUnit(messages))
+                    {
+                        throw handledException;
+                    }
+
+                    wasSourceHistoryTrimmed = true;
+                }
+            }
+
+            compressionMessage.Complete(summary, wasSourceHistoryTrimmed, DateTimeOffset.UtcNow);
+            await chatContext.MarkContextCompactedAsync(
+                context.KernelMixin.ModelId,
+                context.KernelMixin.ContextLimit);
+            return true;
+        }
+        catch (OperationCanceledException ex)
+        {
+            compressionMessage.Fail(ex.GetFriendlyMessage(), DateTimeOffset.UtcNow);
+            _logger.LogInformation("Context compression was canceled");
+            return false;
+        }
+        catch (ContextCompressionOutputException ex)
+        {
+            compressionMessage.Fail(new DynamicLocaleKey(ex.LocaleKey), DateTimeOffset.UtcNow);
+            _logger.LogWarning(ex, "Context compression returned an invalid response");
+            return false;
+        }
+        catch (Exception ex)
+        {
+            ex = HandledChatException.Handle(ex, context.KernelMixin);
+            compressionMessage.Fail(ex.GetFriendlyMessage(), DateTimeOffset.UtcNow);
+            _logger.LogError(ex, "Failed to compact chat context");
+            return false;
+        }
+    }
+
+    private async Task<string> RequestCompressionSummaryAsync(
+        ChatContext chatContext,
+        GenerationContext context,
+        IReadOnlyList<ChatMessage> messages,
+        Guid compressionMessageNodeId,
+        CancellationToken cancellationToken)
+    {
+        var chatHistory = await ChatHistoryBuilder.BuildSelectedChatHistoryAsync(
+            context.PromptRenderer,
+            context.SystemPrompt,
+            messages,
+            context.InputModalities,
+            cancellationToken);
+        chatHistory.AddUserMessage(DefaultPrompts.ContextCompressionPrompt);
+
+        using var activity = _activitySource.StartChatActivity("compact_context", context.KernelMixin);
+        activity?.SetTag("gen_ai.messages.count", chatHistory.Count);
+        var promptExecutionSettings = context.KernelMixin.GetPromptExecutionSettings(FunctionChoiceBehavior.None());
+        var summaryBuilder = new StringBuilder();
+        var functionCallBuilder = new FunctionCallContentBuilder();
+        var usage = new ChatUsageDetails();
+        var startedAt = DateTimeOffset.UtcNow;
+        var invocationId = Guid.CreateVersion7();
+        var previousModelInvocationEventId = _currentModelInvocationEventId.Value;
+        Exception? invocationException = null;
+
+        await _statisticsRecorder.StartModelInvocationAsync(
+            new StatisticsModelInvocationDraft(
+                invocationId,
+                _currentTurnEventId.Value,
+                chatContext.Metadata.Id,
+                compressionMessageNodeId,
+                StatisticsModelInvocationPurpose.ContextCompression,
+                context.KernelMixin.ModelId,
+                startedAt),
+            cancellationToken);
+        _currentModelInvocationEventId.Value = invocationId;
+
+        try
+        {
+            await foreach (var content in context.KernelMixin.ChatCompletionService.GetStreamingChatMessageContentsAsync(
+                               chatHistory,
+                               promptExecutionSettings,
+                               context.Kernel,
+                               cancellationToken))
+            {
+                usage.Update(content);
+                if (functionCallBuilder.Append(content))
+                {
+                    throw new ContextCompressionOutputException(LocaleKey.ContextCompression_Error_ToolCallNotAllowed);
+                }
+
+                foreach (var item in content.Items)
+                {
+                    switch (item)
+                    {
+                        case StreamingChatMessageContent { Content.Length: > 0 } chatMessageContent:
+                            summaryBuilder.Append(chatMessageContent.Content);
+                            break;
+                        case StreamingTextContent { Text.Length: > 0 } textContent:
+                            summaryBuilder.Append(textContent.Text);
+                            break;
+                    }
+                }
+            }
+
+            if (functionCallBuilder.Build().Count > 0)
+            {
+                throw new ContextCompressionOutputException(LocaleKey.ContextCompression_Error_ToolCallNotAllowed);
+            }
+
+            var summary = summaryBuilder.ToString().Trim();
+            if (summary.Length == 0)
+            {
+                throw new ContextCompressionOutputException(LocaleKey.ContextCompression_Error_EmptyResponse);
+            }
+
+            return summary;
+        }
+        catch (Exception ex)
+        {
+            invocationException = ex;
+            throw;
+        }
+        finally
+        {
+            var finishedAt = DateTimeOffset.UtcNow;
+            activity.SetChatUsageTags(usage);
+            RecordChatUsageMetrics(usage, context.KernelMixin.ModelId);
+            _chatRequestsCounter.Add(1, GetModelTag(context.KernelMixin.ModelId));
+            _currentModelInvocationEventId.Value = previousModelInvocationEventId;
+            await _statisticsRecorder.CompleteModelInvocationAsync(
+                invocationId,
+                usage,
+                finishedAt,
+                invocationException is null,
+                invocationException is OperationCanceledException || cancellationToken.IsCancellationRequested,
+                invocationException?.GetType().FullName,
+                CancellationToken.None);
+        }
+    }
+
+    private static ContextCompressionTrigger? ResolvePendingAutomaticCompressionTrigger(ChatContext chatContext, int contextCompressionThreshold)
+    {
+        var latestCompression = chatContext.Items
+            .AsValueEnumerable()
+            .Select(static node => node.Message)
+            .OfType<ContextCompressionChatMessage>()
+            .LastOrDefault();
+        if (latestCompression is { NeedsAutomaticCompaction: true }) return latestCompression.Trigger;
+
+        return chatContext.ContextUsage.Snapshot.HasReachedCompressionThreshold(contextCompressionThreshold) ?
+            ContextCompressionTrigger.Automatic :
+            null;
+    }
+
+    private static Guid ResolveCompressionBoundary(
+        ChatContext chatContext,
+        AssistantChatMessage? currentAssistantMessage = null)
+    {
+        var nodes = chatContext.Items;
+        var boundaryIndex = nodes.Count - 1;
+        if (currentAssistantMessage is not null)
+        {
+            boundaryIndex = FindMessageIndex(nodes, currentAssistantMessage);
+            if (boundaryIndex >= 0 && currentAssistantMessage.Count > 0) return nodes[boundaryIndex].Id;
+
+            boundaryIndex = FindPreviousCompressionSourceIndex(nodes, boundaryIndex - 1);
+            if (boundaryIndex >= 0 && nodes[boundaryIndex].Message is UserChatMessage)
+            {
+                // Send/Edit/Retry add the current user turn before this empty assistant placeholder.
+                // Keep that instruction verbatim in the suffix rather than asking the compression
+                // model to interpret or rewrite it.
+                boundaryIndex = FindPreviousCompressionSourceIndex(nodes, boundaryIndex - 1);
+            }
+        }
+        else
+        {
+            boundaryIndex = FindPreviousCompressionSourceIndex(nodes, boundaryIndex);
+        }
+
+        return boundaryIndex >= 0 ? nodes[boundaryIndex].Id : Guid.Empty;
+    }
+
+    private static int FindMessageIndex(IReadOnlyList<ChatMessageNode> nodes, ChatMessage message)
+    {
+        for (var i = nodes.Count - 1; i >= 0; i--)
+        {
+            if (ReferenceEquals(nodes[i].Message, message)) return i;
+        }
+
+        return -1;
+    }
+
+    private static int FindPreviousCompressionSourceIndex(IReadOnlyList<ChatMessageNode> nodes, int startIndex)
+    {
+        for (var i = Math.Min(startIndex, nodes.Count - 1); i >= 0; i--)
+        {
+            if (IsCompressionSourceMessage(nodes[i].Message)) return i;
+        }
+
+        return -1;
+    }
+
+    private static bool IsCompressionSourceMessage(ChatMessage message) =>
+        message is ContextCompressionChatMessage { HasSummary: true } ||
+        message.Role.Label == AuthorRole.Assistant.Label ||
+        message.Role.Label == AuthorRole.User.Label ||
+        message.Role.Label == AuthorRole.Developer.Label ||
+        message.Role.Label == AuthorRole.System.Label ||
+        message.Role.Label == AuthorRole.Tool.Label;
+
+    private static ChatMessageNode[] SelectCompressionSourceNodes(
+        IReadOnlyList<ChatMessageNode> nodes,
+        Guid coveredThroughNodeId)
+    {
+        if (coveredThroughNodeId == Guid.Empty) return [];
+
+        for (var i = 0; i < nodes.Count; i++)
+        {
+            if (nodes[i].Id == coveredThroughNodeId) return nodes.Take(i + 1).ToArray();
+        }
+
+        return [];
+    }
+
+    private static bool TryTrimOldestConversationUnit(List<ChatMessage> messages)
+    {
+        if (messages.Count <= 1) return false;
+
+        var compressionIndex = messages.FindLastIndex(static message => message is ContextCompressionChatMessage { HasSummary: true });
+        if (compressionIndex > 0)
+        {
+            // Retained user messages are intentionally placed before the prior summary. They are
+            // useful verbatim context, but are the first optional history to drop when the
+            // compression request itself exceeds the provider limit.
+            messages.RemoveAt(0);
+            return true;
+        }
+
+        var startIndex = compressionIndex + 1;
+        if (startIndex >= messages.Count)
+        {
+            messages.RemoveAt(compressionIndex);
+            return messages.Count > 0;
+        }
+
+        var firstUserIndex = messages.FindIndex(
+            startIndex,
+            static message => message.Role.Label == AuthorRole.User.Label && message is not ContextCompressionChatMessage);
+        if (firstUserIndex < 0)
+        {
+            if (messages.Count - startIndex > 1)
+            {
+                messages.RemoveAt(startIndex);
+                return true;
+            }
+
+            if (compressionIndex < 0) return false;
+
+            messages.RemoveAt(compressionIndex);
+            return true;
+        }
+
+        if (firstUserIndex > startIndex)
+        {
+            messages.RemoveRange(startIndex, firstUserIndex - startIndex);
+            return true;
+        }
+
+        var nextUserIndex = messages.FindIndex(
+            firstUserIndex + 1,
+            static message => message.Role.Label == AuthorRole.User.Label && message is not ContextCompressionChatMessage);
+        var removeCount = (nextUserIndex < 0 ? messages.Count : nextUserIndex) - firstUserIndex;
+        if (removeCount >= messages.Count - startIndex)
+        {
+            if (compressionIndex < 0) return false;
+
+            messages.RemoveAt(compressionIndex);
+            return true;
+        }
+
+        messages.RemoveRange(firstUserIndex, removeCount);
+        return true;
+    }
+
+    private static bool IsContextLengthExceeded(Exception exception, KernelMixin kernelMixin) =>
+        HandledChatException.Handle(exception, kernelMixin) is HandledChatException
+        {
+            ExceptionType: HandledChatExceptionType.ContextLengthExceeded
+        };
 
     /// <summary>
     /// Gets streaming chat message contents from the chat completion service.
@@ -558,7 +1060,7 @@ public sealed partial class ChatService : IChatService
     /// <param name="purpose"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<IReadOnlyList<FunctionCallContent>> GetStreamingChatMessageContentsAsync(
+    private async Task<ModelInvocationResult> GetStreamingChatMessageContentsAsync(
         Kernel kernel,
         KernelMixin kernelMixin,
         ChatContext chatContext,
@@ -571,7 +1073,7 @@ public sealed partial class ChatService : IChatService
         activity?.SetTag("gen_ai.messages.count", chatHistory.Count);
 
         AuthorRole? authorRole = null;
-        IDisposable? callingToolsBusyMessage = null;
+        IDisposable? callingToolsActivity = null;
         AssistantChatMessageSpan? span = null;
 
         var usage = new ChatUsageDetails(); // Each generation has its own usage details.
@@ -580,7 +1082,9 @@ public sealed partial class ChatService : IChatService
         DateTimeOffset? firstTokenAt = null;
         var isFirstToken = true;
         var promptExecutionSettings = kernelMixin.GetPromptExecutionSettings(
-            kernelMixin.SupportsToolCall && _persistentState.IsToolCallEnabled ? FunctionChoiceBehavior.Auto(autoInvoke: false) : null);
+            kernelMixin.SupportsToolCall && kernel.Plugins.Count > 0 ?
+                FunctionChoiceBehavior.Auto(autoInvoke: false) :
+                null);
 
         var invocationId = Guid.CreateVersion7();
         await _statisticsRecorder.StartModelInvocationAsync(
@@ -657,7 +1161,7 @@ public sealed partial class ChatService : IChatService
                         using var memoryStream = new MemoryStream(binaryContent.Data.Value.ToArray());
                         var blob = await _blobStorage.StorageBlobAsync(memoryStream, binaryContent.MimeType, cancellationToken: cancellationToken);
                         EnsureSpan<AssistantChatMessageImageSpan>(true).ImageOutput = new FileAttachment(
-                            new DynamicResourceKey(string.Empty),
+                            new DynamicLocaleKey(string.Empty),
                             blob.LocalPath,
                             blob.Sha256,
                             blob.MimeType);
@@ -688,9 +1192,12 @@ public sealed partial class ChatService : IChatService
                 authorRole ??= streamingContent.Role;
                 var hasFunctionCallUpdates = functionCallContentBuilder.Append(streamingContent);
 
-                if (callingToolsBusyMessage is null && hasFunctionCallUpdates)
+                if (callingToolsActivity is null && hasFunctionCallUpdates)
                 {
-                    callingToolsBusyMessage = chatContext.SetBusyMessage(new DynamicResourceKey(LocaleKey.ChatContext_BusyMessage_CallingTools));
+                    callingToolsActivity = await chatContext.SetBusyActivityAsync(
+                        LucideIconKind.Hammer,
+                        new DynamicLocaleKey(LocaleKey.ChatContext_BusyMessage_CallingTools),
+                        removeAfterCompletion: true);
                 }
             }
         }
@@ -714,7 +1221,7 @@ public sealed partial class ChatService : IChatService
             if (assistantChatMessage.Spans is { Count: > 0 } spans)
                 spans[^1].FinishedAt ??= generationEndTime;
 
-            callingToolsBusyMessage?.Dispose();
+            callingToolsActivity?.Dispose();
             await _statisticsRecorder.CompleteModelInvocationAsync(
                 invocationId,
                 invocationUsage,
@@ -727,7 +1234,7 @@ public sealed partial class ChatService : IChatService
 
         var functionCallContents = functionCallContentBuilder.Build();
         activity?.SetTag("gen_ai.tool.count", functionCallContents.Count);
-        return functionCallContents;
+        return new ModelInvocationResult(functionCallContents, usage);
 
         TSpan EnsureSpan<TSpan>(bool createNew) where TSpan : AssistantChatMessageSpan, new()
         {
@@ -814,7 +1321,7 @@ public sealed partial class ChatService : IChatService
                     // Display error in the chat span (UI).
                     var errorFunctionMessage = new FunctionCallChatMessage(
                         LucideIconKind.X,
-                        new DirectResourceKey(functionCallContentGroup.Key));
+                        new DirectLocaleKey(functionCallContentGroup.Key));
                     functionCallSpan.Add(errorFunctionMessage);
 
                     // Iterate through the function call contents in the group.
@@ -822,7 +1329,7 @@ public sealed partial class ChatService : IChatService
                     foreach (var functionCallContent in functionCallContentGroup)
                     {
                         // Add the function call content to the missing function chat message for DB storage.
-                        errorFunctionMessage.Calls.Add(functionCallContent);
+                        errorFunctionMessage.AddCall(functionCallContent);
 
                         // Create the corresponding function result content with the error message.
                         var missingFunctionResultContent = new FunctionResultContent(
@@ -830,7 +1337,7 @@ public sealed partial class ChatService : IChatService
                             "Tool calling is disabled by the user");
 
                         // Add the function result content to the missing function chat message for DB storage.
-                        errorFunctionMessage.Results.Add(missingFunctionResultContent);
+                        errorFunctionMessage.AddResult(missingFunctionResultContent);
                         await RecordToolInvocationAsync(
                             chatContext,
                             functionCallContent,
@@ -839,9 +1346,9 @@ public sealed partial class ChatService : IChatService
                             cancellationToken);
                     }
 
-                    errorFunctionMessage.ErrorMessageKey = new FormattedDynamicResourceKey(
+                    errorFunctionMessage.ErrorMessageKey = new FormattedDynamicLocaleKey(
                         LocaleKey.HandledFunctionInvokingException_FunctionCallingDisabled,
-                        new DirectResourceKey(functionCallContentGroup.Key));
+                        new DirectLocaleKey(functionCallContentGroup.Key));
 
                     continue;
                 }
@@ -869,7 +1376,7 @@ public sealed partial class ChatService : IChatService
                     // Display error in the chat span (UI).
                     var errorFunctionMessage = new FunctionCallChatMessage(
                         LucideIconKind.X,
-                        new DirectResourceKey(functionCallContentGroup.Key));
+                        new DirectLocaleKey(functionCallContentGroup.Key));
                     functionCallSpan.Add(errorFunctionMessage);
 
                     // Iterate through the function call contents in the group.
@@ -877,13 +1384,13 @@ public sealed partial class ChatService : IChatService
                     foreach (var functionCallContent in functionCallContentGroup)
                     {
                         // Add the function call content to the missing function chat message for DB storage.
-                        errorFunctionMessage.Calls.Add(functionCallContent);
+                        errorFunctionMessage.AddCall(functionCallContent);
 
                         // Create the corresponding function result content with the error message.
                         var missingFunctionResultContent = new FunctionResultContent(functionCallContent, errorMessageBuilder.ToString());
 
                         // Add the function result content to the missing function chat message for DB storage.
-                        errorFunctionMessage.Results.Add(missingFunctionResultContent);
+                        errorFunctionMessage.AddResult(missingFunctionResultContent);
                         await RecordToolInvocationAsync(
                             chatContext,
                             functionCallContent,
@@ -892,9 +1399,9 @@ public sealed partial class ChatService : IChatService
                             cancellationToken);
                     }
 
-                    errorFunctionMessage.ErrorMessageKey = new FormattedDynamicResourceKey(
+                    errorFunctionMessage.ErrorMessageKey = new FormattedDynamicLocaleKey(
                         LocaleKey.HandledFunctionInvokingException_FunctionNotFound,
-                        new DirectResourceKey(functionCallContentGroup.Key));
+                        new DirectLocaleKey(functionCallContentGroup.Key));
 
                     continue;
                 }
@@ -904,15 +1411,6 @@ public sealed partial class ChatService : IChatService
                     chatFunction.HeaderKey);
                 functionCallChatMessage.IsBusy = true;
                 functionCallSpan.Add(functionCallChatMessage); // functionCallSpan will dispose FunctionCallChatMessage
-
-                var functionCallContext = new FunctionCallContext(
-                    kernel,
-                    chatContext,
-                    chatPlugin,
-                    chatFunction,
-                    functionCallChatMessage,
-                    _settings.Plugin.IsPermissionGrantedRecords);
-                chatContext.FunctionCallContext.Value = functionCallContext;
 
                 try
                 {
@@ -929,14 +1427,30 @@ public sealed partial class ChatService : IChatService
                             throw new InvalidOperationException("Tool call must have an ID");
                         }
 
+                        // Each FunctionCallContent receives its own ambient context even though the
+                        // visible FunctionCallChatMessage may aggregate calls to the same function.
+                        // This keeps AsyncLocal services and runtime previews invocation-local. It
+                        // does not by itself make the shared Calls/Results collections safe for a
+                        // future parallel execution strategy; those collections have their own
+                        // concurrency boundary.
+                        using var functionCallContext = new FunctionCallContext(
+                            kernel,
+                            chatContext,
+                            chatPlugin,
+                            chatFunction,
+                            functionCallChatMessage,
+                            functionCallContent,
+                            _settings.Plugin.ToolBypassApprovalRulesets);
+                        using var functionCallContextScope = chatContext.EnterFunctionCallContext(functionCallContext);
+
                         // Add the function call content to the function call chat message.
                         // This will record the function call in the database.
-                        functionCallChatMessage.Calls.Add(functionCallContent);
+                        functionCallChatMessage.AddCall(functionCallContent);
 
                         // Also add a display block for the function call content.
                         // This will allow the UI to display the function call content.
                         var friendlyContent = chatFunction.GetFriendlyCallContent(functionCallContent);
-                        if (friendlyContent is not null) functionCallChatMessage.DisplaySink.AppendBlock(friendlyContent);
+                        if (friendlyContent is not null) functionCallContext.DisplaySink.AppendBlock(friendlyContent);
 
                         var resultContent = await InvokeFunctionAsync(
                             kernelMixin,
@@ -950,7 +1464,7 @@ public sealed partial class ChatService : IChatService
 
                         // dd the function result content to the function call chat message.
                         // This will record the function result in the database.
-                        functionCallChatMessage.Results.Add(resultContent);
+                        functionCallChatMessage.AddResult(resultContent);
 
                         if (resultContent.InnerContent is Exception ex)
                         {
@@ -963,11 +1477,10 @@ public sealed partial class ChatService : IChatService
                 {
                     functionCallChatMessage.FinishedAt = DateTimeOffset.UtcNow;
                     functionCallChatMessage.IsBusy = false;
-                    chatContext.FunctionCallContext.Value = null;
 
                     if (cancellationToken.IsCancellationRequested)
                     {
-                        functionCallChatMessage.ErrorMessageKey ??= new DynamicResourceKey(LocaleKey.FriendlyExceptionMessage_OperationCanceled);
+                        functionCallChatMessage.ErrorMessageKey ??= new DynamicLocaleKey(LocaleKey.FriendlyExceptionMessage_OperationCanceled);
                     }
                 }
             }
@@ -1016,22 +1529,33 @@ public sealed partial class ChatService : IChatService
             // Check permissions. If permissions are not granted, request user consent.
             var permissionKey = context.PermissionKey;
             var consentDecision = await ProcessConsentAsync(permissionKey);
-            switch (consentDecision.Decision)
+            switch (consentDecision.Kind)
             {
-                case ConsentDecision.AlwaysAllow:
+                case ConsentDecisionKind.AlwaysAllow:
                 {
-                    context.ChatFunction.AutoApprove = true;
+                    _settings.Plugin.ToolBypassApprovalRulesets[permissionKey] = true;
                     break;
                 }
-                case ConsentDecision.AllowSession:
+                case ConsentDecisionKind.AllowSession:
                 {
-                    context.ChatContext.IsPermissionGrantedRecords[permissionKey] = true;
+                    context.ChatContext.ToolBypassApprovalRulesets[permissionKey] = true;
                     break;
                 }
-                case ConsentDecision.Deny:
+                case ConsentDecisionKind.Deny:
                 {
                     toolStatus = StatisticsToolInvocationStatus.Denied;
                     return new FunctionResultContent(content, consentDecision.FormatReason("Tool execution denied by user."));
+                }
+                case ConsentDecisionKind.Custom when
+                    context.ChatPlugin is McpChatPlugin mcpPlugin &&
+                    consentDecision.CustomOption?.Key is ToolConsentCustomOption.BypassMcpServerApproval:
+                {
+                    ToolBypassApprovalPolicy.SetPluginRule(_settings.Plugin.ToolBypassApprovalRulesets, mcpPlugin, true);
+                    break;
+                }
+                case ConsentDecisionKind.Custom:
+                {
+                    throw new InvalidOperationException("Unknown custom tool-consent option.");
                 }
             }
 
@@ -1046,7 +1570,7 @@ public sealed partial class ChatService : IChatService
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             _logger.LogError(ex, "Error invoking tool '{FunctionName}'", content.FunctionName);
 
-            resultContent = new FunctionResultContent(content, $"Error: {ex.Message}") { InnerContent = ex };
+            resultContent = new FunctionResultContent(content, new PromptTokenLimit(4096, $"Error: {ex.Message}")) { InnerContent = ex };
         }
         finally
         {
@@ -1059,25 +1583,33 @@ public sealed partial class ChatService : IChatService
 
         return resultContent;
 
-        Task<ConsentDecisionResult> ProcessConsentAsync(string permissionKey)
+        Task<ConsentDecision> ProcessConsentAsync(string permissionKey)
         {
             // Check if the permission is already granted in the current chat context
-            if (!_settings.Plugin.IsPermissionGrantedRecords.TryGetValue(permissionKey, out var isPermissionGranted))
+            if (!_settings.Plugin.ToolBypassApprovalRulesets.TryGetValue(permissionKey, out var isPermissionGranted))
             {
                 isPermissionGranted = context.IsPermissionGranted;
             }
 
             if (isPermissionGranted)
             {
-                return Task.FromResult(ConsentDecisionResult.AllowOnce);
+                return Task.FromResult(ConsentDecision.AllowOnce);
             }
 
-            FormattedDynamicResourceKey headerKey;
-            if (context.ChatPlugin is McpChatPlugin)
+            FormattedDynamicLocaleKey headerKey;
+            IReadOnlyList<RequestConsentCustomOption>? customOptions = null;
+            if (context.ChatPlugin.IsMcp)
             {
-                headerKey = new FormattedDynamicResourceKey(
-                    LocaleKey.ChatPluginConsentRequest_MCP_Header,
-                    context.ChatFunction.HeaderKey);
+                headerKey = new FormattedDynamicLocaleKey(LocaleKey.ChatPluginConsentRequest_MCP_Header, context.ChatFunction.HeaderKey);
+                customOptions =
+                [
+                    new RequestConsentCustomOption(
+                        ToolConsentCustomOption.BypassMcpServerApproval,
+                        new FormattedDynamicLocaleKey(
+                            LocaleKey.ChatPluginConsentRequest_MCP_BypassServerApproval_Header,
+                            context.ChatPlugin.HeaderKey),
+                        null)
+                ];
             }
             else
             {
@@ -1085,41 +1617,36 @@ public sealed partial class ChatService : IChatService
                 {
                     return onPermissionConsent(content) switch
                     {
-                        true => Task.FromResult(ConsentDecisionResult.AllowOnce),
-                        false => Task.FromResult(ConsentDecisionResult.Deny()),
-                        null => Task.FromResult(ConsentDecisionResult.AllowOnce) // Default to allow once
+                        true => Task.FromResult(ConsentDecision.AllowOnce),
+                        false => Task.FromResult(ConsentDecision.Deny()),
+                        null => Task.FromResult(ConsentDecision.AllowOnce) // Default to allow once
                     };
                 }
 
                 if (context.ChatFunction.Permissions == ChatFunctionPermissions.None)
                 {
-                    headerKey = new FormattedDynamicResourceKey(
-                        LocaleKey.ChatPluginConsentRequest_CommonNone_Header,
-                        context.ChatFunction.HeaderKey);
+                    headerKey = new FormattedDynamicLocaleKey(LocaleKey.ChatPluginConsentRequest_CommonNone_Header, context.ChatFunction.HeaderKey);
                 }
                 else
                 {
-                    headerKey = new FormattedDynamicResourceKey(
+                    headerKey = new FormattedDynamicLocaleKey(
                         LocaleKey.ChatPluginConsentRequest_Common_Header,
                         context.ChatFunction.HeaderKey,
-                        new DirectResourceKey(context.ChatFunction.Permissions.I18N(LocaleResolver.Common_Comma, true)));
+                        new DirectLocaleKey(context.ChatFunction.Permissions.I18N(LocaleResolver.Common_Comma, true)));
                 }
             }
 
             // The function requires permissions that are not granted.
-            return context.ChatContext.UserInterfaceBroker.HandleConsentRequestAsync(
+            return context.WaitForUserInputAsync(() => context.ChatContext.UserInterfaceBroker.HandleConsentRequestAsync(
                 headerKey,
                 displayBlock,
                 RequestConsentRememberMasks.All,
-                cancellationToken);
+                customOptions,
+                cancellationToken));
         }
     }
 
-    private async Task GenerateTopicAsync(
-        Assistant assistant,
-        string userMessage,
-        ChatContextMetadata metadata,
-        CancellationToken cancellationToken)
+    private async Task GenerateTopicAsync(Assistant assistant, string userMessage, ChatContextMetadata metadata, CancellationToken cancellationToken)
     {
         if (!metadata.IsGeneratingTopic.FlipIfFalse())
         {
@@ -1167,15 +1694,15 @@ public sealed partial class ChatService : IChatService
             {
                 new ChatMessageContent(
                     AuthorRole.System,
-                    Prompts.TitleGeneratorSystemPrompt),
+                    DefaultPrompts.TitleGeneratorSystemPrompt),
                 new ChatMessageContent(
                     AuthorRole.User,
                     ScopedPromptRenderer.RenderPrompt(
-                        Prompts.TitleGeneratorUserPrompt,
+                        DefaultPrompts.TitleGeneratorUserPrompt,
                         key => key switch
                         {
                             "UserMessage" => userMessage.SafeSubstring(0, 2048),
-                            "SystemLanguage" => language,
+                            SystemPromptPlaceholderSource.SystemLanguageName => language,
                             _ => null
                         })),
             };
@@ -1267,15 +1794,15 @@ public sealed partial class ChatService : IChatService
             .AsValueEnumerable()
             .OfType<FileAttachment>()
             .Where(x => x.IsImage)
-            .ToList();
-        if (imageAttachments.Count == 0) return;
+            .ToArray();
+        if (imageAttachments.Length == 0) return;
 
         _statisticsRecorder.RecordVisualContextAsync(
                 new StatisticsVisualContextDraft(
                     _currentTurnEventId.Value,
                     chatContext.Metadata.Id,
                     StatisticsVisualContextSource.ImageAttachment,
-                    ImageCount: imageAttachments.Count),
+                    ImageCount: imageAttachments.Length),
                 CancellationToken.None)
             .Detach(IExceptionHandler.DangerouslyIgnoreAllException);
     }
@@ -1305,9 +1832,33 @@ public sealed partial class ChatService : IChatService
 
     #endregion
 
-    // TODO: this is shit
+    private enum ToolConsentCustomOption
+    {
+        BypassMcpServerApproval
+    }
+
+    private sealed record GenerationContext(
+        Kernel Kernel,
+        KernelMixin KernelMixin,
+        ScopedPromptRenderer PromptRenderer,
+        string SystemPrompt,
+        Modalities InputModalities,
+        int ContextCompressionThreshold
+    );
+
+    private sealed record ModelInvocationResult(
+        IReadOnlyList<FunctionCallContent> FunctionCalls,
+        ChatUsageDetails Usage
+    );
+
+    private sealed class ContextCompressionOutputException(string localeKey) : Exception
+    {
+        public string LocaleKey { get; } = localeKey;
+    }
+
     private sealed class ScopedPromptRenderer(
-        IDictionary<string, Func<string>> promptVariables
+        IPromptPlaceholderSource promptPlaceholderSource,
+        PromptPlaceholderContext promptPlaceholderContext
     ) : IPromptRenderer
     {
         public static string RenderPrompt(string prompt, Func<string, string?> resolver) =>
@@ -1315,20 +1866,24 @@ public sealed partial class ChatService : IChatService
 
         public string RenderSystemPrompt(string prompt)
         {
-            return RenderPrompt(prompt, key => promptVariables.TryGetValue(key, out var getter) ? getter() : null);
+            return RenderPrompt(prompt, ResolveSharedPlaceholder);
         }
 
         public string RenderStrategyUserPrompt(string strategyBody, string? userInput, PreprocessorResult? preprocessorResult)
         {
+            var strategySource = new CompositePromptPlaceholderSource(
+            [
+                StrategyPromptPlaceholderSource.Instance,
+                promptPlaceholderSource
+            ]);
+            var strategyContext = promptPlaceholderContext with
+            {
+                Argument = userInput,
+                Variables = preprocessorResult?.Variables
+            };
             var renderedStrategy = RenderPrompt(
                 strategyBody,
-                key =>
-                {
-                    if (key == "Argument") return userInput ?? string.Empty;
-                    if (preprocessorResult?.Variables?.TryGetValue(key, out var val) == true) return val;
-                    if (promptVariables.TryGetValue(key, out var getter)) return getter();
-                    return null;
-                });
+                key => strategySource.TryResolve(key, strategyContext, out var value) ? value : null);
 
             if (string.IsNullOrEmpty(userInput))
             {
@@ -1341,5 +1896,8 @@ public sealed partial class ChatService : IChatService
                 .Append(userInput)
                 .ToString();
         }
+
+        private string? ResolveSharedPlaceholder(string key) =>
+            promptPlaceholderSource.TryResolve(key, promptPlaceholderContext, out var value) ? value : null;
     }
 }

@@ -27,12 +27,6 @@ public class PersistentState(IKeyValueStorage storage) : ObservableObject
         set => Set(value);
     }
 
-    public bool IsToolCallEnabled
-    {
-        get => Get(true);
-        set => Set(value);
-    }
-
     public bool IsWebSearchEnabled
     {
         get => Get(false);
@@ -129,9 +123,9 @@ public class PersistentState(IKeyValueStorage storage) : ObservableObject
         set => Set(value);
     }
 
-    public IDynamicResourceKey? LastCloudSynchronizationErrorMessageKey
+    public IDynamicLocaleKey? LastCloudSynchronizationErrorMessageKey
     {
-        get => Get<IDynamicResourceKey?>();
+        get => Get<IDynamicLocaleKey?>();
         set => Set(value);
     }
 

@@ -38,7 +38,7 @@ public partial class MessagePackRun : MessagePackInline
     private string? Text { get; set; }
 
     [Key(1)]
-    private List<TextDecorationLocation>? TextDecorationLocations { get; set; }
+    private TextDecorationLocation[]? TextDecorationLocations { get; set; }
 
     [SerializationConstructor]
     private MessagePackRun() { }
@@ -46,7 +46,7 @@ public partial class MessagePackRun : MessagePackInline
     public MessagePackRun(Run run)
     {
         Text = run.Text;
-        TextDecorationLocations = run.TextDecorations?.Select(td => td.Location).ToList();
+        TextDecorationLocations = run.TextDecorations?.Select(td => td.Location).ToArray();
     }
 
     /// <summary>

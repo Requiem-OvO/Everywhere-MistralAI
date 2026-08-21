@@ -1,0 +1,110 @@
+<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:system="clr-namespace:System;assembly=System.Runtime"
+  xmlns:v="using:Everywhere.Views">
+  <ControlTheme
+    x:Key="{x:Type v:CustomAssistantPromptSelector}"
+    TargetType="v:CustomAssistantPromptSelector">
+    <Setter Property="Padding" Value="16"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="Background" Value="{DynamicResource CardBackgroundColor}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
+    <Setter Property="CornerRadius" Value="{DynamicResource XlCornerRadius}"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border
+          Background="{TemplateBinding Background}"
+          BorderBrush="{TemplateBinding BorderBrush}"
+          BorderThickness="{TemplateBinding BorderThickness}"
+          CornerRadius="{TemplateBinding CornerRadius}">
+          <DockPanel
+            Margin="{TemplateBinding Padding}"
+            VerticalSpacing="8">
+            <ComboBox
+              x:Name="PART_ComboBox" DockPanel.Dock="Top"
+              MinWidth="240" MinHeight="32"
+              HorizontalAlignment="Left"
+              shadui:ControlAssist.Label="{I18N {x:Static LocaleKey.AssistantPromptSelector_ComboBox_Label}}"
+              ItemsSource="{Binding ItemsSource, RelativeSource={RelativeSource TemplatedParent}}"
+              MaxDropDownHeight="320"
+              SelectedValue="{Binding SelectedId, Mode=TwoWay, FallbackValue={x:Static system:Guid.Empty}, RelativeSource={RelativeSource TemplatedParent}}"
+              SelectedValueBinding="{Binding Id, x:DataType=v:CustomAssistantPromptSelector+Item, FallbackValue={x:Static system:Guid.Empty}}">
+              <shadui:ControlAssist.Footer>
+                <Border
+                  BorderBrush="{DynamicResource BorderColor}"
+                  BorderThickness="0,1,0,0">
+                  <StackPanel
+                    Margin="4" Spacing="2">
+                    <Button
+                      Padding="12,6"
+                      shadui:ButtonAssist.Icon="{LucideIconContent Plus}"
+                      BorderThickness="0"
+                      Content="{I18N {x:Static LocaleKey.AssistantPromptSelector_NewPrompt}}"
+                      CornerRadius="6">
+                      <Interaction.Behaviors>
+                        <ButtonClickEventTriggerBehavior>
+                          <ButtonClickEventTriggerBehavior.Actions>
+                            <HidePopupAction Popup="{Binding $parent[Popup]}"/>
+                            <InvokeCommandAction Command="{Binding $parent[v:CustomAssistantPromptSelector].CreatePromptCommand}"/>
+                          </ButtonClickEventTriggerBehavior.Actions>
+                        </ButtonClickEventTriggerBehavior>
+                      </Interaction.Behaviors>
+                    </Button>
+
+                    <Button
+                      Padding="12,6"
+                      shadui:ButtonAssist.Icon="{LucideIconContent Settings}"
+                      BorderThickness="0"
+                      Content="{I18N {x:Static LocaleKey.AssistantPromptSelector_ManagePrompts}}"
+                      CornerRadius="6">
+                      <Interaction.Behaviors>
+                        <ButtonClickEventTriggerBehavior>
+                          <ButtonClickEventTriggerBehavior.Actions>
+                            <HidePopupAction Popup="{Binding $parent[Popup]}"/>
+                            <InvokeCommandAction Command="{Binding $parent[v:CustomAssistantPromptSelector].ManagePromptsCommand}"/>
+                          </ButtonClickEventTriggerBehavior.Actions>
+                        </ButtonClickEventTriggerBehavior>
+                      </Interaction.Behaviors>
+                    </Button>
+                  </StackPanel>
+                </Border>
+              </shadui:ControlAssist.Footer>
+
+              <ComboBox.DataTemplates>
+                <DataTemplate x:DataType="v:CustomAssistantPromptSelector+Item">
+                  <TextBlock Text="{Binding DisplayNameKey^}"/>
+                </DataTemplate>
+              </ComboBox.DataTemplates>
+            </ComboBox>
+
+            <TabControl ClipToBounds="False">
+              <TabItem Header="{I18N {x:Static LocaleKey.PromptPage_Tab_Preview}}">
+                <ScrollViewer
+                  Margin="0,0,-12,0" HorizontalScrollBarVisibility="Disabled"
+                  VerticalScrollBarVisibility="Auto">
+                  <v:PromptTemplateTextBlock
+                    Margin="8,8,20,8"
+                    FontFamily="{StaticResource MonospaceFontFamily}"
+                    PromptSegments="{Binding RenderedPreviewSegments, RelativeSource={RelativeSource TemplatedParent}}"
+                    TextWrapping="Wrap"/>
+                </ScrollViewer>
+              </TabItem>
+
+              <TabItem Header="{I18N {x:Static LocaleKey.PromptPage_Tab_Raw}}">
+                <ScrollViewer
+                  Margin="0,0,-12,0" HorizontalScrollBarVisibility="Disabled"
+                  VerticalScrollBarVisibility="Auto">
+                  <v:PromptTemplateTextBlock
+                    Margin="8,8,20,8"
+                    FontFamily="{StaticResource MonospaceFontFamily}"
+                    PromptText="{Binding RawTemplate, RelativeSource={RelativeSource TemplatedParent}}"
+                    TextWrapping="Wrap"/>
+                </ScrollViewer>
+              </TabItem>
+            </TabControl>
+          </DockPanel>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

@@ -112,7 +112,7 @@
     <data name="WebSearchEngineProvider_EndPoint_Description" xml:space="preserve">
         <value>Belassen Sie dies bei der Standardeinstellung, wenn Sie nicht wissen, was Sie tun sollen. Muss mit &quot;http(s)://&quot; beginnen.</value>
     </data>
-    <data name="ChatInputArea_Watermark" xml:space="preserve">
+    <data name="ChatInputArea_PlaceholderText" xml:space="preserve">
         <value>Fragen Sie Everywhere oder chatten Sie einfach</value>
     </data>
     <data name="ChatInputArea_AddAttachmentMenuItem_ToolTip" xml:space="preserve">
@@ -139,8 +139,53 @@
     <data name="ChatInputArea_CancelButton_ToolTip" xml:space="preserve">
         <value>Abbrechen</value>
     </data>
+    <data name="ChatInputArea_ContextUsage_Header" xml:space="preserve">
+        <value>Kontextnutzung</value>
+    </data>
+    <data name="ChatInputArea_ContextUsage_UsedPercentage" xml:space="preserve">
+        <value>Verwendet {0}%</value>
+    </data>
+    <data name="ChatInputArea_ContextUsage_Tokens" xml:space="preserve">
+        <value>Verwendet {0}, insgesamt {1}</value>
+    </data>
+    <data name="ChatInputArea_ContextUsage_ReportedTokens" xml:space="preserve">
+        <value>Berichtete Nutzung: {0}</value>
+    </data>
+    <data name="ChatInputArea_ContextUsage_CachedTokens" xml:space="preserve">
+        <value>Zwischengespeicherte Eingabe: {0}</value>
+    </data>
+    <data name="ChatInputArea_ContextUsage_Unavailable" xml:space="preserve">
+        <value>Kontextnutzung noch nicht verfügbar</value>
+    </data>
+    <data name="ChatInputArea_ContextUsage_Estimated" xml:space="preserve">
+        <value>Geschätzter Wert nach Modellwechsel</value>
+    </data>
+    <data name="ChatInputArea_ContextUsage_Compacted" xml:space="preserve">
+        <value>Kontext komprimiert, wartet auf nächste Messung</value>
+    </data>
+    <data name="ChatInputArea_ContextUsage_CompactButton" xml:space="preserve">
+        <value>Kontext komprimieren</value>
+    </data>
     <data name="ActionChatMessage_Header_AnalyzingContext" xml:space="preserve">
         <value>Kontext analysieren</value>
+    </data>
+    <data name="ContextCompression_Status_Compressing" xml:space="preserve">
+        <value>Kontext wird komprimiert</value>
+    </data>
+    <data name="ContextCompression_Status_Compressed" xml:space="preserve">
+        <value>Kontext komprimiert</value>
+    </data>
+    <data name="ContextCompression_Status_Failed" xml:space="preserve">
+        <value>Kontextkompression fehlgeschlagen</value>
+    </data>
+    <data name="ContextCompression_Error_EmptyResponse" xml:space="preserve">
+        <value>Modell hat eine leere Kontextzusammenfassung zurückgegeben.</value>
+    </data>
+    <data name="ContextCompression_Error_NoHistory" xml:space="preserve">
+        <value>Keine komprimierbare Gesprächshistorie vorhanden.</value>
+    </data>
+    <data name="ContextCompression_Error_ToolCallNotAllowed" xml:space="preserve">
+        <value>Modell hat versucht, ein Tool während der Kontextkompression aufzurufen.</value>
     </data>
     <data name="ActionChatMessage_Header_WebSearching" xml:space="preserve">
         <value>Websuche</value>
@@ -159,6 +204,24 @@
     </data>
     <data name="ChatWindow_History_ToolTip" xml:space="preserve">
         <value>Chat-Verlauf (Strg+H)</value>
+    </data>
+    <data name="ChatWindow_History_SearchBox_PlaceholderText" xml:space="preserve">
+        <value>Suchverlauf durchsuchen</value>
+    </data>
+    <data name="ChatWindow_History_IncludeContentToggleButton_ToolTip" xml:space="preserve">
+        <value>Inhalte einbeziehen</value>
+    </data>
+    <data name="ChatWindow_TextSearch_PlaceholderText" xml:space="preserve">
+        <value>In diesem Gespräch suchen</value>
+    </data>
+    <data name="ChatWindow_TextSearch_Previous_ToolTip" xml:space="preserve">
+        <value>Vorheriges Ergebnis (Shift+Enter)</value>
+    </data>
+    <data name="ChatWindow_TextSearch_Next_ToolTip" xml:space="preserve">
+        <value>Nächstes Ergebnis (Enter)</value>
+    </data>
+    <data name="ChatWindow_TextSearch_Close_ToolTip" xml:space="preserve">
+        <value>Suche schließen (Esc)</value>
     </data>
     <data name="ChatWindow_CreateNew_ToolTip" xml:space="preserve">
         <value>Neuen Chat erstellen (Strg+N)</value>
@@ -193,7 +256,7 @@
     <data name="ChatWindowViewModel_QuickActions_Summarize" xml:space="preserve">
         <value>Zusammenfassung</value>
     </data>
-    <data name="KeyboardShortcutInputBox_Watermark" xml:space="preserve">
+    <data name="KeyboardShortcutInputBox_PlaceholderText" xml:space="preserve">
         <value>Klicken Sie, um eine Tastenkombination festzulegen</value>
     </data>
     <data name="KeyboardShortcutInputBox_SettingWatermark" xml:space="preserve">
@@ -359,7 +422,8 @@
         <value>Unbekannter Fehler, bitte versuchen Sie es später erneut.</value>
     </data>
     <data name="FriendlyExceptionMessage_Aggregate" xml:space="preserve">
-        <value>Ein oder mehrere Fehler sind aufgetreten.</value>
+        <value>Ein oder mehrere Fehler sind aufgetreten.
+{0}</value>
     </data>
     <data name="FriendlyExceptionMessage_TaskCanceled" xml:space="preserve">
         <value>Aufgabe abgebrochen.</value>
@@ -629,10 +693,10 @@
         <value>Modellkennung für API-Aufrufe, z. B. gpt-4o.</value>
     </data>
     <data name="ChatPluginPage_Title" xml:space="preserve">
-        <value>Chat-Tools</value>
+        <value>Tools</value>
     </data>
     <data name="ChatPluginPage_Description" xml:space="preserve">
-        <value>Chat-Plugins umfassen integrierte Plugins und MCP-Plugins. LLMs, die Tool-Aufrufe unterstützen, verwenden diese Plugins zu geeigneten Zeiten (z. B. zum Suchen im Internet oder zum Zugriff auf lokale Dateien), um leistungsfähigere Funktionen zu erhalten.</value>
+        <value>Die Chat-Tools umfassen integrierte Werkzeuge und den MCP-Server. Sprachmodelle, die Werkzeugaufrufe unterstützen, nutzen diese Werkzeuge zur richtigen Zeit (z. B. Websuche, Zugriff auf lokale Dateien usw.), um leistungsfähigere Funktionen zu bieten.</value>
     </data>
     <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
         <value>Web-Suchmaschinenanbieter</value>
@@ -653,13 +717,22 @@
         <value>Webseite</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
-        <value>Bietet die Möglichkeit, Webseiten zu durchsuchen. Das Wissen großer Modelle ist oft nach der Veröffentlichung festgelegt und kann bei zeitkritischen Fragen zu Fehlinformationen führen. Dieses Plugin ermöglicht es dem Assistenten, Inhalte in Echtzeit zu durchsuchen und somit seine Fähigkeiten zu verbessern.</value>
+        <value>Bietet die Möglichkeit, Webseiten zu durchsuchen, sodass der Assistent in Echtzeit auf Webseiteninhalte zugreifen kann, um seine Fähigkeiten zu verbessern.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Header" xml:space="preserve">
         <value>Dateisystem</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Description" xml:space="preserve">
         <value>Bietet die Möglichkeit, auf Dateien zuzugreifen, z. B. Auflisten, Erstellen, Löschen, Umbenennen, Lesen oder Schreiben.</value>
+    </data>
+    <data name="FileSystemSettings_ApprovalPaths_Header" xml:space="preserve">
+        <value>Genehmigte Pfade</value>
+    </data>
+    <data name="FileSystemSettings_ApprovalPaths_Description" xml:space="preserve">
+        <value>Dateisystemoperationen, die mit diesen absoluten Pfad-Globs übereinstimmen, benötigen keine erneute Genehmigung des Pfades. Verwenden Sie ** für Verzeichnistiefen beliebiger Art, z. B. C:\** oder D:\**\3rd.</value>
+    </data>
+    <data name="FileSystemSettings_ApprovalPaths_Pattern_PlaceholderText" xml:space="preserve">
+        <value>Absolute Glob-Pfade, z. B. C:\Source\Everywhere\**</value>
     </data>
     <data name="FriendlyExceptionMessage_InvalidOperation" xml:space="preserve">
         <value>Ungültiger Vorgang.</value>
@@ -674,7 +747,7 @@
         <value>Einstellungen</value>
     </data>
     <data name="ChatPluginPage_TabItem_Functions_Header" xml:space="preserve">
-        <value>Funktionen</value>
+        <value>Werkzeuge</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_Header" xml:space="preserve">
         <value>Visueller Kontext</value>
@@ -755,7 +828,7 @@ Meine Intelligenz wird von einem großen Sprachmodell bereitgestellt, und ich be
     <data name="WelcomeView_AssistantStep_PresetBased_Message4" xml:space="preserve">
         <value>Nachdem du deine Auswahl getroffen hast, klicke auf „Verfügbarkeit des Assistenten testen“, ich werde überprüfen, ob die Konfiguration korrekt ist.</value>
     </data>
-    <data name="WelcomeView_ApiKeyTextBox_Watermark" xml:space="preserve">
+    <data name="WelcomeView_ApiKeyTextBox_PlaceholderText" xml:space="preserve">
         <value>API-Schlüssel hier eingeben...</value>
     </data>
     <data name="WelcomeView_AssistantStep_PresetBased_Message5" xml:space="preserve">
@@ -802,6 +875,9 @@ Meine Intelligenz wird von einem großen Sprachmodell bereitgestellt, und ich be
     </data>
     <data name="ChatMessageControl_ChatStatisticsTextBlock_TotalTokenCountRun" xml:space="preserve">
         <value>Gesamt</value>
+    </data>
+    <data name="ChatMessageControl_ChatStatisticsTextBlock_CachedInputHitRateRun" xml:space="preserve">
+        <value>Cache-Treffer</value>
     </data>
     <data name="ChatMessageControl_ChatStatisticsTextBlock_ElapsedRun" xml:space="preserve">
         <value>Gesamtdauer</value>
@@ -956,23 +1032,22 @@ Meine Intelligenz wird von einem großen Sprachmodell bereitgestellt, und ich be
     <data name="CustomAssistantPage_CreateNewCustomAssistantButton_Content" xml:space="preserve">
         <value>Erstellen</value>
     </data>
-    <data name="CustomAssistant_EmptyName_Watermark" xml:space="preserve">
+    <data name="CustomAssistant_EmptyName_PlaceholderText" xml:space="preserve">
         <value>Name</value>
     </data>
     <data name="CustomAssistant_Name_Description" xml:space="preserve">
         <value>Geben Sie den Namen des Assistenten an, der ausschließlich zu Anzeige- und Unterscheidungszwecken verwendet wird.</value>
     </data>
-    <data name="CustomAssistant_EmptyDescription_Watermark" xml:space="preserve">
+    <data name="CustomAssistant_EmptyDescription_PlaceholderText" xml:space="preserve">
         <value>Beschreibung</value>
     </data>
     <data name="CustomAssistant_Description_Description" xml:space="preserve">
         <value>Geben Sie die Beschreibung des Assistenten an, die ausschließlich zu Anzeige- und Unterscheidungszwecken verwendet wird.</value>
     </data>
-    <data name="CustomAssistant_SystemPrompt_Description" xml:space="preserve">
-        <value>Der Systemprompt wird zu Beginn des Gesprächs an das Modell gesendet und bleibt bei jeder Nachricht aktuell.
-Im Prompt können Platzhalter verwendet werden, die in {} enthalten sind und vor dem Senden an das Modell durch die entsprechenden Inhalte ersetzt werden.</value>
+    <data name="AssistantPromptSelector_ComboBox_Label" xml:space="preserve">
+        <value>System-Prompt auswählen</value>
     </data>
-    <data name="CustomAssistant_SystemPrompt_Header" xml:space="preserve">
+    <data name="CustomAssistant_PromptSelector_Header" xml:space="preserve">
         <value>Systemaufforderung</value>
     </data>
     <data name="CustomAssistantPage_DeleteCustomAssistantButton_Content" xml:space="preserve">
@@ -1149,50 +1224,113 @@ Im Prompt können Platzhalter verwendet werden, die in {} enthalten sind und vor
     <data name="TextDifferenceEditor_AcceptButton_Content" xml:space="preserve">
         <value>Akzeptieren</value>
     </data>
-    <data name="TextDifferenceEditor_RevertButton_Content" xml:space="preserve">
-        <value>Rückgängig machen</value>
+    <data name="TextDifferenceEditor_RejectButton_Content" xml:space="preserve">
+        <value>Ablehnen</value>
     </data>
-    <data name="TextDifferenceSummaryView_AddedLineCountTextRun_Text" xml:space="preserve">
-        <value> Zeilen hinzugefügt</value>
+    <data name="TextDifferenceEditor_CommentButton_Content" xml:space="preserve">
+        <value>Kommentar hinzufügen</value>
     </data>
-    <data name="TextDifferenceSummaryView_RemovedLineCountTextRun_Text" xml:space="preserve">
-        <value> Zeilen gelöscht</value>
+    <data name="TextDifferenceEditor_CommentTextBox_PlaceholderText" xml:space="preserve">
+        <value>Fügen Sie einen Kommentar zur aktuellen Zeile hinzu, um den Assistenten zu leiten…</value>
     </data>
-    <data name="TextDifferenceSummaryView_AcceptAllButton_Content" xml:space="preserve">
+    <data name="TextDifferenceEditor_AcceptAllButton_Content" xml:space="preserve">
         <value>Alle akzeptieren</value>
     </data>
-    <data name="TextDifferenceSummaryView_EditButton_Content" xml:space="preserve">
-        <value>Bearbeiten</value>
+    <data name="TextDifferenceEditor_RejectAllButton_Content" xml:space="preserve">
+        <value>Alle ablehnen</value>
     </data>
-    <data name="TextDifferenceSummaryView_DiscardAllButton_Content" xml:space="preserve">
-        <value>Alle verwerfen</value>
+    <data name="TextDifferenceEditor_ConfirmButton_Content" xml:space="preserve">
+        <value>Bestätigen</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_DeleteFiles_DeletionConsent_Header" xml:space="preserve">
-        <value>{0} Dateien oder Ordner werden gelöscht</value>
+    <data name="TextDifferenceEditor_ConfirmButton_ToolTip" xml:space="preserve">
+        <value>Akzeptierte Änderungen anwenden und fortfahren</value>
+    </data>
+    <data name="Common_TextDifference_ChangeSelectionSummary" xml:space="preserve">
+        <value>Insgesamt {0} Änderungen, {1} akzeptiert</value>
+    </data>
+    <data name="TextDifferenceEditor_WindowTitle" xml:space="preserve">
+        <value>Änderungen überprüfen</value>
+    </data>
+    <data name="TextDifferenceEditor_OmittedLineButton_Content" xml:space="preserve">
+        <value>{0} Zeilen unveränderten Inhalts</value>
+    </data>
+    <data name="TextDifferenceEditor_LoadErrorTextBlock_Text" xml:space="preserve">
+        <value>Detaillierte Differenzvorschau kann nicht geladen werden.</value>
+    </data>
+    <data name="TextDifferenceSummaryView_AddedLineCountTextRun_Text" xml:space="preserve">
+        <value>{0} Zeilen hinzugefügt</value>
+    </data>
+    <data name="TextDifferenceSummaryView_RemovedLineCountTextRun_Text" xml:space="preserve">
+        <value>{0} Zeilen entfernt</value>
+    </data>
+    <data name="TextDifferenceSummaryView_UpdateHeader" xml:space="preserve">
+        <value>Änderung {0}</value>
+    </data>
+    <data name="TextDifferenceSummaryView_CreateHeader" xml:space="preserve">
+        <value>Neu erstellen {0}</value>
+    </data>
+    <data name="TextDifferenceSummaryView_DeleteHeader" xml:space="preserve">
+        <value>Löschen {0}</value>
+    </data>
+    <data name="TextDifferenceSummaryView_MoveAndUpdateHeader" xml:space="preserve">
+        <value>Verschieben und ändern {0} → {1}</value>
+    </data>
+    <data name="TextDifferenceSummaryView_MoveHeader" xml:space="preserve">
+        <value>Verschieben {0} → {1}</value>
+    </data>
+    <data name="TextDifferenceSummaryView_ReviewChangesButton_Content" xml:space="preserve">
+        <value>Differenzen überprüfen</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_DeletePaths_DeletionConsent_Header" xml:space="preserve">
+        <value>Die ausgewählten {0} Dateien oder Ordner löschen?</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_MoveFile_MoveConsent_Header" xml:space="preserve">
         <value>Allow file move?</value>
     </data>
+    <data name="BuiltInChatPlugin_FileSystem_TransferPath_CopyConsent_Header" xml:space="preserve">
+        <value>Möchten Sie {0} nach {1} kopieren?</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_TransferPath_MoveConsent_Header" xml:space="preserve">
+        <value>Möchten Sie {0} nach {1} verschieben?</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_TransferPath_Consent_From" xml:space="preserve">
+        <value>Von</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_TransferPath_CopyTo" xml:space="preserve">
+        <value>Kopieren nach</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_TransferPath_MoveTo" xml:space="preserve">
+        <value>Verschieben nach</value>
+    </data>
     <data name="BuiltInChatPlugin_FileSystem_CreateDirectory_CreateConsent_Header" xml:space="preserve">
         <value>Allow directory creation?</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_WriteToFile_WriteConsent_Header" xml:space="preserve">
-        <value>Allow file write?</value>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_FileOperationReview_Header" xml:space="preserve">
+        <value>Darf diese Dateioperation ausgeführt werden?</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_WriteToFile_CreateConsent_Description" xml:space="preserve">
-        <value>Create this file.</value>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_CreateFileReview_Header" xml:space="preserve">
+        <value>Neues {0} erstellen?</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_WriteToFile_AppendConsent_Description" xml:space="preserve">
-        <value>Append to this file.</value>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_UpdateFileReview_Header" xml:space="preserve">
+        <value>Möchten Sie {0} aktualisieren?</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_WriteToFile_OverwriteConsent_Description" xml:space="preserve">
-        <value>Overwrite this file.</value>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_DeleteFileReview_Header" xml:space="preserve">
+        <value>Möchten Sie {0} löschen?</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_DeleteFiles_SystemFile_DeletionConsent_Header" xml:space="preserve">
-        <value>Systemdatei oder -verzeichnis wird gelöscht</value>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_MoveFileReview_Header" xml:space="preserve">
+        <value>Möchten Sie {0} nach {1} verschieben?</value>
     </data>
-    <data name="TextDifferenceEditor_DiscardButton_Content" xml:space="preserve">
-        <value>Verwerfen</value>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowExactPaths" xml:space="preserve">
+        <value>Immer die oben genannten Pfade erlauben</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowParentDirectories" xml:space="preserve">
+        <value>Immer {0} erlauben</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowCustomDirectory" xml:space="preserve">
+        <value>Immer den ausgewählten Ordner erlauben…</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_DeletePaths_SystemFile_DeletionConsent_Header" xml:space="preserve">
+        <value>Systemdatei oder -ordner wird gelöscht</value>
     </data>
     <data name="ChatPluginConsentRequest_Common_Header" xml:space="preserve">
         <value>Darf „{0}“ ausgeführt werden? Es benötigt die Berechtigung „{1}“.</value>
@@ -1236,17 +1374,17 @@ Im Prompt können Platzhalter verwendet werden, die in {} enthalten sind und vor
     <data name="BuiltInChatPlugin_FileSystem_MoveFile_Header" xml:space="preserve">
         <value>Datei verschieben oder umbenennen</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_DeleteFiles_Header" xml:space="preserve">
-        <value>Datei(en) löschen</value>
+    <data name="BuiltInChatPlugin_FileSystem_TransferPath_Header" xml:space="preserve">
+        <value>Pfad kopieren oder verschieben</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_DeletePaths_Header" xml:space="preserve">
+        <value>Pfad löschen</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_CreateDirectory_Header" xml:space="preserve">
         <value>Verzeichnis erstellen</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_WriteToFile_Header" xml:space="preserve">
-        <value>In Datei schreiben</value>
-    </data>
-    <data name="BuiltInChatPlugin_FileSystem_ReplaceFileContent_Header" xml:space="preserve">
-        <value>Dateiinhalt bearbeiten</value>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Header" xml:space="preserve">
+        <value>Patch anwenden</value>
     </data>
     <data name="BuiltInChatPlugin_Web_WebSearch_Searching" xml:space="preserve">
         <value>🔎 {0}</value>
@@ -1332,41 +1470,41 @@ Im Prompt können Platzhalter verwendet werden, die in {} enthalten sind und vor
     <data name="BuiltInChatPlugin_FileSystem_MoveFile_Description" xml:space="preserve">
         <value>Verschieben oder benennen Sie eine Datei oder ein Verzeichnis um.</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_DeleteFiles_Description" xml:space="preserve">
-        <value>Löschen Sie Dateien oder Verzeichnisse am angegebenen Pfad.</value>
+    <data name="BuiltInChatPlugin_FileSystem_TransferPath_Description" xml:space="preserve">
+        <value>Dateien oder Ordner kopieren oder verschieben, ohne deren Inhalt zu ändern.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_DeletePaths_Description" xml:space="preserve">
+        <value>Eindeutig aufgeführte Dateien oder Ordner löschen. Nicht leere Ordner benötigen recursive=true.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_CreateDirectory_Description" xml:space="preserve">
         <value>Erstellen Sie ein neues Verzeichnis am angegebenen Pfad.</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_WriteToFile_Description" xml:space="preserve">
-        <value>Schreiben Sie Inhalte in eine Textdatei am angegebenen Pfad.</value>
-    </data>
-    <data name="BuiltInChatPlugin_FileSystem_ReplaceFileContent_Description" xml:space="preserve">
-        <value>Ersetzen Sie den Inhalt in einer Textdatei.</value>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Description" xml:space="preserve">
+        <value>Fügen Sie mit Codex-Stil-Patches lokale Textdateien hinzu, aktualisieren, löschen oder verschieben.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage" xml:space="preserve">
-        <value>Die Dateigröße überschreitet 10 MB; Lesevorgang wird nicht unterstützt.</value>
+        <value>Die Dateigröße überschreitet {0} MB; Lesevorgang wird nicht unterstützt.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_MoveFile_CreateDirectory_ErrorMessage" xml:space="preserve">
         <value>Das Erstellen des Verzeichnisses ist fehlgeschlagen.</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_DeleteFiles_RootDirectory_Deletion_ErrorMessage" xml:space="preserve">
-        <value>Das Stammverzeichnis kann nicht gelöscht werden.</value>
+    <data name="BuiltInChatPlugin_FileSystem_DeletePaths_RootDirectory_Deletion_ErrorMessage" xml:space="preserve">
+        <value>Das Wurzelverzeichnis kann nicht gelöscht werden.</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_DeleteFiles_SystemFile_Deletion_ErrorMessage" xml:space="preserve">
-        <value>Systemdateien oder -verzeichnisse können nicht gelöscht werden.</value>
+    <data name="BuiltInChatPlugin_FileSystem_DeletePaths_WorkingDirectory_Deletion_ErrorMessage" xml:space="preserve">
+        <value>Das Arbeitsverzeichnis des Chats kann nicht gelöscht werden.</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_WriteToFile_BinaryFile_Write_ErrorMessage" xml:space="preserve">
-        <value>Kann nicht in eine Binärdatei schreiben.</value>
+    <data name="BuiltInChatPlugin_FileSystem_DeletePaths_SystemFile_Deletion_ErrorMessage" xml:space="preserve">
+        <value>Systemdatei oder -ordner kann nicht gelöscht werden.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_DeletePaths_NonEmptyDirectory_ErrorMessage" xml:space="preserve">
+        <value>Der Ordner ist nicht leer. Bitte setzen Sie recursive=true, um den Inhalt zu löschen.</value>
     </data>
     <data name="HandledFunctionInvokingException_ArgumentError" xml:space="preserve">
         <value>Das Modell hat einen ungültigen Wert für den Parameter '{0}' bereitgestellt, wahrscheinlich aufgrund von Halluzinationen.</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_ReplaceFileContent_FileTooLarge_ErrorMessage" xml:space="preserve">
-        <value>Die Dateigröße ist größer als 10 MB, der Ersetzungsvorgang wird nicht unterstützt.</value>
-    </data>
-    <data name="BuiltInChatPlugin_FileSystem_ReplaceFileContent_BinaryFile_ErrorMessage" xml:space="preserve">
-        <value>Kann den Inhalt in einer Binärdatei nicht ersetzen.</value>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_ErrorMessage" xml:space="preserve">
+        <value>Patch kann nicht angewendet werden. Bitte überprüfen Sie den Patch und versuchen Sie es erneut.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_EnsureDirectoryInfo_PathIsFile_ErrorMessage" xml:space="preserve">
         <value>Der angegebene Pfad ist eine Datei, kein Verzeichnis.</value>
@@ -1396,19 +1534,19 @@ Im Prompt können Platzhalter verwendet werden, die in {} enthalten sind und vor
         <value>Extrahiert die Hauptinhalte einer Webseite. Dies geschieht im Hintergrund durch die Ausführung eines versteckten Webbrowsers mit Puppeteer, der auf die Webseite zugreift. Aus Kompatibilitätsgründen kann es beim ersten Öffnen erforderlich sein, den Webbrowser automatisch herunterzuladen, was je nach Netzwerkbedingungen länger dauern kann.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage" xml:space="preserve">
-        <value>Websuchmaschinenanbieter ist nicht ausgewählt. Bitte konfigurieren Sie ihn in den Einstellungen des Webbrowser-Plugins.</value>
+        <value>Kein Websuchmaschinenanbieter ausgewählt. Bitte konfigurieren Sie die Suchmaschine in den Einstellungen des Webbrowsers.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_InvalidWebSearchEngineEndpoint_ErrorMessage" xml:space="preserve">
         <value>Der angegebene Endpunkt ist ungültig; bitte stellen Sie sicher, dass es sich um eine gültige absolute URI handelt.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_GoogleSearchEngineIdNotSet_ErrorMessage" xml:space="preserve">
-        <value>Die Google-Suchmaschinen-ID ist nicht festgelegt. Bitte konfigurieren Sie sie in den Plugin-Einstellungen.</value>
+        <value>Die Google-Suchmaschinen-ID ist nicht festgelegt. Bitte konfigurieren Sie sie in den Werkzeugeinstellungen.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_UnsupportedWebSearchEngineProvider_ErrorMessage" xml:space="preserve">
-        <value>Der Websuchmaschinenanbieter wird nicht unterstützt. Bitte wechseln Sie ihn in den Plugin-Einstellungen.</value>
+        <value>Nicht unterstützter Suchmaschinenanbieter. Bitte wechseln Sie den Anbieter in den Werkzeugeinstellungen.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_WebSearchEngineApiKeyNotSet_ErrorMessage" xml:space="preserve">
-        <value>Der API-Schlüssel ist nicht festgelegt. Bitte konfigurieren Sie ihn in den Plugin-Einstellungen.</value>
+        <value>Der API-Schlüssel ist nicht festgelegt. Bitte konfigurieren Sie ihn in den Werkzeugeinstellungen.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_PuppeteerBrowserDownloadConnectionError_ErrorMessage" xml:space="preserve">
         <value>Verbindung zur Puppeteer-Browser-Download-URL fehlgeschlagen.</value>
@@ -1452,6 +1590,12 @@ Scrollrad oder Zifferntasten zum Wechseln der Auswahlmodi</value>
     </data>
     <data name="Assistant_RequestTimeoutSeconds_Header" xml:space="preserve">
         <value>Anforderungszeitüberschreitung</value>
+    </data>
+    <data name="Assistant_ContextCompressionThreshold_Description" xml:space="preserve">
+        <value>Wenn die berichtete Kontextnutzung diesen Prozentsatz der vom Modell angegebenen Kontextlänge erreicht, wird der Gesprächskontext automatisch komprimiert.</value>
+    </data>
+    <data name="Assistant_ContextCompressionThreshold_Header" xml:space="preserve">
+        <value>Kontextkompression Schwellenwert</value>
     </data>
     <data name="DynamicWebProxy_ApplyProxySettings_EndpointRequired_ErrorMessage" xml:space="preserve">
         <value>Proxy-Server-Adresse ist erforderlich.</value>
@@ -1523,7 +1667,10 @@ Scrollrad oder Zifferntasten zum Wechseln der Auswahlmodi</value>
         <value>Doppelte Einträge sind nicht zulässig.</value>
     </data>
     <data name="ChatPluginConsentRequest_MCP_Header" xml:space="preserve">
-        <value>„{0}“ ist ein MCP-Tool. Everywhere kann die erforderlichen Berechtigungen nicht überprüfen. Bitte stellen Sie sicher, dass es aus einer vertrauenswürdigen Quelle stammt, und Everywhere übernimmt keine Verantwortung für die Folgen.</value>
+        <value>„{0}“ ist ein MCP-Tool. Bitte stellen Sie sicher, dass es aus einer vertrauenswürdigen Quelle stammt. Everywhere kann die erforderlichen Berechtigungen nicht bestätigen und übernimmt keine Verantwortung für die Folgen.</value>
+    </data>
+    <data name="ChatPluginConsentRequest_MCP_BypassServerApproval_Header" xml:space="preserve">
+        <value>Immer alle Tools von „{0}“ erlauben</value>
     </data>
     <data name="ValidationErrorMessage_DuplicateKey" xml:space="preserve">
         <value>Doppelte Einträge sind nicht erlaubt.</value>
@@ -1576,20 +1723,20 @@ Scrollrad oder Zifferntasten zum Wechseln der Auswahlmodi</value>
     <data name="McpTransportConfigurationForm_HeadersDataList_Label" xml:space="preserve">
         <value>Anforderungsheader</value>
     </data>
-    <data name="McpTransportConfigurationForm_KeyTextBox_Watermark" xml:space="preserve">
+    <data name="McpTransportConfigurationForm_KeyTextBox_PlaceholderText" xml:space="preserve">
         <value>* Key</value>
     </data>
-    <data name="McpTransportConfigurationForm_ValueTextBox_Watermark" xml:space="preserve">
+    <data name="McpTransportConfigurationForm_ValueTextBox_PlaceholderText" xml:space="preserve">
         <value>* Wert</value>
     </data>
-    <data name="McpTransportConfigurationForm_OptionalValueTextBox_Watermark" xml:space="preserve">
+    <data name="McpTransportConfigurationForm_OptionalValueTextBox_PlaceholderText" xml:space="preserve">
         <value>Value</value>
     </data>
     <data name="ChatPluginPageViewModel_EditMcpPlugin_DialogTitle" xml:space="preserve">
-        <value>MCP-Plugin bearbeiten (Felder mit * sind erforderlich)</value>
+        <value>MCP-Server bearbeiten (Felder mit * sind erforderlich)</value>
     </data>
     <data name="ChatPluginPageViewModel_AddMcpPlugin_DialogTitle" xml:space="preserve">
-        <value>MCP-Plugin hinzufügen (Felder mit * sind erforderlich)</value>
+        <value>MCP-Server hinzufügen (Felder mit * sind erforderlich)</value>
     </data>
     <data name="ChatPluginPageViewModel_RemoveMcpPlugin_ConfirmationMessage" xml:space="preserve">
         <value>Sind Sie sicher, dass Sie „{0}“ entfernen möchten?</value>
@@ -1607,7 +1754,7 @@ Scrollrad oder Zifferntasten zum Wechseln der Auswahlmodi</value>
         <value>Ungültige MCP-Konfiguration.</value>
     </data>
     <data name="ChatPluginManager_Common_FailedToStartMcpPlugin" xml:space="preserve">
-        <value>Fehler beim Starten des MCP-Plugins „{0}“</value>
+        <value>Konnte MCP &quot;{0}&quot; nicht starten</value>
     </data>
     <data name="ChatPluginManager_McpPluginMissingRuntime_Warning" xml:space="preserve">
         <value>This MCP server requires {0}, but Everywhere could not find it.</value>
@@ -1646,7 +1793,7 @@ Scrollrad oder Zifferntasten zum Wechseln der Auswahlmodi</value>
         <value>MCP wird gestartet</value>
     </data>
     <data name="ChatContext_BusyMessage_CallingTools" xml:space="preserve">
-        <value>Werkzeugaufruf wird generiert</value>
+        <value>Bereite Werkzeugaufruf vor</value>
     </data>
     <data name="ChatWindowViewModel_ExportMarkdown_FailedToLoadChatContext" xml:space="preserve">
         <value>Fehler beim Laden des Chat-Kontexts.</value>
@@ -1771,8 +1918,8 @@ Scrollrad oder Zifferntasten zum Wechseln der Auswahlmodi</value>
     <data name="AskQuestionCard_PreviousButton_Content" xml:space="preserve">
         <value>Vorheriger</value>
     </data>
-    <data name="AskQuestionCard_FreeformTextBox_Watermark" xml:space="preserve">
-        <value>Geben Sie Ihre Antwort ein…</value>
+    <data name="AskQuestionCard_FreeformTextBox_PlaceholderText" xml:space="preserve">
+        <value>Gib deine Antwort ein...</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_SearchFiles_OperationStarted_Message" xml:space="preserve">
         <value>📂 {0}</value>
@@ -1785,6 +1932,12 @@ Scrollrad oder Zifferntasten zum Wechseln der Auswahlmodi</value>
     </data>
     <data name="ApiKeyComboBox_ManageApiKey" xml:space="preserve">
         <value>API-Schlüssel verwalten</value>
+    </data>
+    <data name="AssistantPromptSelector_NewPrompt" xml:space="preserve">
+        <value>Eingabeaufforderung erstellen</value>
+    </data>
+    <data name="AssistantPromptSelector_ManagePrompts" xml:space="preserve">
+        <value>Eingabeaufforderungen verwalten</value>
     </data>
     <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
         <value>Sind Sie sicher, dass Sie {0} API-Schlüssel löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden!</value>
@@ -1838,7 +1991,7 @@ Scrollrad oder Zifferntasten zum Wechseln der Auswahlmodi</value>
         <value>Bitte beachten Sie, dass ich keine perfekte Kompatibilität mit allen Drittanbieter-Modellen garantieren kann.</value>
     </data>
     <data name="AdvancedAssistantConfigurator_InvalidEndpoint" xml:space="preserve">
-        <value>Muss eine gültige URL sein, die mit http:// oder https:// beginnt</value>
+        <value>Muss eine gültige URL sein, die mit http:// oder https:// beginn</value>
     </data>
     <data name="VisualElementType_Spinner" xml:space="preserve">
         <value>Dropdown-Liste</value>
@@ -1871,7 +2024,7 @@ Scrollrad oder Zifferntasten zum Wechseln der Auswahlmodi</value>
         <value>Von JSON importieren</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_DialogTitle" xml:space="preserve">
-        <value>MCP-Plugin importieren</value>
+        <value>MCP-Server importieren</value>
     </data>
     <data name="McpImportForm_Description" xml:space="preserve">
         <value>Fügen Sie Ihre MCP-Konfigurations-JSON unten ein oder importieren Sie sie von einer lokalen Datei.</value>
@@ -1880,19 +2033,19 @@ Scrollrad oder Zifferntasten zum Wechseln der Auswahlmodi</value>
         <value>Öffnen</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_SuccessToast_Title" xml:space="preserve">
-        <value>{0} MCP-Plugins importiert</value>
+        <value>{0} MCP-Server importiert</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_FailedToast_Title" xml:space="preserve">
-        <value>Import von MCP-Plugins fehlgeschlagen</value>
+        <value>Import des MCP-Servers fehlgeschlagen</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_NotFoundToast_Title" xml:space="preserve">
-        <value>Keine gültigen MCP-Plugins gefunden</value>
+        <value>Keine gültige MCP-Konfiguration gefunden</value>
     </data>
     <data name="McpTransportConfiguration_DefaultName" xml:space="preserve">
         <value>MCP-Server</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_PartialSuccessToast_Title" xml:space="preserve">
-        <value>{0} Plugins erfolgreich importiert, {1} fehlgeschlagen</value>
+        <value>{0} MCP-Server erfolgreich importiert, aber {1} fehlgeschlagen</value>
     </data>
     <data name="MainTrayIcon_Menu_OpenChatWindow" xml:space="preserve">
         <value>Chatfenster öffnen</value>
@@ -2012,8 +2165,14 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
     <data name="ChatPluginPage_FunctionsTabItem_EnabledDataGridTemplateColumn_Header" xml:space="preserve">
         <value>Aktivieren</value>
     </data>
-    <data name="ChatPluginPage_FunctionsTabItem_AutoApproveDataGridTemplateColumn_Header" xml:space="preserve">
-        <value>Automatische Genehmigung</value>
+    <data name="ChatPluginPage_FunctionsTabItem_BypassApprovalDataGridTemplateColumn_Header" xml:space="preserve">
+        <value>Genehmigung umgehen</value>
+    </data>
+    <data name="ChatPluginPage_McpBypassApproval_Header" xml:space="preserve">
+        <value>Alle Tools umgehen die Genehmigung</value>
+    </data>
+    <data name="ChatPluginPage_McpBypassApproval_Description" xml:space="preserve">
+        <value>Wenn Sie diesem MCP-Server vertrauen, wird nach Aktivierung dieser Option bei allen folgenden Tools keine Genehmigung mehr angefordert.</value>
     </data>
     <data name="PreviewEndpointTextBox_Hint" xml:space="preserve">
         <value>Vorschau: {0}</value>
@@ -2439,7 +2598,7 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
     <data name="ChatContext_TemporaryToggleButton_ToolTip" xml:space="preserve">
         <value>Temporäres Chat: Wenn aktiviert, wird der aktuelle Chat nicht gespeichert und beim Wechseln oder Erstellen eines neuen Gesprächs gelöscht.</value>
     </data>
-    <data name="ChatInputArea_Watermark_StrategyArgumentHint" xml:space="preserve">
+    <data name="ChatInputArea_PlaceholderText_StrategyArgumentHint" xml:space="preserve">
         <value>(Optional) {0}</value>
     </data>
     <data name="ChangeLogView_UpdateButton_Content" xml:space="preserve">
@@ -2487,7 +2646,7 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
     <data name="Common_Submit" xml:space="preserve">
         <value>Einreichen</value>
     </data>
-    <data name="ConsentDecisionCard_ReasonTextBox_Watermark" xml:space="preserve">
+    <data name="ConsentDecisionCard_ReasonTextBox_PlaceholderText" xml:space="preserve">
         <value>Geben Sie den Ablehnungsgrund ein</value>
     </data>
     <data name="HandledChatException_TemperatureNotSupport" xml:space="preserve">
@@ -2505,7 +2664,7 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
     <data name="ChatPluginPage_EmptyContent_SelectInstruction" xml:space="preserve">
         <value>Wählen Sie links ein Element aus, um die Details anzuzeigen</value>
     </data>
-    <data name="IconEditor_SearchBox_Watermark" xml:space="preserve">
+    <data name="IconEditor_SearchBox_PlaceholderText" xml:space="preserve">
         <value>Suche...</value>
     </data>
     <data name="UserProfilePresenter_ErrorTextBlock_Text" xml:space="preserve">
@@ -2549,6 +2708,12 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
     </data>
     <data name="BuiltInChatPlugin_Essential_ManageTodoList_Reset" xml:space="preserve">
         <value>{0} To-Do-Elemente gesetzt</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ManageTodoList_Update" xml:space="preserve">
+        <value>{0} To-Do-Elemente aktualisiert</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ManageTodoList_Clear" xml:space="preserve">
+        <value>To-do-Liste geleert</value>
     </data>
     <data name="BuiltInChatPlugin_ListWindows_WindowCount" xml:space="preserve">
         <value>{0} Fenster gefunden</value>
@@ -2688,17 +2853,20 @@ Scrollrad oder Zifferntasten zum Wechseln des Auswahlmodus</value>
     <data name="Greetings_Tip6" xml:space="preserve">
         <value>💡Treten Sie unserer offiziellen Community auf der Über-Seite bei und interagieren Sie mit uns~</value>
     </data>
-    <data name="TerminalPluginSettings_AutoApprove_WarningToast_Content" xml:space="preserve">
-        <value>Die automatische Genehmigung für das Terminal-Tool ist aktiviert. Unsachgemäße Aufrufe des Assistenten können zu schwerwiegenden Systemabstürzen oder irreversiblen Datenverlusten führen. Bitte übernehmen Sie das Risiko selbst.</value>
+    <data name="TerminalPluginSettings_BypassesApproval_WarningToast_Content" xml:space="preserve">
+        <value>Alle Terminalaufrufe umgehen die Genehmigung. Unzulässige Aufrufe des Assistenten können zu schweren Systemabstürzen oder irreversiblen Datenverlusten führen. Bitte tragen Sie das Risiko selbst.</value>
     </data>
-    <data name="TerminalPluginSettings_AutoApprove_Header" xml:space="preserve">
-        <value>Automatische Genehmigung</value>
+    <data name="TerminalPluginSettings_BypassApproval_Header" xml:space="preserve">
+        <value>Genehmigung umgehen</value>
     </data>
-    <data name="TerminalPluginSettings_AutoApprove_Description" xml:space="preserve">
-        <value>Wenn aktiviert, werden alle Terminaloperationen automatisch genehmigt, ohne manuelle Bestätigung. Unsachgemäße Aufrufe des Assistenten können zu schwerwiegenden Systemabstürzen oder irreversiblen Datenverlusten führen. Die Aktivierung dieser Option bedeutet, dass Sie das Risiko selbst einschätzen und bereit sind, es zu übernehmen.</value>
+    <data name="TerminalPluginSettings_BypassApproval_Description" xml:space="preserve">
+        <value>Nach Aktivierung werden alle Terminaloperationen automatisch genehmigt, ohne manuelle Genehmigung. Unzulässige Aufrufe des Assistenten können zu schweren Systemabstürzen oder irreversiblen Datenverlusten führen. Die Aktivierung dieser Option bedeutet, dass Sie das Risiko selbst einschätzen und bereit sind, es zu tragen.</value>
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
         <value>Im Terminal Ausführen</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Preview" xml:space="preserve">
+        <value>Führe {0} aus</value>
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
         <value>Skript-Ausführung fehlgeschlagen: {0}</value>
@@ -2772,8 +2940,8 @@ Veröffentlichungsdatum: {2}</value>
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>Befehl begann um {0}, fehlgeschlagen nach {1} Sekunden, Rückgabewert: {2}</value>
     </data>
-    <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Description" xml:space="preserve">
-        <value>Verwenden Sie Everything, um Dateien zu suchen.</value>
+    <data name="Assistant_ConfiguratorSelector_Advanced" xml:space="preserve">
+        <value>Erweitert</value>
     </data>
     <data name="Common_Advanced" xml:space="preserve">
         <value>Erweitert</value>
@@ -2794,28 +2962,28 @@ Veröffentlichungsdatum: {2}</value>
         <value>Dokument öffnen</value>
     </data>
     <data name="Assistant_OpenAIOptions_Header" xml:space="preserve">
-        <value>OpenAI Kompatible Optionen</value>
+        <value>OpenAI Chat Completions Einstellungen</value>
     </data>
     <data name="Assistant_OpenAIOptions_Description" xml:space="preserve">
-        <value>Konfigurieren Sie die Chat-Vervollständigungsparameter des OpenAI-kompatiblen Anbieters.</value>
+        <value>Parameter für die OpenAI Chat Completions API konfigurieren.</value>
     </data>
     <data name="Assistant_OpenAIResponsesOptions_Header" xml:space="preserve">
-        <value>OpenAI Antworten Optionen</value>
+        <value>OpenAI Responses Einstellungen</value>
     </data>
     <data name="Assistant_OpenAIResponsesOptions_Description" xml:space="preserve">
-        <value>Konfigurieren Sie die Inferenzparameter der Responses API.</value>
+        <value>Parameter für die OpenAI Responses API konfigurieren.</value>
     </data>
     <data name="Assistant_AnthropicOptions_Header" xml:space="preserve">
-        <value>Anthropic Optionen</value>
+        <value>Anthropic Messages Einstellungen</value>
     </data>
     <data name="Assistant_AnthropicOptions_Description" xml:space="preserve">
-        <value>Konfigurieren Sie das Denk- und Cache-Verhalten der Anthropic Messages API.</value>
+        <value>Parameter für die Anthropic Messages API konfigurieren.</value>
     </data>
     <data name="Assistant_GoogleOptions_Header" xml:space="preserve">
-        <value>Google Gemini Optionen</value>
+        <value>Google Gemini Einstellungen</value>
     </data>
     <data name="Assistant_GoogleOptions_Description" xml:space="preserve">
-        <value>Konfigurieren Sie die Denkparameter von Gemini.</value>
+        <value>Parameter für die Google Gemini API konfigurieren.</value>
     </data>
     <data name="OpenAIOptions_IncludeReasoningContent_Header" xml:space="preserve">
         <value>Reasoning_Content beibehalten</value>
@@ -2958,7 +3126,7 @@ Veröffentlichungsdatum: {2}</value>
     <data name="SkillPage_SourceFilter_All" xml:space="preserve">
         <value>Alle Quellen</value>
     </data>
-    <data name="SkillPage_SearchBox_Watermark" xml:space="preserve">
+    <data name="SkillPage_SearchBox_PlaceholderText" xml:space="preserve">
         <value>Fähigkeiten suchen...</value>
     </data>
     <data name="SkillPage_ClearSearchButton_ToolTip" xml:space="preserve">
@@ -3189,13 +3357,13 @@ Veröffentlichungsdatum: {2}</value>
     <data name="HomePage_OutputTokensToolTip" xml:space="preserve">
         <value>Ausgabe-Token: {0}</value>
     </data>
-    <data name="HomePage_HeatmapWeekdayMondayShort" xml:space="preserve">
+    <data name="StatisticsHeatmap_MondayShort" xml:space="preserve">
         <value>Mo</value>
     </data>
-    <data name="HomePage_HeatmapWeekdayWednesdayShort" xml:space="preserve">
+    <data name="StatisticsHeatmap_WednesdayShort" xml:space="preserve">
         <value>Mi</value>
     </data>
-    <data name="HomePage_HeatmapWeekdayFridayShort" xml:space="preserve">
+    <data name="StatisticsHeatmap_FridayShort" xml:space="preserve">
         <value>Fr</value>
     </data>
     <data name="HomePage_HeatmapDayToolTip" xml:space="preserve">
@@ -3218,5 +3386,528 @@ Veröffentlichungsdatum: {2}</value>
     </data>
     <data name="HomeNotification_StatisticsBackfilled" xml:space="preserve">
         <value>Die ersten Statistiken stammen aus der Analyse historischer Chats und können Ungenauigkeiten aufweisen.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_WriteObservedPathFailed" xml:space="preserve">
+        <value>Fehler beim Schreiben des Einstellungs-Pfades „{0}“.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_UnsupportedPropertyKind" xml:space="preserve">
+        <value>Der Typ „{0}“ für die Einstellungs-Eigenschaft „{1}“ wird nicht unterstützt.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_SerializedSubtreeNotWritable" xml:space="preserve">
+        <value>Der serialisierte Teilbaum „{0}“ kann nicht ersetzt werden, da die Eigenschaft nicht beschreibbar ist.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ExpectedJsonArrayForList" xml:space="preserve">
+        <value>Die Einstellungs-Liste „{0}“ benötigt ein JSON-Array.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ListNotMutable" xml:space="preserve">
+        <value>Die Einstellungs-Liste „{0}“ ist unveränderlich und kann nicht ersetzt werden.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ExpectedJsonObjectForDictionary" xml:space="preserve">
+        <value>Das Einstellungs-Wörterbuch „{0}“ benötigt ein JSON-Objekt.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_DictionaryNotMutable" xml:space="preserve">
+        <value>Das Einstellungs-Wörterbuch „{0}“ ist unveränderlich und kann nicht ersetzt werden.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ExpectedJsonObjectForObject" xml:space="preserve">
+        <value>Das Einstellungs-Objekt „{0}“ benötigt ein JSON-Objekt.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ObjectCannotBeCreated" xml:space="preserve">
+        <value>Das Einstellungs-Objekt „{0}“ ist null und kann nicht erstellt werden.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_UnknownMember" xml:space="preserve">
+        <value>Unbekanntes Einstellungsmitglied „{0}“.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_NullForNonNullable" xml:space="preserve">
+        <value>Kann null nicht dem nicht-nullbaren Einstellungswert „{0}“ zuweisen.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_PropertyCannotBeSetToNull" xml:space="preserve">
+        <value>Der Einstellungswert „{0}“ darf null sein, aber seine Eigenschaft ist schreibgeschützt und kann nicht geleert werden.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ReadValueFailed" xml:space="preserve">
+        <value>Konnte den Einstellungswert „{0}“ nicht als „{1}“ lesen.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_DictionaryKeyFailed" xml:space="preserve">
+        <value>Konnte den Schlüssel des Einstellungs-Wörterbuchs „{0}“ nicht als „{1}“ lesen.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ParseFailure" xml:space="preserve">
+        <value>Fehler beim Parsen des Einstellungsdokuments „{0}“, ein neues In-Memory-Dokument wurde erstellt.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_WriteFileFailed" xml:space="preserve">
+        <value>Fehler beim Schreiben des Einstellungs-JSON in „{0}“ (Versuch {1}, Inhaltslänge {2} Bytes).</value>
+    </data>
+    <data name="PromptPage_Title" xml:space="preserve">
+        <value>Eingabeaufforderungen</value>
+    </data>
+    <data name="PromptPage_SearchBox_PlaceholderText" xml:space="preserve">
+        <value>Eingabeaufforderungen suchen</value>
+    </data>
+    <data name="PromptPage_CountText" xml:space="preserve">
+        <value>{0} Eingabeaufforderungen</value>
+    </data>
+    <data name="PromptPage_DefaultPrompt_DisplayName" xml:space="preserve">
+        <value>Standard-Eingabeaufforderung</value>
+    </data>
+    <data name="PromptPage_UntitledPrompt_DisplayName" xml:space="preserve">
+        <value>Unbenannte Eingabeaufforderung</value>
+    </data>
+    <data name="PromptPage_Source_BuiltInDefault" xml:space="preserve">
+        <value>Integriert Standard</value>
+    </data>
+    <data name="PromptPage_BuiltInBadge_Content" xml:space="preserve">
+        <value>Integriert</value>
+    </data>
+    <data name="PromptPage_CopyRenderedButton_ToolTip" xml:space="preserve">
+        <value>Vorschauinhalt kopieren</value>
+    </data>
+    <data name="PromptPage_NewPromptButton_Content" xml:space="preserve">
+        <value>Erstellen</value>
+    </data>
+    <data name="PromptPage_NewPromptButton_ToolTip" xml:space="preserve">
+        <value>Eingabeaufforderung erstellen</value>
+    </data>
+    <data name="PromptPage_EditPromptButton_Content" xml:space="preserve">
+        <value>Bearbeiten</value>
+    </data>
+    <data name="PromptPage_EditPromptButton_ToolTip" xml:space="preserve">
+        <value>Eingabeaufforderung bearbeiten</value>
+    </data>
+    <data name="PromptPage_DeletePromptButton_ToolTip" xml:space="preserve">
+        <value>Eingabeaufforderung löschen</value>
+    </data>
+    <data name="PromptPage_DeletePrompt_Dialog_Message" xml:space="preserve">
+        <value>Möchten Sie diese Eingabeaufforderung dauerhaft löschen?
+„{0}“ wird entfernt.</value>
+    </data>
+    <data name="PromptPage_DeletePromptUsedByAssistant_Dialog_Message" xml:space="preserve">
+        <value>1 Assistent verwendet bereits diese Eingabeaufforderung.
+Nach dem Löschen verwendet dieser Assistent die Standard-Eingabeaufforderung, bis eine neue ausgewählt wird.
+
+Möchten Sie „{0}“ trotzdem dauerhaft löschen?</value>
+    </data>
+    <data name="PromptPage_DeletePromptUsedByAssistants_Dialog_Message" xml:space="preserve">
+        <value>{0} Assistenten verwenden bereits diese Eingabeaufforderung.
+Nach dem Löschen verwenden diese Assistenten die Standard-Eingabeaufforderung, bis eine neue ausgewählt wird.
+
+Möchten Sie „{1}“ trotzdem dauerhaft löschen?</value>
+    </data>
+    <data name="PromptPage_NoMatchingPrompts" xml:space="preserve">
+        <value>Keine passenden Eingabeaufforderungen</value>
+    </data>
+    <data name="PromptPage_Tab_Preview" xml:space="preserve">
+        <value>Vorschau</value>
+    </data>
+    <data name="PromptPage_Tab_Raw" xml:space="preserve">
+        <value>Roh</value>
+    </data>
+    <data name="PromptPage_AssistantsUsingPromptTitle" xml:space="preserve">
+        <value>Assistenten, die diese Eingabeaufforderung verwenden ({0})</value>
+    </data>
+    <data name="PromptPage_NoAssistantsUsingPrompt" xml:space="preserve">
+        <value>Keine Assistenten verwenden diese Eingabeaufforderung</value>
+    </data>
+    <data name="PromptPage_EmptyContent_SelectInstruction" xml:space="preserve">
+        <value>Wählen Sie eine Eingabeaufforderung, um die Vorschau anzuzeigen</value>
+    </data>
+    <data name="PromptPage_CopyFailedToast_Title" xml:space="preserve">
+        <value>Kopieren fehlgeschlagen</value>
+    </data>
+    <data name="PromptPage_NavigationWarning_Title" xml:space="preserve">
+        <value>Eingabeaufforderung kann nicht geöffnet werden</value>
+    </data>
+    <data name="PromptPage_InvalidRoutePrompt_Content" xml:space="preserve">
+        <value>Ungültiger Eingabeaufforderungslink: {0}</value>
+    </data>
+    <data name="PromptPage_MissingRoutePrompt_Content" xml:space="preserve">
+        <value>Eingabeaufforderung nicht gefunden: {0}</value>
+    </data>
+    <data name="PromptPage_UnnamedAssistant" xml:space="preserve">
+        <value>Unbenannter Assistent</value>
+    </data>
+    <data name="PromptPage_NoModelSelected" xml:space="preserve">
+        <value>Kein Modell ausgewählt</value>
+    </data>
+    <data name="PromptEditor_CreateTitle" xml:space="preserve">
+        <value>Eingabeaufforderung erstellen</value>
+    </data>
+    <data name="PromptEditor_EditTitle" xml:space="preserve">
+        <value>Eingabeaufforderung bearbeiten</value>
+    </data>
+    <data name="PromptEditor_SaveButton_Content" xml:space="preserve">
+        <value>Speichern</value>
+    </data>
+    <data name="PromptEditor_NameLabel" xml:space="preserve">
+        <value>Name (nur zur Unterscheidung)</value>
+    </data>
+    <data name="PromptEditor_NamePlaceholder" xml:space="preserve">
+        <value>Optional</value>
+    </data>
+    <data name="PromptEditor_TemplateLabel" xml:space="preserve">
+        <value>Inhalt der Eingabeaufforderung</value>
+    </data>
+    <data name="PromptEditor_PlaceholderReferencesTitle" xml:space="preserve">
+        <value>Verfügbare Platzhalter</value>
+    </data>
+    <data name="PromptEditor_PreviewLabel" xml:space="preserve">
+        <value>Vorschau</value>
+    </data>
+    <data name="PromptEditor_OpenFailedToast_Title" xml:space="preserve">
+        <value>Bearbeiten der Eingabeaufforderung fehlgeschlagen</value>
+    </data>
+    <data name="PromptEditor_OpenFailedToast_Content" xml:space="preserve">
+        <value>Diese Eingabeaufforderung existiert nicht oder kann nicht bearbeitet werden.</value>
+    </data>
+    <data name="PromptEditor_SaveFailedToast_Title" xml:space="preserve">
+        <value>Speichern der Eingabeaufforderung fehlgeschlagen</value>
+    </data>
+    <data name="PromptEditor_Placeholder_DefaultSystemPrompt_Description" xml:space="preserve">
+        <value>Everywhere Standard-Systembeschreibung</value>
+    </data>
+    <data name="PromptEditor_Placeholder_SkillsPrompt_Description" xml:space="preserve">
+        <value>Anleitung für aktivierte Fähigkeiten</value>
+    </data>
+    <data name="PromptEditor_Placeholder_Date_Description" xml:space="preserve">
+        <value>Aktuelles Datum</value>
+    </data>
+    <data name="PromptEditor_Placeholder_Time_Description" xml:space="preserve">
+        <value>Aktuelle Uhrzeit</value>
+    </data>
+    <data name="PromptEditor_Placeholder_OS_Description" xml:space="preserve">
+        <value>Betriebssystem</value>
+    </data>
+    <data name="PromptEditor_Placeholder_SystemLanguage_Description" xml:space="preserve">
+        <value>Systemsprache</value>
+    </data>
+    <data name="PromptEditor_Placeholder_WorkingDirectory_Description" xml:space="preserve">
+        <value>Arbeitsverzeichnis</value>
+    </data>
+    <data name="PromptDiagnostic_EmptyTemplate" xml:space="preserve">
+        <value>Der Inhalt der Eingabeaufforderung darf nicht leer sein.</value>
+    </data>
+    <data name="PromptDiagnostic_UnknownPlaceholder" xml:space="preserve">
+        <value>Unbekannter Platzhalter: {0}.</value>
+    </data>
+    <data name="PromptDiagnostic_MissingSkillsPrompt" xml:space="preserve">
+        <value>Diese Eingabeaufforderung enthält weder {DefaultSystemPrompt} noch {SkillsPrompt}, daher kann der Assistent möglicherweise die Fähigkeiten nicht korrekt nutzen.</value>
+    </data>
+    <data name="PromptDiagnostic_MissingDate" xml:space="preserve">
+        <value>Fehlendes {Date}, die Eingabeaufforderung könnte an zeitlichem Kontext mangeln.</value>
+    </data>
+    <data name="PromptDiagnostic_TimeMayReduceCacheHitRate" xml:space="preserve">
+        <value>{Time} auf die Sekunde genau kann die Cache-Trefferquote verringern und die Nutzungskosten erhöhen. Verwenden Sie, wenn möglich, {Date}.</value>
+    </data>
+    <data name="PromptDiagnostic_UnresolvedReference" xml:space="preserve">
+        <value>Eingabeaufforderung nicht gefunden: {0}. Es wird auf die Standard-Eingabeaufforderung zurückgegriffen.</value>
+    </data>
+    <data name="PromptSource_Blank" xml:space="preserve">
+        <value>Manuell erstellt</value>
+    </data>
+    <data name="PromptSource_Guided" xml:space="preserve">
+        <value>Geführt erstellt</value>
+    </data>
+    <data name="PromptSource_Copy" xml:space="preserve">
+        <value>Kopiert erstellt</value>
+    </data>
+    <data name="PromptSource_Migration" xml:space="preserve">
+        <value>Von alten Einstellungen migriert</value>
+    </data>
+    <data name="PromptSource_Import" xml:space="preserve">
+        <value>Importieren Erstellen</value>
+    </data>
+    <data name="PromptEditor_CopyToClipboardButton_ToolTip" xml:space="preserve">
+        <value>Platzhalter Kopieren</value>
+    </data>
+    <data name="PromptCreate_Title" xml:space="preserve">
+        <value>Prompt Erstellen</value>
+    </data>
+    <data name="PromptCreate_CreateButton_Content" xml:space="preserve">
+        <value>Speichern</value>
+    </data>
+    <data name="PromptCreate_QuickMode_Description" xml:space="preserve">
+        <value>Der Schnellmodus erstellt einen verwendbaren Prompt basierend auf wenigen Auswahlmöglichkeiten.</value>
+    </data>
+    <data name="PromptCreate_AdvancedMode_Description" xml:space="preserve">
+        <value>Der erweiterte Modus ermöglicht die direkte Kontrolle über den gesamten Inhalt des Prompts.</value>
+    </data>
+    <data name="PromptCreate_SwitchToAdvanced_Content" xml:space="preserve">
+        <value>Zu Erweitertem Modus Wechseln</value>
+    </data>
+    <data name="PromptCreate_SwitchToQuick_Content" xml:space="preserve">
+        <value>Zurück zum Schnellmodus</value>
+    </data>
+    <data name="PromptCreate_PersonaLabel" xml:space="preserve">
+        <value>Persona</value>
+    </data>
+    <data name="PromptCreate_PreferredUserNameLabel" xml:space="preserve">
+        <value>Wie möchtest du, dass der Assistent dich anspricht?</value>
+    </data>
+    <data name="PromptCreate_PreferredUserNamePlaceholder" xml:space="preserve">
+        <value>Optional</value>
+    </data>
+    <data name="PromptCreate_ScenarioLabel" xml:space="preserve">
+        <value>Arbeitszenarien (max. 3)</value>
+    </data>
+    <data name="PromptCreate_ScenarioHint" xml:space="preserve">
+        <value>Wähle bis zu 3 Szenarien aus.</value>
+    </data>
+    <data name="PromptCreate_ToneLabel" xml:space="preserve">
+        <value>Tonfall</value>
+    </data>
+    <data name="PromptCreate_DetailLabel" xml:space="preserve">
+        <value>Antwortdetails</value>
+    </data>
+    <data name="PromptCreate_OrganizationLabel" xml:space="preserve">
+        <value>Organisationsweise</value>
+    </data>
+    <data name="PromptCreate_AdditionalRequirementsLabel" xml:space="preserve">
+        <value>Zusätzliche Anforderungen</value>
+    </data>
+    <data name="PromptCreate_AdditionalRequirementsPlaceholder" xml:space="preserve">
+        <value>(Optional) Zusätzliche Anforderungen, die bei diesem Prompt berücksichtigt werden sollen.</value>
+    </data>
+    <data name="PromptCreate_LivePreviewTitle" xml:space="preserve">
+        <value>Echtzeitvorschau</value>
+    </data>
+    <data name="PromptCreate_LivePreviewDescription" xml:space="preserve">
+        <value>Die Vorschau rendert in Echtzeit den aktuellen Datum-, Uhrzeit- und andere Platzhalterinhalte.</value>
+    </data>
+    <data name="PromptCreate_DiscardAdvanced_DialogTitle" xml:space="preserve">
+        <value>Fortschrittliche Bearbeitung verwerfen?</value>
+    </data>
+    <data name="PromptCreate_DiscardAdvanced_DialogMessage" xml:space="preserve">
+        <value>Die Rückkehr zur Schnellkonfiguration wird den Inhalt der Eingabeaufforderung basierend auf der aktuellen Auswahl neu generieren und die manuelle Bearbeitung aufgeben.</value>
+    </data>
+    <data name="PromptCreate_DiscardAdvanced_DialogPrimary" xml:space="preserve">
+        <value>Bearbeitung verwerfen</value>
+    </data>
+    <data name="PromptRecipe_Persona_General" xml:space="preserve">
+        <value>🤝 Allgemeiner Assistent</value>
+    </data>
+    <data name="PromptRecipe_Persona_ProfessionalAdvisor" xml:space="preserve">
+        <value>💼 Professioneller Berater</value>
+    </data>
+    <data name="PromptRecipe_Persona_ProgrammingAssistant" xml:space="preserve">
+        <value>💻 Programmierassistent</value>
+    </data>
+    <data name="PromptRecipe_Persona_WritingEditor" xml:space="preserve">
+        <value>✍️ Schreibeditor</value>
+    </data>
+    <data name="PromptRecipe_Persona_TranslationAssistant" xml:space="preserve">
+        <value>🌐 Übersetzungsassistent</value>
+    </data>
+    <data name="PromptRecipe_Persona_ResearchAssistant" xml:space="preserve">
+        <value>🔎 Forschungsassistent</value>
+    </data>
+    <data name="PromptRecipe_Persona_LearningMentor" xml:space="preserve">
+        <value>🎓 Lernmentor</value>
+    </data>
+    <data name="PromptRecipe_Persona_ProductStrategyPartner" xml:space="preserve">
+        <value>🧩 Produkt- und Strategiepartner</value>
+    </data>
+    <data name="PromptRecipe_Scenario_GeneralQA" xml:space="preserve">
+        <value>Allgemeine Fragen und Antworten</value>
+    </data>
+    <data name="PromptRecipe_Scenario_ProgrammingDevelopment" xml:space="preserve">
+        <value>Programmierung und Entwicklung</value>
+    </data>
+    <data name="PromptRecipe_Scenario_CodeReview" xml:space="preserve">
+        <value>Codeüberprüfung</value>
+    </data>
+    <data name="PromptRecipe_Scenario_WritingEditing" xml:space="preserve">
+        <value>Schreiben und Bearbeiten</value>
+    </data>
+    <data name="PromptRecipe_Scenario_DataAnalysis" xml:space="preserve">
+        <value>Datenanalyse</value>
+    </data>
+    <data name="PromptRecipe_Scenario_LearningEducation" xml:space="preserve">
+        <value>Lernen und Bildung</value>
+    </data>
+    <data name="PromptRecipe_Scenario_TranslationLanguage" xml:space="preserve">
+        <value>Übersetzung von Sprachen</value>
+    </data>
+    <data name="PromptRecipe_Scenario_ProductPlanning" xml:space="preserve">
+        <value>Produktplanung</value>
+    </data>
+    <data name="PromptRecipe_Scenario_Troubleshooting" xml:space="preserve">
+        <value>Fehlerbehebung</value>
+    </data>
+    <data name="PromptRecipe_Scenario_ResearchPlanning" xml:space="preserve">
+        <value>Forschungsplanung</value>
+    </data>
+    <data name="PromptRecipe_Tone_ProfessionalRigorous" xml:space="preserve">
+        <value>Professionell und Streng</value>
+    </data>
+    <data name="PromptRecipe_Tone_FriendlyPatient" xml:space="preserve">
+        <value>Freundlich und Geduldig</value>
+    </data>
+    <data name="PromptRecipe_Tone_ConciseDirect" xml:space="preserve">
+        <value>Klar und Direkt</value>
+    </data>
+    <data name="PromptRecipe_Tone_SocraticGuiding" xml:space="preserve">
+        <value>Sokratische Anleitung</value>
+    </data>
+    <data name="PromptRecipe_Tone_FormalBusiness" xml:space="preserve">
+        <value>Formell und Geschäftlich</value>
+    </data>
+    <data name="PromptRecipe_Tone_CreativeExploratory" xml:space="preserve">
+        <value>Kreativ und Erkundend</value>
+    </data>
+    <data name="PromptRecipe_Detail_Concise" xml:space="preserve">
+        <value>Kurz</value>
+    </data>
+    <data name="PromptRecipe_Detail_Balanced" xml:space="preserve">
+        <value>Ausgewogen</value>
+    </data>
+    <data name="PromptRecipe_Detail_Detailed" xml:space="preserve">
+        <value>Detailliert</value>
+    </data>
+    <data name="PromptRecipe_Organization_Automatic" xml:space="preserve">
+        <value>Strukturiert</value>
+    </data>
+    <data name="PromptRecipe_Organization_ConclusionFirst" xml:space="preserve">
+        <value>Schlussfolgerung Zuerst</value>
+    </data>
+    <data name="PromptRecipe_Organization_StepByStep" xml:space="preserve">
+        <value>Schritt-für-Schritt</value>
+    </data>
+    <data name="PromptRecipe_Organization_KeyPoints" xml:space="preserve">
+        <value>Stichpunktliste</value>
+    </data>
+    <data name="PromptRecipe_Organization_CompareOptions" xml:space="preserve">
+        <value>Optionen Vergleichen</value>
+    </data>
+    <data name="PromptRecipe_Organization_ExamplesFirst" xml:space="preserve">
+        <value>Beispiele Zuerst</value>
+    </data>
+    <data name="PromptRecipe_Organization_NaturalConversation" xml:space="preserve">
+        <value>Natürliche Konversation</value>
+    </data>
+    <data name="CustomAssistantPage_InvalidRouteAssistant_Content" xml:space="preserve">
+        <value>Ungültige Assistenten-ID im Routing: {0}</value>
+    </data>
+    <data name="CustomAssistantPage_MissingRouteAssistant_Content" xml:space="preserve">
+        <value>Assistent nicht gefunden: {0}</value>
+    </data>
+    <data name="Assistant_AdvancedSettings" xml:space="preserve">
+        <value>Erweiterte Einstellungen</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_ReasoningCount" xml:space="preserve">
+        <value>{0} Überlegungen</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_ToolCallCount" xml:space="preserve">
+        <value>{0} Werkzeugaufrufe</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_SubagentCount" xml:space="preserve">
+        <value>{0} Unterassistenten</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_NoResponse" xml:space="preserve">
+        <value>In dieser Runde wurde keine Antwort generiert.</value>
+    </data>
+    <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
+        <value>Unterassistent anzeigen</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_CompletedActivities" xml:space="preserve">
+        <value>Erledigte {0} Aktivitäten</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_Working" xml:space="preserve">
+        <value>Wird bearbeitet</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_InputRequired" xml:space="preserve">
+        <value>Dein Eingreifen ist erforderlich</value>
+    </data>
+    <data name="LiveElapsedConverters_SecondsFormat" xml:space="preserve">
+        <value>{0:0.0} Sekunden</value>
+    </data>
+    <data name="LiveElapsedConverters_MinutesSecondsFormat" xml:space="preserve">
+        <value>{0} Min {1} Sek</value>
+    </data>
+    <data name="LiveElapsedConverters_HoursMinutesFormat" xml:space="preserve">
+        <value>{0} Std {1} Min</value>
+    </data>
+    <data name="LiveElapsedConverters_DaysHoursFormat" xml:space="preserve">
+        <value>{0} Tage {1} Std</value>
+    </data>
+    <data name="ChatPresentation_GenericActivity" xml:space="preserve">
+        <value>Wird bearbeitet</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_Completed" xml:space="preserve">
+        <value>Abgeschlossen</value>
+    </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Description" xml:space="preserve">
+        <value>Erlaubt das Lesen, Bearbeiten und Automatisieren von Word-, Excel- und PowerPoint-Dateien, ohne dass Office installiert sein muss.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_UnsupportedOperation_ErrorMessage" xml:space="preserve">
+        <value>Diese Datei unterstützt die angeforderte Operation nicht.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_InvalidPath_ErrorMessage" xml:space="preserve">
+        <value>Der Dateipfad ist ungültig, bitte überprüfen Sie ihn und versuchen Sie es erneut.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_UnsupportedResource_ErrorMessage" xml:space="preserve">
+        <value>Diese Art von Ressource kann nicht geöffnet werden.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ReadFile_BinaryFile_ErrorMessage" xml:space="preserve">
+        <value>Diese Datei kann nicht als Text gelesen werden.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_PdfNoText_ErrorMessage" xml:space="preserve">
+        <value>In diesem PDF-Dokument befindet sich kein lesbarer Text, es könnte gescannte Seiten enthalten.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_PdfEncrypted_ErrorMessage" xml:space="preserve">
+        <value>Dieses PDF ist passwortgeschützt und kann nicht geöffnet werden.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_PdfDamaged_ErrorMessage" xml:space="preserve">
+        <value>Dieses PDF kann nicht geöffnet werden, es könnte beschädigt sein oder ein nicht unterstütztes Format verwenden.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_SkillResourceUnavailable_ErrorMessage" xml:space="preserve">
+        <value>Die angeforderte Skill-Datei konnte nicht gefunden oder geöffnet werden.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_LocalPathOnly_ErrorMessage" xml:space="preserve">
+        <value>Diese Operation ist nur für Dateien auf diesem Gerät verfügbar.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ConsentDenied_ErrorMessage" xml:space="preserve">
+        <value>Dateioperationen wurden nicht genehmigt.</value>
+    </data>
+    <data name="FileSystemSettings_InvalidApprovalPath_ErrorMessage" xml:space="preserve">
+        <value>Bitte geben Sie einen vollständigen Pfad mit einem gültigen Glob-Muster ein.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_InvalidPattern_ErrorMessage" xml:space="preserve">
+        <value>Such- oder Ersetzungsmuster ist ungültig.</value>
+    </data>
+    <data name="FontFamilyPicker_PlaceholderText" xml:space="preserve">
+        <value>Schriftart suchen</value>
+    </data>
+    <data name="DisplaySettings_Font_Header" xml:space="preserve">
+        <value>Schriftart</value>
+    </data>
+    <data name="DisplaySettings_Font_Description" xml:space="preserve">
+        <value>Wählen Sie die Hauptschriftart für die Benutzeroberfläche der Anwendung aus.</value>
+    </data>
+    <data name="FontFamilyPicker_NotInstalled" xml:space="preserve">
+        <value>Diese Schriftart ist auf dem aktuellen System nicht installiert, die Vorschau verwendet die Standard-Schriftart.</value>
+    </data>
+    <data name="FontFamilyPicker_NotInstalledFormat" xml:space="preserve">
+        <value>{0} (nicht installiert)</value>
+    </data>
+    <data name="FontFamilyPicker_PreviewUnavailable" xml:space="preserve">
+        <value>Vorschau dieser Schriftart kann nicht geladen werden, es wird die Standard-Schriftart angezeigt.</value>
+    </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Header" xml:space="preserve">
+        <value>Office Suite</value>
+    </data>
+    <data name="AssistantToolSettings_FollowGlobal_Header" xml:space="preserve">
+        <value>Globale Tool-Einstellungen folgen</value>
+    </data>
+    <data name="AssistantToolSettings_FollowingGlobal_Content" xml:space="preserve">
+        <value>Der Assistent folgt den globalen Werkzeugeinstellungen. Nach Deaktivierung des Schalters oben können die Einstellungen individuell konfiguriert werden.</value>
+    </data>
+    <data name="AssistantToolSettings_ToolCallDisabled_Content" xml:space="preserve">
+        <value>Dieser Assistent hat den Werkzeugaufruf deaktiviert. Bitte aktivieren Sie ihn oben, um verfügbare Werkzeuge zu konfigurieren.</value>
+    </data>
+    <data name="AskQuestionCard_PageDisplay" xml:space="preserve">
+        <value>Seite {0} von {1}</value>
+    </data>
+    <data name="AskQuestionCard_OptionalFreeformTextBox_PlaceholderText" xml:space="preserve">
+        <value>Optional: Zusätzliche Antwort eingeben…</value>
+    </data>
+    <data name="TextDifferenceEditor_OmittedLineButton_ToolTip" xml:space="preserve">
+        <value>Klicken zum Erweitern</value>
     </data>
 </root>

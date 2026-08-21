@@ -7,6 +7,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Everywhere.Chat;
@@ -21,10 +22,12 @@ public partial class VisualTreeDebugger : UserControl
     private readonly IVisualElementContext _visualElementContext;
     private readonly IWindowHelper _windowHelper;
     private readonly ObservableCollection<IVisualElement> _rootElements = [];
-    private readonly IReadOnlyList<VisualElementProperty> _properties = typeof(DebuggerVisualElement)
-        .GetProperties(BindingFlags.Instance | BindingFlags.Public)
-        .Select(p => new VisualElementProperty(p))
-        .ToList();
+    private readonly IReadOnlyList<VisualElementProperty> _properties =
+    [
+        .. typeof(DebuggerVisualElement)
+            .GetProperties(BindingFlags.Instance | BindingFlags.Public)
+            .Select(p => new VisualElementProperty(p)),
+    ];
     private readonly VisualElementOverlayWindow _treeViewPointerOverOverlayWindow;
 
     public VisualTreeDebugger(
@@ -130,7 +133,9 @@ public partial class VisualTreeDebugger : UserControl
             using var pointer = await selectedItem.CaptureAsync(CancellationToken.None);
             var bitmap = pointer.ToAvaloniaBitmap();
 #if DEBUG
-            bitmap?.Save(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"capture_{DateTime.Now:yyyyMMdd_HHmmss}.png"));
+            bitmap?.Save(
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"capture_{DateTime.Now:yyyyMMdd_HHmmss}.png"),
+                PngBitmapEncoderOptions.Default);
 #endif
             CaptureImage.Source = bitmap;
         }
@@ -150,7 +155,7 @@ public partial class VisualTreeDebugger : UserControl
             var effectScope =
                 ServiceLocator.Resolve<VisualElementEffect>().CreateScanEffect(CancellationToken.None);
             var builder = new VisualContextBuilder(
-                VisualTreeView.SelectedItems.AsValueEnumerable().OfType<IVisualElement>().ToList(),
+                VisualTreeView.SelectedItems.AsValueEnumerable().OfType<IVisualElement>().ToArray(),
                 tokenLimit,
                 0,
                 level,

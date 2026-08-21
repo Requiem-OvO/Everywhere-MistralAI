@@ -95,7 +95,7 @@ public sealed partial class OfficialModelProvider : ObservableObject, IOfficialM
                 cancellationToken);
 
             var cloudModelDefinitions = payload.EnsureData();
-            var result = cloudModelDefinitions.AsValueEnumerable().Select(m => m.ToModelDefinitionTemplate()).ToList();
+            var result = cloudModelDefinitions.AsValueEnumerable().Select(m => m.ToModelDefinitionTemplate()).ToArray();
             _modelDefinitionsSource.Reset(result);
             _persistentState.OfficialModelDefinitionTemplate = result;
 
@@ -157,7 +157,7 @@ public sealed partial class OfficialModelProvider : ObservableObject, IOfficialM
         [property: JsonPropertyName("id")] string ModelId,
         [property: JsonPropertyName("name")] string Name,
         [property: JsonPropertyName("icon")] string Icon,
-        [property: JsonPropertyName("description")] JsonDynamicResourceKey? DescriptionKey,
+        [property: JsonPropertyName("description")] JsonDynamicLocaleKey? DescriptionKey,
         [property: JsonPropertyName("toolCall")] bool SupportsToolCall,
         [property: JsonPropertyName("knowledge")] string? KnowledgeCutoff,
         [property: JsonPropertyName("releaseDate")] string? ReleaseDate,
@@ -224,7 +224,7 @@ public sealed partial class OfficialModelProvider : ObservableObject, IOfficialM
                 new TokenPricing(
                     t.Pricing.Input * CreditsMultiplier,
                     t.Pricing.Output * CreditsMultiplier,
-                    t.Pricing.CachedInput * CreditsMultiplier))).ToList();
+                    t.Pricing.CachedInput * CreditsMultiplier))).ToArray();
             return new ModelPricing(tiers, ModelPricingUnit.MCreditPerMToken);
         }
     }

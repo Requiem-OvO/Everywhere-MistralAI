@@ -1,7 +1,8 @@
 ﻿<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:common="clr-namespace:Everywhere.Common" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
-  xmlns:v="using:Everywhere.Views">
+  xmlns:common="clr-namespace:Everywhere.Common" xmlns:shad="clr-namespace:ShadUI;assembly=ShadUI"
+  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
+  xmlns:v="using:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters">
   <Design.PreviewWith>
     <v:IconEditor
       Width="300" Height="500"/>
@@ -19,8 +20,8 @@
                 <TextBox
                   Classes="Compact" Margin="8,4,0,4"
                   InnerLeftContent="{LucideIconContent Search, Size=12}"
-                  Text="{Binding $parent[v:IconEditor].QueryText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                  Watermark="{I18N {x:Static LocaleKey.IconEditor_SearchBox_Watermark}}"/>
+                  PlaceholderText="{I18N {x:Static LocaleKey.IconEditor_SearchBox_PlaceholderText}}"
+                  Text="{Binding $parent[v:IconEditor].QueryText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
               </shadui:TabControlAssist.HeaderContent>
 
               <TabItem
@@ -29,8 +30,10 @@
                 <ListBox
                   Classes="Simple"
                   ItemsSource="{TemplateBinding LucideItemsSource}"
-                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                  SelectedItem="{Binding Icon.Kind, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={x:Null}}">
+                  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                  <Interaction.Behaviors>
+                    <shad:FixSelectedItemBehavior SelectedItem="{Binding Icon.Kind, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={x:Null}}"/>
+                  </Interaction.Behaviors>
                   <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
                       <shadui:VirtualizingWrapPanel
@@ -51,8 +54,10 @@
                 <ListBox
                   Classes="Simple"
                   ItemsSource="{TemplateBinding EmojiItemsSource}"
-                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                  SelectedItem="{Binding Icon.Text, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={x:Null}}">
+                  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                  <Interaction.Behaviors>
+                    <shad:FixSelectedItemBehavior SelectedItem="{Binding Icon.Text, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={x:Null}}"/>
+                  </Interaction.Behaviors>
                   <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
                       <shadui:VirtualizingWrapPanel
@@ -72,10 +77,10 @@
             </TabControl>
           </TabItem>
           <TabItem Header="{I18N {x:Static LocaleKey.IconEditor_BackgroundTabItem_Header}}">
-            <ColorView Color="{Binding Icon.BackgroundColor, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay, FallbackValue={x:Null}}"/>
+            <ColorView Color="{Binding Icon.Background, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay, FallbackValue={x:Null}, Converter={x:Static vc:SerializableColorConverters.ToColor}}"/>
           </TabItem>
           <TabItem Header="{I18N {x:Static LocaleKey.IconEditor_ForegroundTabItem_Header}}">
-            <ColorView Color="{Binding Icon.ForegroundColor, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay, FallbackValue={x:Null}}"/>
+            <ColorView Color="{Binding Icon.Foreground, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay, FallbackValue={x:Null}, Converter={x:Static vc:SerializableColorConverters.ToColor}}"/>
           </TabItem>
         </TabControl>
       </ControlTemplate>

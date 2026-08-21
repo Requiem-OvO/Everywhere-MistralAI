@@ -4,12 +4,14 @@ using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Everywhere.Common;
+using Everywhere.Configuration;
 using Microsoft.Extensions.Configuration;
 using ModelContextProtocol.Client;
 using ZLinq;
 
 namespace Everywhere.Chat.Plugins;
 
+[SettingsSerializedSubtree]
 [JsonPolymorphic]
 [JsonDerivedType(typeof(StdioMcpTransportConfiguration), "stdio")]
 [JsonDerivedType(typeof(HttpMcpTransportConfiguration), "sse")]
@@ -56,6 +58,12 @@ public abstract partial class McpTransportConfiguration : ObservableValidator
 
 public sealed partial class StdioMcpTransportConfiguration : McpTransportConfiguration
 {
+    public StdioMcpTransportConfiguration()
+    {
+        Arguments.CollectionChanged += (_, _) => OnPropertyChanged(nameof(SerializableArguments));
+        EnvironmentVariables.CollectionChanged += (_, _) => OnPropertyChanged(nameof(SerializableEnvironmentVariables));
+    }
+
     [ObservableProperty]
     [NotifyDataErrorInfo]
     [Required(ErrorMessageResourceType = typeof(LocaleResolver), ErrorMessageResourceName = LocaleKey.ValidationErrorMessage_Required)]
@@ -65,8 +73,9 @@ public sealed partial class StdioMcpTransportConfiguration : McpTransportConfigu
     [ConfigurationKeyName("Arguments")]
     public IReadOnlyList<string>? SerializableArguments
     {
-        get => Arguments.AsValueEnumerable().Select(arg => arg.Value).ToList();
-        set {
+        get => Arguments.AsValueEnumerable().Select(arg => arg.Value).ToArray();
+        set
+        {
             if (value is null)
             {
                 Arguments.Clear();
@@ -163,6 +172,11 @@ public sealed partial class StdioMcpTransportConfiguration : McpTransportConfigu
 
 public sealed partial class HttpMcpTransportConfiguration : McpTransportConfiguration
 {
+    public HttpMcpTransportConfiguration()
+    {
+        Headers.CollectionChanged += (_, _) => OnPropertyChanged(nameof(SerializableHeaders));
+    }
+
     [ObservableProperty]
     [NotifyDataErrorInfo]
     [Url(ErrorMessageResourceType = typeof(LocaleResolver), ErrorMessageResourceName = LocaleKey.ValidationErrorMessage_Url)]

@@ -1,14 +1,13 @@
-﻿using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Everywhere.Collections;
 using Everywhere.Common;
 using Everywhere.Interop;
 using Everywhere.Terminal;
+using LiveMarkdown.Avalonia;
 using Lucide.Avalonia;
 using MessagePack;
-using ZLinq;
 
 namespace Everywhere.Chat.Plugins;
 
@@ -18,7 +17,7 @@ namespace Everywhere.Chat.Plugins;
 [MessagePackObject]
 [Union(0, typeof(ChatPluginContainerDisplayBlock))]
 [Union(1, typeof(ChatPluginTextDisplayBlock))]
-[Union(2, typeof(ChatPluginDynamicResourceKeyDisplayBlock))]
+[Union(2, typeof(ChatPluginDynamicLocaleKeyDisplayBlock))]
 [Union(3, typeof(ChatPluginMarkdownDisplayBlock))]
 [Union(4, typeof(ChatPluginProgressDisplayBlock))]
 [Union(5, typeof(ChatPluginFileReferencesDisplayBlock))]
@@ -26,16 +25,9 @@ namespace Everywhere.Chat.Plugins;
 [Union(7, typeof(ChatPluginUrlsDisplayBlock))]
 [Union(8, typeof(ChatPluginSeparatorDisplayBlock))]
 [Union(9, typeof(ChatPluginCodeBlockDisplayBlock))]
-[Union(10, typeof(ChatPluginChatContextDisplayBlock))]
+[Union(10, typeof(ChatPluginSubagentDisplayBlock))]
 [Union(11, typeof(ChatPluginTerminalDisplayBlock))]
-public abstract partial class ChatPluginDisplayBlock : ObservableObject
-{
-    /// <summary>
-    /// Indicates whether this display block is waiting for user input.
-    /// </summary>
-    [IgnoreMember]
-    public virtual bool IsWaitingForUserInput => false;
-}
+public abstract partial class ChatPluginDisplayBlock : ObservableObject;
 
 /// <summary>
 /// Represents a container block that can hold other display blocks.
@@ -55,6 +47,7 @@ public sealed partial class ChatPluginContainerDisplayBlock : ChatPluginDisplayB
 
     [Key(0)] private readonly ChatPluginDisplaySink _displaySink;
     [IgnoreMember] private readonly IDisposable _displaySinkConnection;
+    [IgnoreMember] private readonly IDisposable _displaySinkPersistenceConnection;
 
     [SerializationConstructor]
     private ChatPluginContainerDisplayBlock(ChatPluginDisplaySink displaySink)
@@ -64,6 +57,13 @@ public sealed partial class ChatPluginContainerDisplayBlock : ChatPluginDisplayB
             .Connect()
             .ObserveOnAvaloniaDispatcher()
             .BindEx(out _displaySinkConnection);
+
+        // Bubble changes from nested blocks to the owning container. DynamicData keeps
+        // subscriptions aligned with the child collection, including removals and resets.
+        _displaySinkPersistenceConnection = _displaySink
+            .Connect()
+            .AutoRefresh()
+            .Subscribe(_ => OnPropertyChanged(nameof(Children)));
     }
 
     public ChatPluginContainerDisplayBlock() : this(new ChatPluginDisplaySink()) { }
@@ -82,6 +82,7 @@ public sealed partial class ChatPluginContainerDisplayBlock : ChatPluginDisplayB
 
     public void Dispose()
     {
+        _displaySinkPersistenceConnection.Dispose();
         _displaySink.Dispose();
         _displaySinkConnection.Dispose();
     }
@@ -98,17 +99,17 @@ public sealed partial class ChatPluginTextDisplayBlock(string text, string? clas
 }
 
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
-public sealed partial class ChatPluginDynamicResourceKeyDisplayBlock(IDynamicResourceKey key, string? className = null) : ChatPluginDisplayBlock
+public sealed partial class ChatPluginDynamicLocaleKeyDisplayBlock(IDynamicLocaleKey key, string? className = null) : ChatPluginDisplayBlock
 {
     [Key(0)]
-    public IDynamicResourceKey Key { get; } = key;
+    public IDynamicLocaleKey Key { get; } = key;
 
     [Key(1)]
     public string? ClassName { get; } = className;
 }
 
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
-public sealed partial class ChatPluginMarkdownDisplayBlock : ChatPluginDisplayBlock
+public sealed partial class ChatPluginMarkdownDisplayBlock : ChatPluginDisplayBlock, IDisposable
 {
     public ThreadSafeObservableStringBuilder MarkdownBuilder { get; } = new();
 
@@ -118,16 +119,31 @@ public sealed partial class ChatPluginMarkdownDisplayBlock : ChatPluginDisplayBl
         get => MarkdownBuilder.ToString();
         set => MarkdownBuilder.Clear().Append(value);
     }
+
+    public ChatPluginMarkdownDisplayBlock()
+    {
+        MarkdownBuilder.Changed += HandleMarkdownBuilderChanged;
+    }
+
+    private void HandleMarkdownBuilderChanged(in ObservableStringBuilderChangedEventArgs e)
+    {
+        OnPropertyChanged(nameof(Markdown));
+    }
+
+    public void Dispose()
+    {
+        MarkdownBuilder.Changed -= HandleMarkdownBuilderChanged;
+    }
 }
 
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
-public sealed partial class ChatPluginProgressDisplayBlock(IDynamicResourceKey headerKey) : ChatPluginDisplayBlock
+public sealed partial class ChatPluginProgressDisplayBlock(IDynamicLocaleKey headerKey) : ChatPluginDisplayBlock
 {
     [field: AllowNull, MaybeNull]
     public Progress<double> ProgressReporter => field ??= new Progress<double>(value => Progress = value);
 
     [Key(0)]
-    public IDynamicResourceKey HeaderKey { get; } = headerKey;
+    public IDynamicLocaleKey HeaderKey { get; } = headerKey;
 
     [Key(1)]
     [ObservableProperty]
@@ -140,7 +156,7 @@ public sealed partial class ChatPluginProgressDisplayBlock(IDynamicResourceKey h
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
 public partial class ChatPluginFileReference(
     string fullPath,
-    IDynamicResourceKey? displayNameKey = null,
+    IDynamicLocaleKey? displayNameKey = null,
     IReadOnlySet<ChatPluginFileReferenceLocation>? locations = null
 )
 {
@@ -148,7 +164,7 @@ public partial class ChatPluginFileReference(
     public string FullPath { get; } = fullPath;
 
     [Key(1)]
-    public IDynamicResourceKey? DisplayNameKey { get; } = displayNameKey;
+    public IDynamicLocaleKey? DisplayNameKey { get; } = displayNameKey;
 
     [Key(2)]
     public IReadOnlySet<ChatPluginFileReferenceLocation>? Locations { get; } = locations;
@@ -185,13 +201,14 @@ public partial class ChatPluginFileReference(
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
 public readonly partial record struct ChatPluginFileReferenceLocation(
     [property: Key(0)] int Line,
-    [property: Key(1)] int Column);
+    [property: Key(1)] int Column
+);
 
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
 public sealed partial class ChatPluginFileReferencesDisplayBlock(params IReadOnlyList<ChatPluginFileReference> references) : ChatPluginDisplayBlock
 {
     [Key(0)]
-    public IReadOnlyList<ChatPluginFileReference> References { get; } = references.AsValueEnumerable().Take(10).ToList();
+    public IReadOnlyList<ChatPluginFileReference> References { get; } = references.AsValueEnumerable().Take(10).ToArray();
 
     [Key(1)]
     public int TotalReferenceCount { get; set; } = references.Count;
@@ -200,34 +217,106 @@ public sealed partial class ChatPluginFileReferencesDisplayBlock(params IReadOnl
     public bool HasMoreReferences => TotalReferenceCount > References.Count;
 }
 
+/// <summary>
+/// Presents a file operation as an interactive consent review or a completed lightweight summary.
+/// </summary>
+/// <remarks>
+/// Detailed text and change objects exist only while consent is pending. <see cref="CompleteReview"/>
+/// removes them before the block is appended to a durable DisplaySink.
+/// </remarks>
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
-[method: SerializationConstructor]
-public sealed partial class ChatPluginFileDifferenceDisplayBlock(TextDifference difference) : ChatPluginDisplayBlock
+public sealed partial class ChatPluginFileDifferenceDisplayBlock : ChatPluginDisplayBlock
 {
     [Key(0)]
-    public TextDifference Difference { get; } = difference;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanReview))]
+    public partial TextDifference? Difference { get; private set; }
 
-    public string? OriginalText { get; init; }
+    [Key(1)]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanReview))]
+    public partial string? OriginalText { get; private set; }
 
-    public override bool IsWaitingForUserInput => Difference.Acceptance is null;
+    [Key(2)]
+    public TextDifferenceReviewKind ReviewKind { get; }
 
-    public ChatPluginFileDifferenceDisplayBlock(TextDifference difference, string originalText) : this(difference)
+    [Key(3)]
+    public string? SourcePath { get; }
+
+    [Key(4)]
+    public string FilePath { get; }
+
+    [Key(5)]
+    public int AddedLineCount { get; }
+
+    [Key(6)]
+    public int RemovedLineCount { get; }
+
+    [IgnoreMember]
+    public bool HasLineChanges => AddedLineCount > 0 || RemovedLineCount > 0;
+
+    [IgnoreMember]
+    public bool CanReview => Difference is { TotalChangesCount: > 0 } && OriginalText is not null;
+
+    /// <summary>
+    /// Initializes a file-difference block for consent review.
+    /// </summary>
+    public ChatPluginFileDifferenceDisplayBlock(
+        TextDifference difference,
+        string originalText,
+        TextDifferenceReviewKind reviewKind,
+        string? sourcePath)
     {
+        Difference = difference;
         OriginalText = originalText;
+        ReviewKind = reviewKind;
+        SourcePath = sourcePath;
+        FilePath = difference.FilePath;
+        AddedLineCount = CountAddedLines(difference);
+        RemovedLineCount = CountRemovedLines(difference, originalText);
+    }
 
-        // Only subscribe to property changes in this constructor since deserialization will not change the Difference property.
-        difference.PropertyChanged += HandleDifferencePropertyChanged;
+    [SerializationConstructor]
+    private ChatPluginFileDifferenceDisplayBlock(
+        TextDifference? difference,
+        string? originalText,
+        TextDifferenceReviewKind reviewKind,
+        string? sourcePath,
+        string? filePath,
+        int addedLineCount,
+        int removedLineCount)
+    {
+        Difference = null;
+        OriginalText = null;
+        ReviewKind = reviewKind;
+        SourcePath = sourcePath;
+        FilePath = filePath ?? difference?.FilePath ?? sourcePath ?? string.Empty;
+        AddedLineCount = addedLineCount != 0 || difference is null ?
+            addedLineCount :
+            CountAddedLines(difference);
+        RemovedLineCount = removedLineCount != 0 || difference is null || originalText is null ?
+            removedLineCount :
+            CountRemovedLines(difference, originalText);
     }
 
     /// <summary>
-    /// Handles property changes on the TextDifference to update the IsWaitingForUserInput property.
+    /// Releases detailed review content before this block becomes durable DisplaySink output.
     /// </summary>
-    /// <param name="sender"></param>
-    /// <param name="e"></param>
-    private void HandleDifferencePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    internal void CompleteReview()
     {
-        if (e.PropertyName == nameof(TextDifference.Acceptance)) OnPropertyChanged(nameof(IsWaitingForUserInput));
+        Difference = null;
+        OriginalText = null;
     }
+
+    private static int CountAddedLines(TextDifference difference) => difference.GetFilteredChanges(false)
+        .AsValueEnumerable()
+        .Where(static change => change.Kind is TextChangeKind.Insert or TextChangeKind.Replace)
+        .Sum(static change => TextDifference.CountLines(change.NewText ?? string.Empty));
+
+    private static int CountRemovedLines(TextDifference difference, string originalText) => difference.GetFilteredChanges(false)
+        .AsValueEnumerable()
+        .Where(static change => change.Kind is TextChangeKind.Delete or TextChangeKind.Replace)
+        .Sum(change => TextDifference.CountLines(change.GetOriginalSlice(originalText)));
 }
 
 /// <summary>
@@ -236,13 +325,13 @@ public sealed partial class ChatPluginFileDifferenceDisplayBlock(TextDifference 
 /// <param name="url"></param>
 /// <param name="displayNameKey"></param>
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
-public sealed partial class ChatPluginUrl(string? url, IDynamicResourceKey displayNameKey)
+public sealed partial class ChatPluginUrl(string? url, IDynamicLocaleKey displayNameKey)
 {
     [Key(0)]
     public string? Url { get; } = url;
 
     [Key(1)]
-    public IDynamicResourceKey DisplayNameKey { get; } = displayNameKey;
+    public IDynamicLocaleKey DisplayNameKey { get; } = displayNameKey;
 
     /// <summary>
     /// The index of this URL in the original list, if applicable.
@@ -297,7 +386,7 @@ public sealed partial class ChatPluginCodeBlockDisplayBlock(string code, string?
 /// </remarks>
 /// <param name="chatContext"></param>
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
-public sealed partial class ChatPluginChatContextDisplayBlock(ChatContext chatContext) : ChatPluginDisplayBlock, IDisposable
+public sealed partial class ChatPluginSubagentDisplayBlock(ChatContext chatContext) : ChatPluginDisplayBlock, IDisposable
 {
     [Key(0)]
     public ChatContext ChatContext { get; } = chatContext;
@@ -337,10 +426,7 @@ public sealed partial class ChatPluginTerminalDisplayBlock : ChatPluginDisplayBl
 
     [IgnoreMember] private TerminalSession? _session;
 
-    public ChatPluginTerminalDisplayBlock(
-        ShellType shellType,
-        TerminalRun run,
-        TerminalSession session)
+    public ChatPluginTerminalDisplayBlock(ShellType shellType, TerminalRun run, TerminalSession session)
     {
         ShellType = shellType;
         Command = run.CommandLine;

@@ -1,12 +1,16 @@
+using System.ComponentModel;
 using Everywhere.Collections;
 
 namespace Everywhere.Skills;
 
-public interface ISkillManager
+public interface ISkillManager : INotifyPropertyChanged
 {
-    IReadOnlyBindableList<SkillSourceGroup> SourceGroups { get; }
+    /// <summary>
+    /// Gets whether a refresh is active or waiting to run.
+    /// </summary>
+    bool IsRefreshing { get; }
 
-    SkillResolutionResult ResolveSkillReference(string reference);
+    IReadOnlyBindableList<SkillSourceGroup> SourceGroups { get; }
 
     Task RefreshAsync(CancellationToken cancellationToken = default);
 }
