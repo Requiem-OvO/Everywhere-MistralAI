@@ -24,14 +24,14 @@ public sealed class StatisticsBackfillerTests
         var assistantNodeId = Guid.CreateVersion7();
         var now = DateTimeOffset.UtcNow;
 
-        var toolMessage = new FunctionCallChatMessage(LucideIconKind.Hammer, new DirectResourceKey("read_file"))
+        var toolMessage = new FunctionCallChatMessage(LucideIconKind.Hammer, new DirectLocaleKey("read_file"))
         {
             CreatedAt = now,
             FinishedAt = now.AddMilliseconds(25)
         };
         var call = new FunctionCallContent("get_file_content_1", null, "call-1", null);
-        toolMessage.Calls.Add(call);
-        toolMessage.Results.Add(new FunctionResultContent(call, "ok"));
+        toolMessage.AddCall(call);
+        toolMessage.AddResult(new FunctionResultContent(call, "ok"));
         var assistantMessage = new AssistantChatMessage
         {
             CreatedAt = now,

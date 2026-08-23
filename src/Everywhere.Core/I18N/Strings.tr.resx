@@ -112,7 +112,7 @@
     <data name="WebSearchEngineProvider_EndPoint_Description" xml:space="preserve">
         <value>Ne yapacağını bilmiyorsan varsayılan değerde bırak. &quot;http(s)://&quot; ile başlamalıdır.</value>
     </data>
-    <data name="ChatInputArea_Watermark" xml:space="preserve">
+    <data name="ChatInputArea_PlaceholderText" xml:space="preserve">
         <value>Everywhere'e sor veya sohbet et</value>
     </data>
     <data name="ChatInputArea_AddAttachmentMenuItem_ToolTip" xml:space="preserve">
@@ -139,8 +139,53 @@
     <data name="ChatInputArea_CancelButton_ToolTip" xml:space="preserve">
         <value>İptal</value>
     </data>
+    <data name="ChatInputArea_ContextUsage_Header" xml:space="preserve">
+        <value>Bağlam Kullanım Durumu</value>
+    </data>
+    <data name="ChatInputArea_ContextUsage_UsedPercentage" xml:space="preserve">
+        <value>Kullanılan {0}%</value>
+    </data>
+    <data name="ChatInputArea_ContextUsage_Tokens" xml:space="preserve">
+        <value>Kullanılan {0}, Toplam {1}</value>
+    </data>
+    <data name="ChatInputArea_ContextUsage_ReportedTokens" xml:space="preserve">
+        <value>Rapor Edilen Kullanım: {0}</value>
+    </data>
+    <data name="ChatInputArea_ContextUsage_CachedTokens" xml:space="preserve">
+        <value>Önbellek Girişi: {0}</value>
+    </data>
+    <data name="ChatInputArea_ContextUsage_Unavailable" xml:space="preserve">
+        <value>Bağlam kullanımı henüz alınamadı</value>
+    </data>
+    <data name="ChatInputArea_ContextUsage_Estimated" xml:space="preserve">
+        <value>Model değiştirildiğinde tahmini değer</value>
+    </data>
+    <data name="ChatInputArea_ContextUsage_Compacted" xml:space="preserve">
+        <value>Bağlam sıkıştırıldı, bir sonraki ölçümü bekliyor</value>
+    </data>
+    <data name="ChatInputArea_ContextUsage_CompactButton" xml:space="preserve">
+        <value>Bağlamı Sıkıştır</value>
+    </data>
     <data name="ActionChatMessage_Header_AnalyzingContext" xml:space="preserve">
         <value>Bağlamı Analiz Et</value>
+    </data>
+    <data name="ContextCompression_Status_Compressing" xml:space="preserve">
+        <value>Bağlam sıkıştırılıyor</value>
+    </data>
+    <data name="ContextCompression_Status_Compressed" xml:space="preserve">
+        <value>Bağlam sıkıştırıldı</value>
+    </data>
+    <data name="ContextCompression_Status_Failed" xml:space="preserve">
+        <value>Bağlam sıkıştırma başarısız</value>
+    </data>
+    <data name="ContextCompression_Error_EmptyResponse" xml:space="preserve">
+        <value>Model boş bir bağlam özeti döndürdü.</value>
+    </data>
+    <data name="ContextCompression_Error_NoHistory" xml:space="preserve">
+        <value>Sıkıştırılacak konuşma geçmişi yok.</value>
+    </data>
+    <data name="ContextCompression_Error_ToolCallNotAllowed" xml:space="preserve">
+        <value>Model bağlamı sıkıştırırken araç çağrısı yapmaya çalıştı.</value>
     </data>
     <data name="ActionChatMessage_Header_WebSearching" xml:space="preserve">
         <value>Web Araması</value>
@@ -159,6 +204,24 @@
     </data>
     <data name="ChatWindow_History_ToolTip" xml:space="preserve">
         <value>Sohbet Geçmişi (Ctrl+H)</value>
+    </data>
+    <data name="ChatWindow_History_SearchBox_PlaceholderText" xml:space="preserve">
+        <value>Geçmişi Ara</value>
+    </data>
+    <data name="ChatWindow_History_IncludeContentToggleButton_ToolTip" xml:space="preserve">
+        <value>İçeriği Dahil Et</value>
+    </data>
+    <data name="ChatWindow_TextSearch_PlaceholderText" xml:space="preserve">
+        <value>Mevcut Sohbette Ara</value>
+    </data>
+    <data name="ChatWindow_TextSearch_Previous_ToolTip" xml:space="preserve">
+        <value>Önceki Sonuç (Shift+Enter)</value>
+    </data>
+    <data name="ChatWindow_TextSearch_Next_ToolTip" xml:space="preserve">
+        <value>Sonraki Sonuç (Enter)</value>
+    </data>
+    <data name="ChatWindow_TextSearch_Close_ToolTip" xml:space="preserve">
+        <value>Aramayı Kapat (Esc)</value>
     </data>
     <data name="ChatWindow_CreateNew_ToolTip" xml:space="preserve">
         <value>Yeni Sohbet Oluşturun (Ctrl+N)</value>
@@ -193,7 +256,7 @@
     <data name="ChatWindowViewModel_QuickActions_Summarize" xml:space="preserve">
         <value>Özetle</value>
     </data>
-    <data name="KeyboardShortcutInputBox_Watermark" xml:space="preserve">
+    <data name="KeyboardShortcutInputBox_PlaceholderText" xml:space="preserve">
         <value>Kısayol ayarlamak için tıklayın</value>
     </data>
     <data name="KeyboardShortcutInputBox_SettingWatermark" xml:space="preserve">
@@ -359,7 +422,8 @@
         <value>Bilinmeyen hata, lütfen daha sonra tekrar deneyin.</value>
     </data>
     <data name="FriendlyExceptionMessage_Aggregate" xml:space="preserve">
-        <value>Bir veya birden fazla hata oluştu.\n{0}</value>
+        <value>Bir veya birden fazla hata oluştu.
+{0}</value>
     </data>
     <data name="FriendlyExceptionMessage_TaskCanceled" xml:space="preserve">
         <value>Görev iptal edildi.</value>
@@ -629,10 +693,10 @@
         <value>API çağrıları için model kimliği, örneğin gpt-4o.</value>
     </data>
     <data name="ChatPluginPage_Title" xml:space="preserve">
-        <value>Sohbet Araçları</value>
+        <value>Eklentiler</value>
     </data>
     <data name="ChatPluginPage_Description" xml:space="preserve">
-        <value>Soğbet eklentileri, yerleşik eklentiler ve MCP eklentilerini içerir. Araç çağrılarını destekleyen LLM'ler, daha güçlü işlevsellik elde etmek için (web arama veya yerel dosyalara erişim gibi) bu eklentileri uygun zamanlarda kullanır.</value>
+        <value>Sohbet araçları, yerleşik araçlar ve MCP sunucuları içerir; büyük dil modelleri, uygun zamanlarda bu araçları kullanarak (örneğin, web araması, yerel dosyalara erişim vb.) daha güçlü işlevsellik sunar.</value>
     </data>
     <data name="WebSearchEnginePluginSettings_SelectedProvider_Header" xml:space="preserve">
         <value>Web Arama Motoru Sağlayıcısı</value>
@@ -653,13 +717,22 @@
         <value>Web</value>
     </data>
     <data name="BuiltInChatPlugin_Web_Description" xml:space="preserve">
-        <value>Web'de gezinme yeteneği sağlar. Büyük modeller genellikle yayınlandıktan sonra bilgileri sabitler ve zamanlama sorunlarını işlerken yanılsamalar yaşayabilir. Bu eklenti, asistanın web içeriğini gerçek zamanlı olarak taramasına olanak tanır ve asistanın yeteneklerini artırır.</value>
+        <value>Web sayfalarını gezme yeteneği sağlar, böylece asistanın yeteneklerini artırmak için gerçek zamanlı olarak web içeriğini görüntülemesine olanak tanır.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Header" xml:space="preserve">
         <value>Dosya Sistemi</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_Description" xml:space="preserve">
         <value>Dosyalara erişim yeteneği sağlar; sayım, oluşturma, silme, yeniden adlandırma, okuma veya yazma gibi işlemleri içerir.</value>
+    </data>
+    <data name="FileSystemSettings_ApprovalPaths_Header" xml:space="preserve">
+        <value>Onaylı Yollar</value>
+    </data>
+    <data name="FileSystemSettings_ApprovalPaths_Description" xml:space="preserve">
+        <value>Bu mutlak yolların glob'u ile eşleşen dosya sistemi işlemleri, yol onayı istemeden gerçekleştirilebilir. ** ile herhangi bir derinlikteki dizinleri belirtmek için kullanın, örneğin C:\** veya D:\**\3rd.</value>
+    </data>
+    <data name="FileSystemSettings_ApprovalPaths_Pattern_PlaceholderText" xml:space="preserve">
+        <value>Mutlak glob yolu, örneğin C:\Source\Everywhere\**</value>
     </data>
     <data name="FriendlyExceptionMessage_InvalidOperation" xml:space="preserve">
         <value>Geçersiz işlem.</value>
@@ -674,7 +747,7 @@
         <value>Ayarlar</value>
     </data>
     <data name="ChatPluginPage_TabItem_Functions_Header" xml:space="preserve">
-        <value>Fonksiyonlar</value>
+        <value>Araçlar</value>
     </data>
     <data name="BuiltInChatPlugin_VisualContext_Header" xml:space="preserve">
         <value>Görsel Bağlam</value>
@@ -755,7 +828,7 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
     <data name="WelcomeView_AssistantStep_PresetBased_Message4" xml:space="preserve">
         <value>Seçimi tamamladıktan sonra, “Asistanın kullanılabilirliğini test et” butonuna tıkla, yapılandırmanın doğru olup olmadığını kontrol edeceğim.</value>
     </data>
-    <data name="WelcomeView_ApiKeyTextBox_Watermark" xml:space="preserve">
+    <data name="WelcomeView_ApiKeyTextBox_PlaceholderText" xml:space="preserve">
         <value>API anahtarını buraya girin...</value>
     </data>
     <data name="WelcomeView_AssistantStep_PresetBased_Message5" xml:space="preserve">
@@ -802,6 +875,9 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
     </data>
     <data name="ChatMessageControl_ChatStatisticsTextBlock_TotalTokenCountRun" xml:space="preserve">
         <value>Toplam</value>
+    </data>
+    <data name="ChatMessageControl_ChatStatisticsTextBlock_CachedInputHitRateRun" xml:space="preserve">
+        <value>Önbellek Vuruşu</value>
     </data>
     <data name="ChatMessageControl_ChatStatisticsTextBlock_ElapsedRun" xml:space="preserve">
         <value>Toplam Süre</value>
@@ -956,23 +1032,22 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
     <data name="CustomAssistantPage_CreateNewCustomAssistantButton_Content" xml:space="preserve">
         <value>Oluştur</value>
     </data>
-    <data name="CustomAssistant_EmptyName_Watermark" xml:space="preserve">
+    <data name="CustomAssistant_EmptyName_PlaceholderText" xml:space="preserve">
         <value>İsim</value>
     </data>
     <data name="CustomAssistant_Name_Description" xml:space="preserve">
         <value>Asistanın adını belirtin; yalnızca görüntüleme ve ayırt etme amacıyla kullanılır.</value>
     </data>
-    <data name="CustomAssistant_EmptyDescription_Watermark" xml:space="preserve">
+    <data name="CustomAssistant_EmptyDescription_PlaceholderText" xml:space="preserve">
         <value>Açıklama</value>
     </data>
     <data name="CustomAssistant_Description_Description" xml:space="preserve">
         <value>Asistanın açıklamasını belirtin; yalnızca görüntüleme ve ayırt etme amacıyla kullanılır.</value>
     </data>
-    <data name="CustomAssistant_SystemPrompt_Description" xml:space="preserve">
-        <value>Sistem istemi, sohbetin başında modele gönderilir ve her mesaj gönderildiğinde güncel tutulur.
-İstemde { } içinde yer alan yer tutucular kullanılabilir, modele gönderilmeden önce ilgili içerikle değiştirilir.</value>
+    <data name="AssistantPromptSelector_ComboBox_Label" xml:space="preserve">
+        <value>Sistem İfadelerini Seçin</value>
     </data>
-    <data name="CustomAssistant_SystemPrompt_Header" xml:space="preserve">
+    <data name="CustomAssistant_PromptSelector_Header" xml:space="preserve">
         <value>Sistem İstemi</value>
     </data>
     <data name="CustomAssistantPage_DeleteCustomAssistantButton_Content" xml:space="preserve">
@@ -1149,50 +1224,113 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
     <data name="TextDifferenceEditor_AcceptButton_Content" xml:space="preserve">
         <value>Kabul Et</value>
     </data>
-    <data name="TextDifferenceEditor_RevertButton_Content" xml:space="preserve">
-        <value>Geri Al</value>
+    <data name="TextDifferenceEditor_RejectButton_Content" xml:space="preserve">
+        <value>Reddet</value>
+    </data>
+    <data name="TextDifferenceEditor_CommentButton_Content" xml:space="preserve">
+        <value>Yorum Ekle</value>
+    </data>
+    <data name="TextDifferenceEditor_CommentTextBox_PlaceholderText" xml:space="preserve">
+        <value>Yardımcıyı yönlendirmek için mevcut satıra yorum ekleyin…</value>
+    </data>
+    <data name="TextDifferenceEditor_AcceptAllButton_Content" xml:space="preserve">
+        <value>Hepsini Kabul Et</value>
+    </data>
+    <data name="TextDifferenceEditor_RejectAllButton_Content" xml:space="preserve">
+        <value>Hepsini Reddet</value>
+    </data>
+    <data name="TextDifferenceEditor_ConfirmButton_Content" xml:space="preserve">
+        <value>Onayla</value>
+    </data>
+    <data name="TextDifferenceEditor_ConfirmButton_ToolTip" xml:space="preserve">
+        <value>Kabul edilen değişiklikleri uygula ve devam et</value>
+    </data>
+    <data name="Common_TextDifference_ChangeSelectionSummary" xml:space="preserve">
+        <value>Toplam {0} değişiklik, {1} kabul edildi</value>
+    </data>
+    <data name="TextDifferenceEditor_WindowTitle" xml:space="preserve">
+        <value>Değişiklikleri Gözden Geçir</value>
+    </data>
+    <data name="TextDifferenceEditor_OmittedLineButton_Content" xml:space="preserve">
+        <value>{0} Satır Değişiklik Yok</value>
+    </data>
+    <data name="TextDifferenceEditor_LoadErrorTextBlock_Text" xml:space="preserve">
+        <value>Ayrıntılı fark önizlemesi yüklenemedi.</value>
     </data>
     <data name="TextDifferenceSummaryView_AddedLineCountTextRun_Text" xml:space="preserve">
-        <value> satır eklendi</value>
+        <value>{0} Satır Eklendi</value>
     </data>
     <data name="TextDifferenceSummaryView_RemovedLineCountTextRun_Text" xml:space="preserve">
-        <value> satır silindi</value>
+        <value>{0} Satır Silindi</value>
     </data>
-    <data name="TextDifferenceSummaryView_AcceptAllButton_Content" xml:space="preserve">
-        <value>Tümünü Kabul Et</value>
+    <data name="TextDifferenceSummaryView_UpdateHeader" xml:space="preserve">
+        <value>{0} Güncelle</value>
     </data>
-    <data name="TextDifferenceSummaryView_EditButton_Content" xml:space="preserve">
-        <value>Düzenle</value>
+    <data name="TextDifferenceSummaryView_CreateHeader" xml:space="preserve">
+        <value>{0} Oluştur</value>
     </data>
-    <data name="TextDifferenceSummaryView_DiscardAllButton_Content" xml:space="preserve">
-        <value>Tümünü İptal Et</value>
+    <data name="TextDifferenceSummaryView_DeleteHeader" xml:space="preserve">
+        <value>{0} Sil</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_DeleteFiles_DeletionConsent_Header" xml:space="preserve">
-        <value>{0} dosya veya klasör silinecek</value>
+    <data name="TextDifferenceSummaryView_MoveAndUpdateHeader" xml:space="preserve">
+        <value>{0} → {1} Taşı ve Güncelle</value>
+    </data>
+    <data name="TextDifferenceSummaryView_MoveHeader" xml:space="preserve">
+        <value>{0} → {1} Taşı</value>
+    </data>
+    <data name="TextDifferenceSummaryView_ReviewChangesButton_Content" xml:space="preserve">
+        <value>Farkları Gözden Geçir</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_DeletePaths_DeletionConsent_Header" xml:space="preserve">
+        <value>Seçilen {0} dosya veya klasörü silmek istiyor musunuz?</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_MoveFile_MoveConsent_Header" xml:space="preserve">
         <value>Allow file move?</value>
     </data>
+    <data name="BuiltInChatPlugin_FileSystem_TransferPath_CopyConsent_Header" xml:space="preserve">
+        <value>{0} dosyasını {1} konumuna kopyalamak istiyor musunuz?</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_TransferPath_MoveConsent_Header" xml:space="preserve">
+        <value>{0} dosyasını {1} konumuna taşımak istiyor musunuz?</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_TransferPath_Consent_From" xml:space="preserve">
+        <value>Şuradan</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_TransferPath_CopyTo" xml:space="preserve">
+        <value>Kopyala</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_TransferPath_MoveTo" xml:space="preserve">
+        <value>Taşı</value>
+    </data>
     <data name="BuiltInChatPlugin_FileSystem_CreateDirectory_CreateConsent_Header" xml:space="preserve">
         <value>Allow directory creation?</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_WriteToFile_WriteConsent_Header" xml:space="preserve">
-        <value>Allow file write?</value>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_FileOperationReview_Header" xml:space="preserve">
+        <value>Bu dosya işlemini gerçekleştirmeye izin veriyor musunuz?</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_WriteToFile_CreateConsent_Description" xml:space="preserve">
-        <value>Create this file.</value>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_CreateFileReview_Header" xml:space="preserve">
+        <value>Yeni {0} oluşturulsun mu?</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_WriteToFile_AppendConsent_Description" xml:space="preserve">
-        <value>Append to this file.</value>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_UpdateFileReview_Header" xml:space="preserve">
+        <value>{0} güncellensin mi?</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_WriteToFile_OverwriteConsent_Description" xml:space="preserve">
-        <value>Overwrite this file.</value>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_DeleteFileReview_Header" xml:space="preserve">
+        <value>{0} silinsin mi?</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_DeleteFiles_SystemFile_DeletionConsent_Header" xml:space="preserve">
-        <value>Sistem dosyası veya dizin silinecek</value>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_MoveFileReview_Header" xml:space="preserve">
+        <value>{0} dosyası {1} konumuna taşınsın mı?</value>
     </data>
-    <data name="TextDifferenceEditor_DiscardButton_Content" xml:space="preserve">
-        <value>İptal Et</value>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowExactPaths" xml:space="preserve">
+        <value>Yukarıdaki yolları her zaman izin ver</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowParentDirectories" xml:space="preserve">
+        <value>Her zaman {0}'ı izin ver</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_Consent_AllowCustomDirectory" xml:space="preserve">
+        <value>Her zaman seçilen klasöre izin ver…</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_DeletePaths_SystemFile_DeletionConsent_Header" xml:space="preserve">
+        <value>Sistem dosyası veya klasörü silinecek</value>
     </data>
     <data name="ChatPluginConsentRequest_Common_Header" xml:space="preserve">
         <value>“{0}”ın çalışmasına izin verilsin mi? “{1}” iznine ihtiyaç var.</value>
@@ -1236,17 +1374,17 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
     <data name="BuiltInChatPlugin_FileSystem_MoveFile_Header" xml:space="preserve">
         <value>Dosyayı Taşı veya Yeniden Adlandır</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_DeleteFiles_Header" xml:space="preserve">
-        <value>Dosya(lar) Sil</value>
+    <data name="BuiltInChatPlugin_FileSystem_TransferPath_Header" xml:space="preserve">
+        <value>Yolu Kopyala veya Taşı</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_DeletePaths_Header" xml:space="preserve">
+        <value>Yolu Sil</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_CreateDirectory_Header" xml:space="preserve">
         <value>Dizin Oluştur</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_WriteToFile_Header" xml:space="preserve">
-        <value>Dosyaya Yaz</value>
-    </data>
-    <data name="BuiltInChatPlugin_FileSystem_ReplaceFileContent_Header" xml:space="preserve">
-        <value>Dosya İçeriğini Düzenle</value>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Header" xml:space="preserve">
+        <value>Patch Uygula</value>
     </data>
     <data name="BuiltInChatPlugin_Web_WebSearch_Searching" xml:space="preserve">
         <value>🔎 {0}</value>
@@ -1332,41 +1470,41 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
     <data name="BuiltInChatPlugin_FileSystem_MoveFile_Description" xml:space="preserve">
         <value>Bir dosya veya dizini taşıyın veya yeniden adlandırın.</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_DeleteFiles_Description" xml:space="preserve">
-        <value>Belirtilen yoldaki dosya veya dizinleri silin.</value>
+    <data name="BuiltInChatPlugin_FileSystem_TransferPath_Description" xml:space="preserve">
+        <value>Dosya veya klasörü kopyalayın veya taşıyın, ancak içeriğini değiştirmeyin.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_DeletePaths_Description" xml:space="preserve">
+        <value>Açıkça listelenen dosya veya klasörleri silin. Boş olmayan klasörler için recursive=true gereklidir.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_CreateDirectory_Description" xml:space="preserve">
         <value>Belirtilen yolda yeni bir dizin oluşturun.</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_WriteToFile_Description" xml:space="preserve">
-        <value>Belirtilen yoldaki bir metin dosyasına içerik yazın.</value>
-    </data>
-    <data name="BuiltInChatPlugin_FileSystem_ReplaceFileContent_Description" xml:space="preserve">
-        <value>Bir metin dosyasındaki içeriği değiştirin.</value>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_Description" xml:space="preserve">
+        <value>Codex tarzı patch kullanarak yerel metin dosyalarını ekleyin, güncelleyin, silin veya taşıyın.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_ReadFile_FileTooLarge_ErrorMessage" xml:space="preserve">
-        <value>Dosya boyutu 10 MB'ı aşıyor; okuma işlemi desteklenmiyor.</value>
+        <value>Dosya boyutu {0} MB'ı aşıyor; okuma işlemi desteklenmiyor.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_MoveFile_CreateDirectory_ErrorMessage" xml:space="preserve">
         <value>Dizini oluşturma başarısız oldu.</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_DeleteFiles_RootDirectory_Deletion_ErrorMessage" xml:space="preserve">
+    <data name="BuiltInChatPlugin_FileSystem_DeletePaths_RootDirectory_Deletion_ErrorMessage" xml:space="preserve">
         <value>Kök dizin silinemiyor.</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_DeleteFiles_SystemFile_Deletion_ErrorMessage" xml:space="preserve">
-        <value>Sistem dosyaları veya dizinleri silinemiyor.</value>
+    <data name="BuiltInChatPlugin_FileSystem_DeletePaths_WorkingDirectory_Deletion_ErrorMessage" xml:space="preserve">
+        <value>Sohbet çalışma dizini silinemiyor.</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_WriteToFile_BinaryFile_Write_ErrorMessage" xml:space="preserve">
-        <value>İkili dosyaya yazılamıyor.</value>
+    <data name="BuiltInChatPlugin_FileSystem_DeletePaths_SystemFile_Deletion_ErrorMessage" xml:space="preserve">
+        <value>Sistem dosyası veya klasörü silinemiyor.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_DeletePaths_NonEmptyDirectory_ErrorMessage" xml:space="preserve">
+        <value>Klasör boş değil. İçeriğini silmek için recursive=true ayarını yapın.</value>
     </data>
     <data name="HandledFunctionInvokingException_ArgumentError" xml:space="preserve">
         <value>Model, '{0}' parametresi için geçersiz bir değer sağladı, muhtemelen hayal görme nedeniyle.</value>
     </data>
-    <data name="BuiltInChatPlugin_FileSystem_ReplaceFileContent_FileTooLarge_ErrorMessage" xml:space="preserve">
-        <value>Dosya boyutu 10 MB'dan büyük, değiştirme işlemi desteklenmiyor.</value>
-    </data>
-    <data name="BuiltInChatPlugin_FileSystem_ReplaceFileContent_BinaryFile_ErrorMessage" xml:space="preserve">
-        <value>İkili dosyadaki içeriği değiştiremiyorsunuz.</value>
+    <data name="BuiltInChatPlugin_FileSystem_ApplyPatch_ErrorMessage" xml:space="preserve">
+        <value>Yamanın uygulanamadı. Lütfen yamanın doğruluğunu kontrol edip tekrar deneyin.</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_EnsureDirectoryInfo_PathIsFile_ErrorMessage" xml:space="preserve">
         <value>Belirtilen yol bir dosyadır, dizin değildir.</value>
@@ -1396,19 +1534,19 @@ Zekam büyük dil modeli tarafından sağlanıyor, senin yardımınla yapıland�
         <value>Web'in ana içeriğini çıkarır. Bu, arka planda Puppeteer kullanarak gizli bir web tarayıcısı çalıştırır ve bu tarayıcı aracılığıyla web sayfasına erişir. Uyumluluk açısından, ilk açılışta otomatik olarak web tarayıcısı indirilebilir, internet durumuna bağlı olarak bu işlem uzun sürebilir.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_NoWebSearchEngineProviderSelected_ErrorMessage" xml:space="preserve">
-        <value>Web arama motoru sağlayıcısı seçilmemiştir. Lütfen bunu eklenti ayarlarında yapılandırın.</value>
+        <value>Web arama motoru seçilmedi, lütfen araç ayarlarında web tarayıcısı yapılandırmasını kontrol edin.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_InvalidWebSearchEngineEndpoint_ErrorMessage" xml:space="preserve">
         <value>Verilen uç nokta geçersiz; lütfen geçerli bir mutlak URI olduğundan emin olun.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_GoogleSearchEngineIdNotSet_ErrorMessage" xml:space="preserve">
-        <value>Google Arama Motoru ID'si ayarlanmamıştır. Lütfen bunu eklenti ayarlarında yapılandırın.</value>
+        <value>Google arama motoru kimliği ayarlanmamış, lütfen araç ayarlarında yapılandırın.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_UnsupportedWebSearchEngineProvider_ErrorMessage" xml:space="preserve">
-        <value>Web arama motoru sağlayıcısı desteklenmiyor. Lütfen bunu eklenti ayarlarında değiştirin.</value>
+        <value>Desteklenmeyen arama motoru sağlayıcısı, lütfen araç ayarlarında değiştirin.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_WebSearchEngineApiKeyNotSet_ErrorMessage" xml:space="preserve">
-        <value>API anahtarı ayarlanmamıştır. Lütfen bunu eklenti ayarlarında yapılandırın.</value>
+        <value>API anahtarı ayarlanmamış, lütfen araç ayarlarında yapılandırın.</value>
     </data>
     <data name="BuiltInChatPlugin_Web_PuppeteerBrowserDownloadConnectionError_ErrorMessage" xml:space="preserve">
         <value>Puppeteer tarayıcı indirme URL'sine bağlanılamadı.</value>
@@ -1452,6 +1590,12 @@ Seçim modlarını değiştirmek için kaydırma tekerleğini veya sayı tuşlar
     </data>
     <data name="Assistant_RequestTimeoutSeconds_Header" xml:space="preserve">
         <value>İstek Zaman Aşımı</value>
+    </data>
+    <data name="Assistant_ContextCompressionThreshold_Description" xml:space="preserve">
+        <value>Rapor edilen bağlam kullanımı modelin belirttiği bağlam uzunluğunun bu yüzdesine ulaştığında, otomatik olarak konuşma bağlamını sıkıştırır.</value>
+    </data>
+    <data name="Assistant_ContextCompressionThreshold_Header" xml:space="preserve">
+        <value>Bağlam Sıkıştırma Eşiği</value>
     </data>
     <data name="DynamicWebProxy_ApplyProxySettings_EndpointRequired_ErrorMessage" xml:space="preserve">
         <value>Proxy sunucu adresi gereklidir.</value>
@@ -1523,7 +1667,10 @@ Seçim modlarını değiştirmek için kaydırma tekerleğini veya sayı tuşlar
         <value>Mevcut girişlerin kopyası olamaz.</value>
     </data>
     <data name="ChatPluginConsentRequest_MCP_Header" xml:space="preserve">
-        <value>“{0}” bir MCP aracıdır. Everywhere gerekli izinlerini doğrulayamaz. Lütfen güvenilir bir kaynaktan geldiğinden emin olun ve Everywhere sonuçlarından sorumluluk almaz.</value>
+        <value>“{0}” bir MCP aracıdır, lütfen güvenilir bir kaynaktan geldiğinden emin olun, Everywhere gerekli izinleri doğrulayamaz ve sonuçlarından sorumlu değildir.</value>
+    </data>
+    <data name="ChatPluginConsentRequest_MCP_BypassServerApproval_Header" xml:space="preserve">
+        <value>“{0}”dan gelen tüm araçlara her zaman izin ver</value>
     </data>
     <data name="ValidationErrorMessage_DuplicateKey" xml:space="preserve">
         <value>Kopya girişlere izin verilmez.</value>
@@ -1576,20 +1723,20 @@ Seçim modlarını değiştirmek için kaydırma tekerleğini veya sayı tuşlar
     <data name="McpTransportConfigurationForm_HeadersDataList_Label" xml:space="preserve">
         <value>İstek Başlıkları</value>
     </data>
-    <data name="McpTransportConfigurationForm_KeyTextBox_Watermark" xml:space="preserve">
+    <data name="McpTransportConfigurationForm_KeyTextBox_PlaceholderText" xml:space="preserve">
         <value>* Lütfen anahtarı girin</value>
     </data>
-    <data name="McpTransportConfigurationForm_ValueTextBox_Watermark" xml:space="preserve">
+    <data name="McpTransportConfigurationForm_ValueTextBox_PlaceholderText" xml:space="preserve">
         <value>* Değer</value>
     </data>
-    <data name="McpTransportConfigurationForm_OptionalValueTextBox_Watermark" xml:space="preserve">
+    <data name="McpTransportConfigurationForm_OptionalValueTextBox_PlaceholderText" xml:space="preserve">
         <value>Lütfen değeri girin</value>
     </data>
     <data name="ChatPluginPageViewModel_EditMcpPlugin_DialogTitle" xml:space="preserve">
-        <value>MCP Eklentisini Düzenle ( * ile işaretli alanlar zorunludur)</value>
+        <value>MCP Sunucusunu Düzenle (* ile işaretli alanlar zorunludur)</value>
     </data>
     <data name="ChatPluginPageViewModel_AddMcpPlugin_DialogTitle" xml:space="preserve">
-        <value>MCP Eklentisi Ekle ( * ile işaretli alanlar zorunludur)</value>
+        <value>MCP Sunucusu Ekle (* ile işaretli alanlar zorunludur)</value>
     </data>
     <data name="ChatPluginPageViewModel_RemoveMcpPlugin_ConfirmationMessage" xml:space="preserve">
         <value>“{0}” kaldırmak istediğinizden emin misiniz?</value>
@@ -1607,7 +1754,7 @@ Seçim modlarını değiştirmek için kaydırma tekerleğini veya sayı tuşlar
         <value>Geçersiz MCP yapılandırması.</value>
     </data>
     <data name="ChatPluginManager_Common_FailedToStartMcpPlugin" xml:space="preserve">
-        <value>MCP eklentisi &quot;{0}&quot; başlatılamadı</value>
+        <value>MCP &quot;{0}&quot; başlatılamadı</value>
     </data>
     <data name="ChatPluginManager_McpPluginMissingRuntime_Warning" xml:space="preserve">
         <value>This MCP server requires {0}, but Everywhere could not find it.</value>
@@ -1646,7 +1793,7 @@ Seçim modlarını değiştirmek için kaydırma tekerleğini veya sayı tuşlar
         <value>MCP Başlatılıyor</value>
     </data>
     <data name="ChatContext_BusyMessage_CallingTools" xml:space="preserve">
-        <value>Araç çağrısı oluşturuluyor</value>
+        <value>Araç çağrısı hazırlanıyor</value>
     </data>
     <data name="ChatWindowViewModel_ExportMarkdown_FailedToLoadChatContext" xml:space="preserve">
         <value>Sohbet bağlamı yüklenemedi.</value>
@@ -1771,8 +1918,8 @@ Seçim modlarını değiştirmek için kaydırma tekerleğini veya sayı tuşlar
     <data name="AskQuestionCard_PreviousButton_Content" xml:space="preserve">
         <value>Önceki</value>
     </data>
-    <data name="AskQuestionCard_FreeformTextBox_Watermark" xml:space="preserve">
-        <value>Cevabınızı girin…</value>
+    <data name="AskQuestionCard_FreeformTextBox_PlaceholderText" xml:space="preserve">
+        <value>Cevabınızı girin...</value>
     </data>
     <data name="BuiltInChatPlugin_FileSystem_SearchFiles_OperationStarted_Message" xml:space="preserve">
         <value>📂 {0}</value>
@@ -1785,6 +1932,12 @@ Seçim modlarını değiştirmek için kaydırma tekerleğini veya sayı tuşlar
     </data>
     <data name="ApiKeyComboBox_ManageApiKey" xml:space="preserve">
         <value>API Anahtarını Yönet</value>
+    </data>
+    <data name="AssistantPromptSelector_NewPrompt" xml:space="preserve">
+        <value>İpucu Metni Oluştur</value>
+    </data>
+    <data name="AssistantPromptSelector_ManagePrompts" xml:space="preserve">
+        <value>İpucu Metinlerini Yönet</value>
     </data>
     <data name="ManageApiKeyForm_DeleteApiKeys_Dialog_Message" xml:space="preserve">
         <value>{0} adet API anahtarını silmek istediğinize emin misiniz? Bu işlem geri alınamaz!</value>
@@ -1871,7 +2024,7 @@ Seçim modlarını değiştirmek için kaydırma tekerleğini veya sayı tuşlar
         <value>JSON'dan içe aktar</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_DialogTitle" xml:space="preserve">
-        <value>MCP Eklentisini İçe Aktar</value>
+        <value>MCP Sunucusunu İçe Aktar</value>
     </data>
     <data name="McpImportForm_Description" xml:space="preserve">
         <value>Aşağıya MCP yapılandırma JSON'unuzu yapıştırın veya yerel bir dosyadan içe aktarın.</value>
@@ -1880,19 +2033,19 @@ Seçim modlarını değiştirmek için kaydırma tekerleğini veya sayı tuşlar
         <value>Aç</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_SuccessToast_Title" xml:space="preserve">
-        <value>{0} MCP eklentisi içe aktarıldı</value>
+        <value>{0} MCP sunucusu içe aktarıldı</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_FailedToast_Title" xml:space="preserve">
-        <value>MCP Eklentileri içe aktarılamadı</value>
+        <value>MCP sunucusu içe aktarılamadı</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_NotFoundToast_Title" xml:space="preserve">
-        <value>Geçerli MCP eklentisi bulunamadı</value>
+        <value>Geçerli bir MCP yapılandırması bulunamadı</value>
     </data>
     <data name="McpTransportConfiguration_DefaultName" xml:space="preserve">
         <value>MCP Sunucusu</value>
     </data>
     <data name="ChatPluginPageViewModel_ImportMcpPlugin_PartialSuccessToast_Title" xml:space="preserve">
-        <value>{0} eklenti başarıyla içe aktarıldı, {1} başarısız oldu</value>
+        <value>{0} MCP sunucusu başarıyla içe aktarıldı, ancak {1} tanesi başarısız oldu</value>
     </data>
     <data name="MainTrayIcon_Menu_OpenChatWindow" xml:space="preserve">
         <value>Sohbet Penceresini Aç</value>
@@ -2012,8 +2165,14 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     <data name="ChatPluginPage_FunctionsTabItem_EnabledDataGridTemplateColumn_Header" xml:space="preserve">
         <value>Etkin</value>
     </data>
-    <data name="ChatPluginPage_FunctionsTabItem_AutoApproveDataGridTemplateColumn_Header" xml:space="preserve">
-        <value>Otomatik Onay</value>
+    <data name="ChatPluginPage_FunctionsTabItem_BypassApprovalDataGridTemplateColumn_Header" xml:space="preserve">
+        <value>Onayı Atla</value>
+    </data>
+    <data name="ChatPluginPage_McpBypassApproval_Header" xml:space="preserve">
+        <value>Tüm araçlar onayı atlar</value>
+    </data>
+    <data name="ChatPluginPage_McpBypassApproval_Description" xml:space="preserve">
+        <value>Bu MCP sunucusuna güveniyorsanız, seçenek açıldığında aşağıdaki tüm araçlar çalıştırıldığında onay istemeyecek.</value>
     </data>
     <data name="PreviewEndpointTextBox_Hint" xml:space="preserve">
         <value>Önizleme: {0}</value>
@@ -2439,7 +2598,7 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     <data name="ChatContext_TemporaryToggleButton_ToolTip" xml:space="preserve">
         <value>Geçici Sohbet: Açıldığında mevcut sohbet kaydedilmeyecek, geçiş yapıldığında veya yeni bir diyalog açıldığında silinecek.</value>
     </data>
-    <data name="ChatInputArea_Watermark_StrategyArgumentHint" xml:space="preserve">
+    <data name="ChatInputArea_PlaceholderText_StrategyArgumentHint" xml:space="preserve">
         <value>(isteğe bağlı) {0}</value>
     </data>
     <data name="ChangeLogView_UpdateButton_Content" xml:space="preserve">
@@ -2487,7 +2646,7 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     <data name="Common_Submit" xml:space="preserve">
         <value>Gönder</value>
     </data>
-    <data name="ConsentDecisionCard_ReasonTextBox_Watermark" xml:space="preserve">
+    <data name="ConsentDecisionCard_ReasonTextBox_PlaceholderText" xml:space="preserve">
         <value>Reddetme sebebini girin</value>
     </data>
     <data name="HandledChatException_TemperatureNotSupport" xml:space="preserve">
@@ -2505,7 +2664,7 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     <data name="ChatPluginPage_EmptyContent_SelectInstruction" xml:space="preserve">
         <value>Sol taraftan bir öğe seçin ve ayrıntıları görüntüleyin</value>
     </data>
-    <data name="IconEditor_SearchBox_Watermark" xml:space="preserve">
+    <data name="IconEditor_SearchBox_PlaceholderText" xml:space="preserve">
         <value>Ara...</value>
     </data>
     <data name="UserProfilePresenter_ErrorTextBlock_Text" xml:space="preserve">
@@ -2549,6 +2708,12 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     </data>
     <data name="BuiltInChatPlugin_Essential_ManageTodoList_Reset" xml:space="preserve">
         <value>{0} adet yapılacak iş ayarlandı</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ManageTodoList_Update" xml:space="preserve">
+        <value>{0} adet yapılacak iş güncellendi</value>
+    </data>
+    <data name="BuiltInChatPlugin_Essential_ManageTodoList_Clear" xml:space="preserve">
+        <value>Yapılacaklar listesi temizlendi</value>
     </data>
     <data name="BuiltInChatPlugin_ListWindows_WindowCount" xml:space="preserve">
         <value>{0} pencere bulundu</value>
@@ -2688,17 +2853,20 @@ Seçim modunu değiştirmek için kaydırıcı veya rakam tuşlarını kullanın
     <data name="Greetings_Tip6" xml:space="preserve">
         <value>💡Hakkında sayfasında resmi topluluğumuza katılın ve bizimle etkileşimde bulunun~</value>
     </data>
-    <data name="TerminalPluginSettings_AutoApprove_WarningToast_Content" xml:space="preserve">
-        <value>Terminal araçlarının otomatik onayı açıldı, asistanın yanlış kullanımı ciddi sistem çökmesine veya geri alınamaz dosya kaybına yol açabilir, lütfen riski kendiniz üstlenin.</value>
+    <data name="TerminalPluginSettings_BypassesApproval_WarningToast_Content" xml:space="preserve">
+        <value>Tüm terminal çağrıları onayı atlayacak, asistanın hatalı çağrıları ciddi sistem çökmesine veya geri alınamaz dosya kaybına neden olabilir, lütfen riski kendiniz üstlenin.</value>
     </data>
-    <data name="TerminalPluginSettings_AutoApprove_Header" xml:space="preserve">
-        <value>Otomatik Onay</value>
+    <data name="TerminalPluginSettings_BypassApproval_Header" xml:space="preserve">
+        <value>Onayı Atla</value>
     </data>
-    <data name="TerminalPluginSettings_AutoApprove_Description" xml:space="preserve">
-        <value>Açıldığında, tüm terminal işlemleri otomatik olarak serbest bırakılacak, manuel onay gerekmeyecek. Asistanın yanlış kullanımı ciddi sistem çökmesine veya geri alınamaz dosya kaybına yol açabilir. Bu seçeneği açmak, riski değerlendirdiğinizi ve kendinizin üstlenmeyi kabul ettiğinizi gösterir.</value>
+    <data name="TerminalPluginSettings_BypassApproval_Description" xml:space="preserve">
+        <value>Açıldığında, tüm terminal işlemleri otomatik olarak serbest bırakılacak, manuel onay gerekmeyecek. Asistanın hatalı çağrıları ciddi sistem çökmesine veya geri alınamaz dosya kaybına neden olabilir. Bu seçeneği açmak, riski değerlendirdiğinizi ve kendinizin üstlenmeyi kabul ettiğiniz anlamına gelir.</value>
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Header" xml:space="preserve">
         <value>Terminalde Çalıştır</value>
+    </data>
+    <data name="BuiltInChatPlugin_Terminal_ExecuteScript_Preview" xml:space="preserve">
+        <value>{0} çalıştırılıyor</value>
     </data>
     <data name="BuiltInChatPlugin_Terminal_ExecuteScript_ErrorMessage" xml:space="preserve">
         <value>Script çalıştırma hatası: {0}</value>
@@ -2772,8 +2940,8 @@ Yayın tarihi: {2}</value>
     <data name="TerminalView_ErrorToolTip_Tip" xml:space="preserve">
         <value>Komut {0} tarihinde başladı, {1} saniye sonra başarısız oldu, çıkış kodu {2}</value>
     </data>
-    <data name="Windows_BuiltInChatPlugin_Everything_SearchFiles_Description" xml:space="preserve">
-        <value>Everything ile dosyaları ara.</value>
+    <data name="Assistant_ConfiguratorSelector_Advanced" xml:space="preserve">
+        <value>Gelişmiş</value>
     </data>
     <data name="Common_Advanced" xml:space="preserve">
         <value>Gelişmiş</value>
@@ -2794,28 +2962,28 @@ Yayın tarihi: {2}</value>
         <value>Belgeyi Aç</value>
     </data>
     <data name="Assistant_OpenAIOptions_Header" xml:space="preserve">
-        <value>OpenAI Uyumluluk Seçenekleri</value>
+        <value>OpenAI Chat Tamamlamaları Ayarları</value>
     </data>
     <data name="Assistant_OpenAIOptions_Description" xml:space="preserve">
-        <value>OpenAI uyumlu sağlayıcının Chat Completions parametrelerini yapılandırın.</value>
+        <value>OpenAI Chat Tamamlamaları API'sinin parametrelerini yapılandırın.</value>
     </data>
     <data name="Assistant_OpenAIResponsesOptions_Header" xml:space="preserve">
-        <value>OpenAI Yanıt Seçenekleri</value>
+        <value>OpenAI Yanıtları Ayarları</value>
     </data>
     <data name="Assistant_OpenAIResponsesOptions_Description" xml:space="preserve">
-        <value>Yanıt API'sinin çıkarım parametrelerini yapılandırın.</value>
+        <value>OpenAI Yanıtları API'sinin parametrelerini yapılandırın.</value>
     </data>
     <data name="Assistant_AnthropicOptions_Header" xml:space="preserve">
-        <value>Anthropic Seçenekleri</value>
+        <value>Anthropic Mesajları Ayarları</value>
     </data>
     <data name="Assistant_AnthropicOptions_Description" xml:space="preserve">
-        <value>Anthropic Messages API'sinin düşünme ve önbellek davranışını yapılandırın.</value>
+        <value>Anthropic Mesajları API'sinin parametrelerini yapılandırın.</value>
     </data>
     <data name="Assistant_GoogleOptions_Header" xml:space="preserve">
-        <value>Google Gemini Seçenekleri</value>
+        <value>Google Gemini Ayarları</value>
     </data>
     <data name="Assistant_GoogleOptions_Description" xml:space="preserve">
-        <value>Gemini düşünme parametrelerini yapılandırın.</value>
+        <value>Google Gemini API'sinin parametrelerini yapılandırın.</value>
     </data>
     <data name="OpenAIOptions_IncludeReasoningContent_Header" xml:space="preserve">
         <value>reasoning_content'ı Koruyun</value>
@@ -2958,7 +3126,7 @@ Yayın tarihi: {2}</value>
     <data name="SkillPage_SourceFilter_All" xml:space="preserve">
         <value>Tüm Kaynaklar</value>
     </data>
-    <data name="SkillPage_SearchBox_Watermark" xml:space="preserve">
+    <data name="SkillPage_SearchBox_PlaceholderText" xml:space="preserve">
         <value>Yetenekleri ara...</value>
     </data>
     <data name="SkillPage_ClearSearchButton_ToolTip" xml:space="preserve">
@@ -3106,7 +3274,7 @@ Yayın tarihi: {2}</value>
         <value>Bugün</value>
     </data>
     <data name="HomePage_WelcomeBackPrefix" xml:space="preserve">
-        <value>Hoş geldin,</value>
+        <value>Hoş geldin, </value>
     </data>
     <data name="HomePage_Subtitle" xml:space="preserve">
         <value>AI asistanın masaüstünde her yerde çalışmaya hazır, her uygulamanın bağlamını bağlıyor.</value>
@@ -3189,13 +3357,13 @@ Yayın tarihi: {2}</value>
     <data name="HomePage_OutputTokensToolTip" xml:space="preserve">
         <value>Çıktı Token: {0}</value>
     </data>
-    <data name="HomePage_HeatmapWeekdayMondayShort" xml:space="preserve">
+    <data name="StatisticsHeatmap_MondayShort" xml:space="preserve">
         <value>Pzt</value>
     </data>
-    <data name="HomePage_HeatmapWeekdayWednesdayShort" xml:space="preserve">
+    <data name="StatisticsHeatmap_WednesdayShort" xml:space="preserve">
         <value>Çar</value>
     </data>
-    <data name="HomePage_HeatmapWeekdayFridayShort" xml:space="preserve">
+    <data name="StatisticsHeatmap_FridayShort" xml:space="preserve">
         <value>Cum</value>
     </data>
     <data name="HomePage_HeatmapDayToolTip" xml:space="preserve">
@@ -3219,22 +3387,527 @@ Yayın tarihi: {2}</value>
     <data name="HomeNotification_StatisticsBackfilled" xml:space="preserve">
         <value>İlk istatistik verileri geçmiş sohbet verileri analizinden gelmektedir, hatalar olabilir.</value>
     </data>
-    <data name="Assistant_MistralOptions_Header" xml:space="preserve">
-        <value>Mistral Seçenekleri</value>
+    <data name="SettingsEngine_Diagnostic_WriteObservedPathFailed" xml:space="preserve">
+        <value>Ayar yolu &quot;{0}&quot; yazılamadı.</value>
     </data>
-    <data name="Assistant_MistralOptions_Description" xml:space="preserve">
-        <value>Mistral AI modelleri için yapılandırma seçenekleri</value>
+    <data name="SettingsEngine_Diagnostic_UnsupportedPropertyKind" xml:space="preserve">
+        <value>Ayar özelliği &quot;{1}&quot; için tür &quot;{0}&quot; desteklenmiyor.</value>
     </data>
-    <data name="MistralOptions_IncludeReasoningContent_Header" xml:space="preserve">
-        <value>Muhakemeyi dahil et</value>
+    <data name="SettingsEngine_Diagnostic_SerializedSubtreeNotWritable" xml:space="preserve">
+        <value>Serileştirilmiş alt ağaç &quot;{0}&quot; değiştirilemez, çünkü bu özellik yazılabilir değil.</value>
     </data>
-    <data name="MistralOptions_IncludeReasoningContent_Description" xml:space="preserve">
-        <value>Yanıtta muhakeme/düşünme içeriğini dahil et</value>
+    <data name="SettingsEngine_Diagnostic_ExpectedJsonArrayForList" xml:space="preserve">
+        <value>Ayar listesi &quot;{0}&quot; için JSON dizisi bekleniyor.</value>
     </data>
-    <data name="MistralOptions_ReasoningEffort_Header" xml:space="preserve">
-        <value>Akıl yürütme yoğunluğu</value>
+    <data name="SettingsEngine_Diagnostic_ListNotMutable" xml:space="preserve">
+        <value>Ayar listesi &quot;{0}&quot; değiştirilemez, bu nedenle değiştirilemez.</value>
     </data>
-    <data name="MistralOptions_ReasoningEffort_Description" xml:space="preserve">
-        <value>Modelin muhakeme yoğunluğunu kontrol eder; örneğin: none, low, medium, high. “Muhakemeyi dahil et” seçeneğinin kapatılması muhakemeyi her zaman devre dışı bırakır.</value>
+    <data name="SettingsEngine_Diagnostic_ExpectedJsonObjectForDictionary" xml:space="preserve">
+        <value>Ayar sözlüğü &quot;{0}&quot; için JSON nesnesi bekleniyor.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_DictionaryNotMutable" xml:space="preserve">
+        <value>Ayar sözlüğü &quot;{0}&quot; değiştirilemez, bu nedenle değiştirilemez.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ExpectedJsonObjectForObject" xml:space="preserve">
+        <value>Ayar nesnesi &quot;{0}&quot; için JSON nesnesi bekleniyor.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ObjectCannotBeCreated" xml:space="preserve">
+        <value>Ayar nesnesi &quot;{0}&quot; boş ve oluşturulamıyor.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_UnknownMember" xml:space="preserve">
+        <value>Bilinmeyen ayar üyesi &quot;{0}&quot;.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_NullForNonNullable" xml:space="preserve">
+        <value>Boş değeri &quot;{0}&quot; için atanamaz, çünkü bu ayar değeri boş olamaz.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_PropertyCannotBeSetToNull" xml:space="preserve">
+        <value>Ayar değeri &quot;{0}&quot; null olabilir, ancak özelliği yazılamaz, bu yüzden boş bırakılamaz.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ReadValueFailed" xml:space="preserve">
+        <value>Ayar değeri &quot;{0}&quot; &quot;{1}&quot; olarak okunamadı.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_DictionaryKeyFailed" xml:space="preserve">
+        <value>Ayar sözlüğü anahtarı &quot;{0}&quot; &quot;{1}&quot; olarak okunamadı.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_ParseFailure" xml:space="preserve">
+        <value>Ayar belgesi &quot;{0}&quot; ayrıştırılamadı, yeni bir bellek belgesi oluşturuldu.</value>
+    </data>
+    <data name="SettingsEngine_Diagnostic_WriteFileFailed" xml:space="preserve">
+        <value>Ayar JSON'unu &quot;{0}&quot;'a yazmak başarısız oldu (deneme {1}, içerik uzunluğu {2} bayt).</value>
+    </data>
+    <data name="PromptPage_Title" xml:space="preserve">
+        <value>İpucu Metinleri</value>
+    </data>
+    <data name="PromptPage_SearchBox_PlaceholderText" xml:space="preserve">
+        <value>İpucu Metinlerini Ara</value>
+    </data>
+    <data name="PromptPage_CountText" xml:space="preserve">
+        <value>{0} İpucu Metni</value>
+    </data>
+    <data name="PromptPage_DefaultPrompt_DisplayName" xml:space="preserve">
+        <value>Varsayılan İpucu Metni</value>
+    </data>
+    <data name="PromptPage_UntitledPrompt_DisplayName" xml:space="preserve">
+        <value>İsimsiz İpucu Metni</value>
+    </data>
+    <data name="PromptPage_Source_BuiltInDefault" xml:space="preserve">
+        <value>Yerleşik Varsayılan</value>
+    </data>
+    <data name="PromptPage_BuiltInBadge_Content" xml:space="preserve">
+        <value>Yerleşik</value>
+    </data>
+    <data name="PromptPage_CopyRenderedButton_ToolTip" xml:space="preserve">
+        <value>Önizleme İçeriğini Kopyala</value>
+    </data>
+    <data name="PromptPage_NewPromptButton_Content" xml:space="preserve">
+        <value>Oluştur</value>
+    </data>
+    <data name="PromptPage_NewPromptButton_ToolTip" xml:space="preserve">
+        <value>İpucu Metni Oluştur</value>
+    </data>
+    <data name="PromptPage_EditPromptButton_Content" xml:space="preserve">
+        <value>Düzenle</value>
+    </data>
+    <data name="PromptPage_EditPromptButton_ToolTip" xml:space="preserve">
+        <value>İpucu Metnini Düzenle</value>
+    </data>
+    <data name="PromptPage_DeletePromptButton_ToolTip" xml:space="preserve">
+        <value>İpucu Metnini Sil</value>
+    </data>
+    <data name="PromptPage_DeletePrompt_Dialog_Message" xml:space="preserve">
+        <value>Bu ipucu metnini kalıcı olarak silmek istediğinize emin misiniz?
+“{0}” kaldırılacaktır.</value>
+    </data>
+    <data name="PromptPage_DeletePromptUsedByAssistant_Dialog_Message" xml:space="preserve">
+        <value>Bu ipucu metnini kullanan 1 asistan var.
+Silindikten sonra, bu asistan varsayılan ipucu metnini kullanacaktır, ta ki yeni bir ipucu metni seçene kadar.
+
+Yine de “{0}” ipucu metnini kalıcı olarak silmek istiyor musunuz?</value>
+    </data>
+    <data name="PromptPage_DeletePromptUsedByAssistants_Dialog_Message" xml:space="preserve">
+        <value>{0} asistan bu ipucunu kullanıyor.
+Silindikten sonra, bu asistanlar varsayılan ipucu ile devam edecek, ta ki yeni bir ipucu seçene kadar.
+
+“{1}”ı kalıcı olarak silmek istiyor musunuz?</value>
+    </data>
+    <data name="PromptPage_NoMatchingPrompts" xml:space="preserve">
+        <value>Eşleşen ipucu yok</value>
+    </data>
+    <data name="PromptPage_Tab_Preview" xml:space="preserve">
+        <value>Önizleme</value>
+    </data>
+    <data name="PromptPage_Tab_Raw" xml:space="preserve">
+        <value>Ham</value>
+    </data>
+    <data name="PromptPage_AssistantsUsingPromptTitle" xml:space="preserve">
+        <value>Bu ipucunu kullanan asistanlar ({0})</value>
+    </data>
+    <data name="PromptPage_NoAssistantsUsingPrompt" xml:space="preserve">
+        <value>Bu ipucunu kullanan asistan yok</value>
+    </data>
+    <data name="PromptPage_EmptyContent_SelectInstruction" xml:space="preserve">
+        <value>Önizleme görmek için bir ipucu seçin</value>
+    </data>
+    <data name="PromptPage_CopyFailedToast_Title" xml:space="preserve">
+        <value>Kopyalama başarısız</value>
+    </data>
+    <data name="PromptPage_NavigationWarning_Title" xml:space="preserve">
+        <value>İpucu açılamıyor</value>
+    </data>
+    <data name="PromptPage_InvalidRoutePrompt_Content" xml:space="preserve">
+        <value>İpucu bağlantısı geçersiz: {0}</value>
+    </data>
+    <data name="PromptPage_MissingRoutePrompt_Content" xml:space="preserve">
+        <value>İpucu bulunamadı: {0}</value>
+    </data>
+    <data name="PromptPage_UnnamedAssistant" xml:space="preserve">
+        <value>İsimsiz asistan</value>
+    </data>
+    <data name="PromptPage_NoModelSelected" xml:space="preserve">
+        <value>Model seçilmedi</value>
+    </data>
+    <data name="PromptEditor_CreateTitle" xml:space="preserve">
+        <value>İpucu oluştur</value>
+    </data>
+    <data name="PromptEditor_EditTitle" xml:space="preserve">
+        <value>İpucu düzenle</value>
+    </data>
+    <data name="PromptEditor_SaveButton_Content" xml:space="preserve">
+        <value>Kaydet</value>
+    </data>
+    <data name="PromptEditor_NameLabel" xml:space="preserve">
+        <value>İsim (ayırıcı olarak)</value>
+    </data>
+    <data name="PromptEditor_NamePlaceholder" xml:space="preserve">
+        <value>isteğe bağlı</value>
+    </data>
+    <data name="PromptEditor_TemplateLabel" xml:space="preserve">
+        <value>İpucu içeriği</value>
+    </data>
+    <data name="PromptEditor_PlaceholderReferencesTitle" xml:space="preserve">
+        <value>Kullanılabilir yer tutucular</value>
+    </data>
+    <data name="PromptEditor_PreviewLabel" xml:space="preserve">
+        <value>Önizleme</value>
+    </data>
+    <data name="PromptEditor_OpenFailedToast_Title" xml:space="preserve">
+        <value>İpucu Düzenlenemiyor</value>
+    </data>
+    <data name="PromptEditor_OpenFailedToast_Content" xml:space="preserve">
+        <value>Bu ipucu mevcut değil veya düzenlenemiyor.</value>
+    </data>
+    <data name="PromptEditor_SaveFailedToast_Title" xml:space="preserve">
+        <value>İpucu Kaydedilemedi</value>
+    </data>
+    <data name="PromptEditor_Placeholder_DefaultSystemPrompt_Description" xml:space="preserve">
+        <value>Everywhere Varsayılan Sistem Açıklaması</value>
+    </data>
+    <data name="PromptEditor_Placeholder_SkillsPrompt_Description" xml:space="preserve">
+        <value>Etkin beceriler için rehberlik</value>
+    </data>
+    <data name="PromptEditor_Placeholder_Date_Description" xml:space="preserve">
+        <value>Geçerli tarih</value>
+    </data>
+    <data name="PromptEditor_Placeholder_Time_Description" xml:space="preserve">
+        <value>Geçerli saat</value>
+    </data>
+    <data name="PromptEditor_Placeholder_OS_Description" xml:space="preserve">
+        <value>İşletim sistemi</value>
+    </data>
+    <data name="PromptEditor_Placeholder_SystemLanguage_Description" xml:space="preserve">
+        <value>Sistem dili</value>
+    </data>
+    <data name="PromptEditor_Placeholder_WorkingDirectory_Description" xml:space="preserve">
+        <value>Çalışma dizini</value>
+    </data>
+    <data name="PromptDiagnostic_EmptyTemplate" xml:space="preserve">
+        <value>İpucu içeriği boş olamaz.</value>
+    </data>
+    <data name="PromptDiagnostic_UnknownPlaceholder" xml:space="preserve">
+        <value>Bilinmeyen yer tutucu: {0}.</value>
+    </data>
+    <data name="PromptDiagnostic_MissingSkillsPrompt" xml:space="preserve">
+        <value>Bu ipucu ne {DefaultSystemPrompt} ne de {SkillsPrompt} içeriyor, bu nedenle asistan becerileri doğru şekilde kullanamayabilir.</value>
+    </data>
+    <data name="PromptDiagnostic_MissingDate" xml:space="preserve">
+        <value>{Date} eksik, ipucu zaman bağlamını kaybedebilir.</value>
+    </data>
+    <data name="PromptDiagnostic_TimeMayReduceCacheHitRate" xml:space="preserve">
+        <value>{Time} saniye hassasiyetinde, önbellek hit oranını azaltabilir ve maliyeti artırabilir. Gerekmedikçe {Date} kullanın.</value>
+    </data>
+    <data name="PromptDiagnostic_UnresolvedReference" xml:space="preserve">
+        <value>İpucu bulunamadı: {0}. Varsayılan ipucu kullanılacak.</value>
+    </data>
+    <data name="PromptSource_Blank" xml:space="preserve">
+        <value>Manuel Oluştur</value>
+    </data>
+    <data name="PromptSource_Guided" xml:space="preserve">
+        <value>Rehberli Oluştur</value>
+    </data>
+    <data name="PromptSource_Copy" xml:space="preserve">
+        <value>Kopyala ile Oluştur</value>
+    </data>
+    <data name="PromptSource_Migration" xml:space="preserve">
+        <value>Eski Ayarları Taşı</value>
+    </data>
+    <data name="PromptSource_Import" xml:space="preserve">
+        <value>İçe Aktar</value>
+    </data>
+    <data name="PromptEditor_CopyToClipboardButton_ToolTip" xml:space="preserve">
+        <value>Yer Tutucuyu Kopyala</value>
+    </data>
+    <data name="PromptCreate_Title" xml:space="preserve">
+        <value>İpucu Oluştur</value>
+    </data>
+    <data name="PromptCreate_CreateButton_Content" xml:space="preserve">
+        <value>Kaydet</value>
+    </data>
+    <data name="PromptCreate_QuickMode_Description" xml:space="preserve">
+        <value>Hızlı yapılandırma, birkaç seçimle kullanılabilir bir ipucu oluşturur.</value>
+    </data>
+    <data name="PromptCreate_AdvancedMode_Description" xml:space="preserve">
+        <value>Gelişmiş düzenleme, tam ipucu içeriğini doğrudan kontrol etmenizi sağlar.</value>
+    </data>
+    <data name="PromptCreate_SwitchToAdvanced_Content" xml:space="preserve">
+        <value>Gelişmiş Düzenlemeye Geç</value>
+    </data>
+    <data name="PromptCreate_SwitchToQuick_Content" xml:space="preserve">
+        <value>Hızlı Yapılandırmaya Dön</value>
+    </data>
+    <data name="PromptCreate_PersonaLabel" xml:space="preserve">
+        <value>Kişilik</value>
+    </data>
+    <data name="PromptCreate_PreferredUserNameLabel" xml:space="preserve">
+        <value>Asistanın seni nasıl çağırmasını istersin?</value>
+    </data>
+    <data name="PromptCreate_PreferredUserNamePlaceholder" xml:space="preserve">
+        <value>isteğe bağlı</value>
+    </data>
+    <data name="PromptCreate_ScenarioLabel" xml:space="preserve">
+        <value>Çalışma Senaryosu (en fazla 3)</value>
+    </data>
+    <data name="PromptCreate_ScenarioHint" xml:space="preserve">
+        <value>En fazla 3 senaryo seçebilirsiniz.</value>
+    </data>
+    <data name="PromptCreate_ToneLabel" xml:space="preserve">
+        <value>Üslup</value>
+    </data>
+    <data name="PromptCreate_DetailLabel" xml:space="preserve">
+        <value>Cevap Detayı</value>
+    </data>
+    <data name="PromptCreate_OrganizationLabel" xml:space="preserve">
+        <value>Organizasyon</value>
+    </data>
+    <data name="PromptCreate_AdditionalRequirementsLabel" xml:space="preserve">
+        <value>Ekstra Gereksinimler</value>
+    </data>
+    <data name="PromptCreate_AdditionalRequirementsPlaceholder" xml:space="preserve">
+        <value>(Opsiyonel) Bu istemin uyması gereken kısıtlamalar, referanslar veya tercihler.</value>
+    </data>
+    <data name="PromptCreate_LivePreviewTitle" xml:space="preserve">
+        <value>Canlı Önizleme</value>
+    </data>
+    <data name="PromptCreate_LivePreviewDescription" xml:space="preserve">
+        <value>Önizleme, mevcut tarih, saat gibi yer tutucu içeriklerini anlık olarak render eder.</value>
+    </data>
+    <data name="PromptCreate_DiscardAdvanced_DialogTitle" xml:space="preserve">
+        <value>Gelişmiş düzenlemeleri bırakmak istiyor musunuz?</value>
+    </data>
+    <data name="PromptCreate_DiscardAdvanced_DialogMessage" xml:space="preserve">
+        <value>Hızlı yapılandırmaya dönmek, mevcut seçime göre öneri içeriğini yeniden oluşturacak ve manuel düzenlemeleri bırakacaktır.</value>
+    </data>
+    <data name="PromptCreate_DiscardAdvanced_DialogPrimary" xml:space="preserve">
+        <value>Düzenlemeyi bırak</value>
+    </data>
+    <data name="PromptRecipe_Persona_General" xml:space="preserve">
+        <value>🤝 Genel Asistan</value>
+    </data>
+    <data name="PromptRecipe_Persona_ProfessionalAdvisor" xml:space="preserve">
+        <value>💼 Profesyonel Danışman</value>
+    </data>
+    <data name="PromptRecipe_Persona_ProgrammingAssistant" xml:space="preserve">
+        <value>💻 Programlama Asistanı</value>
+    </data>
+    <data name="PromptRecipe_Persona_WritingEditor" xml:space="preserve">
+        <value>✍️ Yazım Editörü</value>
+    </data>
+    <data name="PromptRecipe_Persona_TranslationAssistant" xml:space="preserve">
+        <value>🌐 Çeviri Asistanı</value>
+    </data>
+    <data name="PromptRecipe_Persona_ResearchAssistant" xml:space="preserve">
+        <value>🔎 Araştırma Asistanı</value>
+    </data>
+    <data name="PromptRecipe_Persona_LearningMentor" xml:space="preserve">
+        <value>🎓 Öğrenme Mentorü</value>
+    </data>
+    <data name="PromptRecipe_Persona_ProductStrategyPartner" xml:space="preserve">
+        <value>🧩 Ürün ve Strateji Ortağı</value>
+    </data>
+    <data name="PromptRecipe_Scenario_GeneralQA" xml:space="preserve">
+        <value>Genel Soru-Cevap</value>
+    </data>
+    <data name="PromptRecipe_Scenario_ProgrammingDevelopment" xml:space="preserve">
+        <value>Programlama Geliştirme</value>
+    </data>
+    <data name="PromptRecipe_Scenario_CodeReview" xml:space="preserve">
+        <value>Kod İncelemesi</value>
+    </data>
+    <data name="PromptRecipe_Scenario_WritingEditing" xml:space="preserve">
+        <value>Yazım Düzenleme</value>
+    </data>
+    <data name="PromptRecipe_Scenario_DataAnalysis" xml:space="preserve">
+        <value>Veri Analizi</value>
+    </data>
+    <data name="PromptRecipe_Scenario_LearningEducation" xml:space="preserve">
+        <value>Öğrenme Eğitimi</value>
+    </data>
+    <data name="PromptRecipe_Scenario_TranslationLanguage" xml:space="preserve">
+        <value>Dil Çevirisi</value>
+    </data>
+    <data name="PromptRecipe_Scenario_ProductPlanning" xml:space="preserve">
+        <value>Ürün Planlama</value>
+    </data>
+    <data name="PromptRecipe_Scenario_Troubleshooting" xml:space="preserve">
+        <value>Sorun Giderme</value>
+    </data>
+    <data name="PromptRecipe_Scenario_ResearchPlanning" xml:space="preserve">
+        <value>Araştırma Planlama</value>
+    </data>
+    <data name="PromptRecipe_Tone_ProfessionalRigorous" xml:space="preserve">
+        <value>Profesyonel ve Titiz</value>
+    </data>
+    <data name="PromptRecipe_Tone_FriendlyPatient" xml:space="preserve">
+        <value>Samimi ve Sabırlı</value>
+    </data>
+    <data name="PromptRecipe_Tone_ConciseDirect" xml:space="preserve">
+        <value>Kısa ve Net</value>
+    </data>
+    <data name="PromptRecipe_Tone_SocraticGuiding" xml:space="preserve">
+        <value>Sokratik Yöntemle Rehberlik</value>
+    </data>
+    <data name="PromptRecipe_Tone_FormalBusiness" xml:space="preserve">
+        <value>Resmi İş</value>
+    </data>
+    <data name="PromptRecipe_Tone_CreativeExploratory" xml:space="preserve">
+        <value>Yaratıcı Keşif</value>
+    </data>
+    <data name="PromptRecipe_Detail_Concise" xml:space="preserve">
+        <value>Kısa</value>
+    </data>
+    <data name="PromptRecipe_Detail_Balanced" xml:space="preserve">
+        <value>Dengeli</value>
+    </data>
+    <data name="PromptRecipe_Detail_Detailed" xml:space="preserve">
+        <value>Ayrıntılı</value>
+    </data>
+    <data name="PromptRecipe_Organization_Automatic" xml:space="preserve">
+        <value>Yapılandırılmış</value>
+    </data>
+    <data name="PromptRecipe_Organization_ConclusionFirst" xml:space="preserve">
+        <value>Önce Sonuç</value>
+    </data>
+    <data name="PromptRecipe_Organization_StepByStep" xml:space="preserve">
+        <value>Adım Adım</value>
+    </data>
+    <data name="PromptRecipe_Organization_KeyPoints" xml:space="preserve">
+        <value>Anahtar Noktalar</value>
+    </data>
+    <data name="PromptRecipe_Organization_CompareOptions" xml:space="preserve">
+        <value>Seçenekleri Karşılaştır</value>
+    </data>
+    <data name="PromptRecipe_Organization_ExamplesFirst" xml:space="preserve">
+        <value>Önce Örnekler</value>
+    </data>
+    <data name="PromptRecipe_Organization_NaturalConversation" xml:space="preserve">
+        <value>Doğal Konuşma</value>
+    </data>
+    <data name="CustomAssistantPage_InvalidRouteAssistant_Content" xml:space="preserve">
+        <value>Yolda geçersiz asistan ID'si: {0}</value>
+    </data>
+    <data name="CustomAssistantPage_MissingRouteAssistant_Content" xml:space="preserve">
+        <value>Bu asistan bulunamadı: {0}</value>
+    </data>
+    <data name="Assistant_AdvancedSettings" xml:space="preserve">
+        <value>Gelişmiş Ayarlar</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_ReasoningCount" xml:space="preserve">
+        <value>{0} kez düşünüldü</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_ToolCallCount" xml:space="preserve">
+        <value>{0} kez araç çağrıldı</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_SubagentCount" xml:space="preserve">
+        <value>{0} alt asistan</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_NoResponse" xml:space="preserve">
+        <value>Bu turda yanıt üretilmedi.</value>
+    </data>
+    <data name="ChatPluginDisplayBlockPresenter_OpenSubagent" xml:space="preserve">
+        <value>Alt Asistanı Aç</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_CompletedActivities" xml:space="preserve">
+        <value>Tamamlanan {0} Etkinlik</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_Working" xml:space="preserve">
+        <value>Devam Ediyor</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_InputRequired" xml:space="preserve">
+        <value>Eyleminiz Gerekli</value>
+    </data>
+    <data name="LiveElapsedConverters_SecondsFormat" xml:space="preserve">
+        <value>{0:0.0} Saniye</value>
+    </data>
+    <data name="LiveElapsedConverters_MinutesSecondsFormat" xml:space="preserve">
+        <value>{0} Dakika {1} Saniye</value>
+    </data>
+    <data name="LiveElapsedConverters_HoursMinutesFormat" xml:space="preserve">
+        <value>{0} Saat {1} Dakika</value>
+    </data>
+    <data name="LiveElapsedConverters_DaysHoursFormat" xml:space="preserve">
+        <value>{0} Gün {1} Saat</value>
+    </data>
+    <data name="ChatPresentation_GenericActivity" xml:space="preserve">
+        <value>İşleniyor</value>
+    </data>
+    <data name="ChatPresentationRowPresenter_Completed" xml:space="preserve">
+        <value>Tamamlandı</value>
+    </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Description" xml:space="preserve">
+        <value>Office'i yüklemeden Word, Excel ve PowerPoint dosyalarını okumaya, düzenlemeye ve otomatikleştirmeye izin verir.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_UnsupportedOperation_ErrorMessage" xml:space="preserve">
+        <value>Bu dosya, istenen işlemi desteklemiyor.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_InvalidPath_ErrorMessage" xml:space="preserve">
+        <value>Dosya yolu geçersiz, lütfen kontrol edip tekrar deneyin.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_UnsupportedResource_ErrorMessage" xml:space="preserve">
+        <value>Bu tür bir kaynağı açamıyorum.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ReadFile_BinaryFile_ErrorMessage" xml:space="preserve">
+        <value>Bu dosyayı metin olarak okuyamıyorum.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_PdfNoText_ErrorMessage" xml:space="preserve">
+        <value>Bu PDF'de okunabilir metin yok, taranmış sayfalar içerebilir.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_PdfEncrypted_ErrorMessage" xml:space="preserve">
+        <value>Bu PDF şifre korumalı, açılamıyor.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_PdfDamaged_ErrorMessage" xml:space="preserve">
+        <value>Bu PDF açılamıyor, muhtemelen bozulmuş veya desteklenmeyen bir format kullanıyor.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_SkillResourceUnavailable_ErrorMessage" xml:space="preserve">
+        <value>İstenen beceri dosyası bulunamadı veya açılamadı.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_LocalPathOnly_ErrorMessage" xml:space="preserve">
+        <value>Bu işlem yalnızca bu cihazdaki dosyalar için geçerlidir.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_ConsentDenied_ErrorMessage" xml:space="preserve">
+        <value>Dosya işlemi için izin verilmedi.</value>
+    </data>
+    <data name="FileSystemSettings_InvalidApprovalPath_ErrorMessage" xml:space="preserve">
+        <value>Geçerli bir glob deseni ile tam bir yol girin.</value>
+    </data>
+    <data name="BuiltInChatPlugin_FileSystem_InvalidPattern_ErrorMessage" xml:space="preserve">
+        <value>Arama veya değiştirme deseni geçersiz.</value>
+    </data>
+    <data name="FontFamilyPicker_PlaceholderText" xml:space="preserve">
+        <value>Yazı Tipi Ara</value>
+    </data>
+    <data name="DisplaySettings_Font_Header" xml:space="preserve">
+        <value>Yazı Tipi</value>
+    </data>
+    <data name="DisplaySettings_Font_Description" xml:space="preserve">
+        <value>Uygulama arayüzünde kullanılacak ana yazı tipi ailesini seçin.</value>
+    </data>
+    <data name="FontFamilyPicker_NotInstalled" xml:space="preserve">
+        <value>Bu yazı tipi sistemde yüklü değil, önizleme varsayılan yazı tipini kullanacaktır.</value>
+    </data>
+    <data name="FontFamilyPicker_NotInstalledFormat" xml:space="preserve">
+        <value>{0} (Yüklenmedi)</value>
+    </data>
+    <data name="FontFamilyPicker_PreviewUnavailable" xml:space="preserve">
+        <value>Bu yazı tipinin önizlemesi yüklenemiyor, varsayılan yazı tipi gösteriliyor.</value>
+    </data>
+    <data name="BuiltInChatPlugin_OfficeCLI_Header" xml:space="preserve">
+        <value>Office Ofis Paketi</value>
+    </data>
+    <data name="AssistantToolSettings_FollowGlobal_Header" xml:space="preserve">
+        <value>Küresel Araç Ayarlarını Takip Et</value>
+    </data>
+    <data name="AssistantToolSettings_FollowingGlobal_Content" xml:space="preserve">
+        <value>Bu asistan, genel araç ayarlarını takip ediyor. Yukarıdaki anahtarı kapattığınızda ayrı ayrı yapılandırabilirsiniz.</value>
+    </data>
+    <data name="AssistantToolSettings_ToolCallDisabled_Content" xml:space="preserve">
+        <value>Bu asistanın araç çağrısı kapatıldı. Yukarıda etkinleştirdikten sonra kullanılabilir araçları yapılandırın.</value>
+    </data>
+    <data name="AskQuestionCard_PageDisplay" xml:space="preserve">
+        <value>{0}. sayfa, toplam {1} sayfa</value>
+    </data>
+    <data name="AskQuestionCard_OptionalFreeformTextBox_PlaceholderText" xml:space="preserve">
+        <value>Opsiyonel: Ek cevap girin...</value>
+    </data>
+    <data name="TextDifferenceEditor_OmittedLineButton_ToolTip" xml:space="preserve">
+        <value>Açmak için tıklayın</value>
     </data>
 </root>

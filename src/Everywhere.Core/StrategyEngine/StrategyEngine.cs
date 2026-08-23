@@ -26,6 +26,6 @@ public sealed class StrategyEngine(IStrategyRegistry registry, ILogger<StrategyE
             }
         }
 
-        return results.AsValueEnumerable().OrderByDescending(s => s.Priority).DistinctBy(s => s.Id).ToList();
+        return results.AsValueEnumerable().OrderByDescending(s => s.Priority).DistinctBy(s => s.Id).ToArray();
     }
 }

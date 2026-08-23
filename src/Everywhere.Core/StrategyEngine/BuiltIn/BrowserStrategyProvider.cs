@@ -1,3 +1,4 @@
+using Everywhere.Chat.Plugins;
 using Everywhere.StrategyEngine.Conditions;
 using Lucide.Avalonia;
 
@@ -35,8 +36,8 @@ public sealed class BrowserStrategyProvider : BuiltInStrategyProvider
         new()
         {
             Id = "translate",
-            NameKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_Browser_TranslateCommand_Name),
-            DescriptionKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_Browser_TranslateCommand_Description),
+            NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Browser_TranslateCommand_Name),
+            DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Browser_TranslateCommand_Description),
             Icon = LucideIconKind.Languages,
             Priority = 100,
             Condition = Condition,
@@ -47,15 +48,15 @@ public sealed class BrowserStrategyProvider : BuiltInStrategyProvider
                 Maintain the original formatting and structure where possible.
                 If the content is already in the target language, inform the user.
                 """,
-            ArgumentHintKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_Browser_TranslateCommand_ArgumentHint)
+            ArgumentHintKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Browser_TranslateCommand_ArgumentHint)
         },
 
         // Summarize page
         new()
         {
             Id = "summarize",
-            NameKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_Browser_SummarizePageCommand_Name),
-            DescriptionKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_Browser_SummarizePageCommand_Description),
+            NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Browser_SummarizePageCommand_Name),
+            DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Browser_SummarizePageCommand_Description),
             Icon = LucideIconKind.FileText,
             Priority = 90,
             Condition = Condition,
@@ -74,8 +75,8 @@ public sealed class BrowserStrategyProvider : BuiltInStrategyProvider
         new()
         {
             Id = "extract-info",
-            NameKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_Browser_ExtractInfoCommand_Name),
-            DescriptionKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_Browser_ExtractInfoCommand_Description),
+            NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Browser_ExtractInfoCommand_Name),
+            DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Browser_ExtractInfoCommand_Description),
             Icon = LucideIconKind.ListChecks,
             Priority = 80,
             Condition = Condition,
@@ -92,8 +93,8 @@ public sealed class BrowserStrategyProvider : BuiltInStrategyProvider
         new()
         {
             Id = "explain",
-            NameKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_Browser_ExplainCommand_Name),
-            DescriptionKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_Browser_ExplainCommand_Description),
+            NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Browser_ExplainCommand_Name),
+            DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Browser_ExplainCommand_Description),
             Icon = LucideIconKind.GraduationCap,
             Priority = 70,
             Condition = Condition,
@@ -111,14 +112,14 @@ public sealed class BrowserStrategyProvider : BuiltInStrategyProvider
         new()
         {
             Id = "fact-check",
-            NameKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_Browser_FactCheckCommand_Name),
-            DescriptionKey = new DynamicResourceKey(LocaleKey.Strategy_BuiltIn_Browser_FactCheckCommand_Description),
+            NameKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Browser_FactCheckCommand_Name),
+            DescriptionKey = new DynamicLocaleKey(LocaleKey.Strategy_BuiltIn_Browser_FactCheckCommand_Description),
             Icon = LucideIconKind.ShieldCheck,
             Priority = 60,
             Condition = Condition,
-            ToolRulesets = new(1)
+            ToolPatternRulesets = new ToolPatternRulesets(1)
             {
-                { "builtin.web_browser.*", true }
+                { "builtin.web", new ToolFunctionPatternRulesets { { "*", true } } }
             },
             Body =
                 """

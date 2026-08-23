@@ -11,7 +11,7 @@
       </Style>
 
       <Style Selector="^.narrow">
-        <Style Selector="^ &gt; shadui|NavigationBar">
+        <Style Selector="^ > shadui|NavigationBar">
           <Setter Property="DockPanel.Dock" Value="Bottom"/>
           <Setter Property="Orientation" Value="Horizontal"/>
           <Setter Property="Margin" Value="0,8"/>
@@ -73,7 +73,7 @@
       <TransitioningContentControl.PageTransition>
         <CrossFade
           FadeInEasing="CubicEaseInOut" FadeOutEasing="CubicEaseInOut"
-          Duration="0:0:0.4"/>
+          FillMode="None" Duration="0:0:0.4"/>
       </TransitioningContentControl.PageTransition>
     </TransitioningContentControl>
   </DockPanel>

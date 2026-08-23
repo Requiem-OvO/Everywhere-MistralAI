@@ -44,7 +44,7 @@ public sealed class StrategyContext
             .OfType<VisualElementAttachment>()
             .Where(a => a.Element?.Target is not null)
             .Select(a => a.Element!.Target!)
-            .ToList();
+            .ToArray();
 
         var rootElements = DeriveRootElements(visualElements);
         var activeProcess = DeriveActiveProcess(visualElements);
@@ -76,7 +76,7 @@ public sealed class StrategyContext
             roots.Add(current);
         }
 
-        return roots.ToList();
+        return [.. roots];
     }
 
     /// <summary>

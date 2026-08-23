@@ -1,0 +1,51 @@
+<ResourceDictionary
+  xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:c="using:Everywhere.Configuration" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
+  xmlns:v="using:Everywhere.Views">
+  <ControlTheme
+    x:Key="{x:Type v:FontFamilyPicker}"
+    TargetType="v:FontFamilyPicker">
+    <Setter Property="Template">
+      <ControlTemplate TargetType="v:FontFamilyPicker">
+        <AutoCompleteBox
+          x:Name="PART_AutoCompleteBox" MinWidth="240"
+          MinHeight="32" Padding="4,0"
+          FilterMode="Custom" MaxDropDownHeight="320"
+          MinimumPopulateDelay="0" MinimumPrefixLength="0"
+          PlaceholderText="{I18N {x:Static LocaleKey.FontFamilyPicker_PlaceholderText}}">
+          <AutoCompleteBox.ItemTemplate>
+            <DataTemplate x:DataType="c:FontFamilyCatalog+Item">
+              <DockPanel
+                Background="Transparent"
+                ToolTip.Tip="{Binding ToolTip}">
+                <LucideIcon
+                  DockPanel.Dock="Right" VerticalAlignment="Center"
+                  Foreground="{DynamicResource WarningColor}"
+                  IsVisible="{Binding HasWarning}"
+                  Kind="TriangleAlert"
+                  Size="{DynamicResource FontSizeL}"/>
+                <TextBlock
+                  VerticalAlignment="Center"
+                  FontFamily="{Binding PreviewFontFamily}"
+                  MaxLines="1"
+                  Text="{Binding DisplayName}"
+                  TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+              </DockPanel>
+            </DataTemplate>
+          </AutoCompleteBox.ItemTemplate>
+          <AutoCompleteBox.InnerRightContent>
+            <Button
+              Classes="Ghost" Padding="6"
+              Command="{Binding $parent[v:FontFamilyPicker].ExpandCommand}"
+              CornerRadius="4">
+              <PathIcon
+                Width="12" Height="12"
+                Data="{x:Static shadui:Icons.ChevronUpDown}"
+                IsHitTestVisible="False"/>
+            </Button>
+          </AutoCompleteBox.InnerRightContent>
+        </AutoCompleteBox>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

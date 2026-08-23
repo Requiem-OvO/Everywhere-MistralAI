@@ -13,6 +13,7 @@ namespace Everywhere.Chat;
 [Union(4, typeof(FunctionCallChatMessage))]
 [Union(5, typeof(UserStrategyChatMessage))]
 [Union(6, typeof(UserActionChatMessage))]
+[Union(7, typeof(ContextCompressionChatMessage))]
 public abstract partial class ChatMessage : ObservableObject
 {
     public abstract AuthorRole Role { get; }
@@ -21,6 +22,17 @@ public abstract partial class ChatMessage : ObservableObject
     [JsonIgnore]
     [ObservableProperty]
     public partial bool IsBusy { get; set; }
+
+    /// <summary>
+    /// Gets a value indicating whether this message is excluded from the normal chat presentation.
+    /// </summary>
+    /// <remarks>
+    /// Overrides that change this value after the node enters a chat context must raise a property
+    /// change notification; otherwise the DynamicData visibility projections are not re-evaluated.
+    /// </remarks>
+    [IgnoreMember]
+    [JsonIgnore]
+    public virtual bool IsHidden => false;
 }
 
 public interface IHaveChatAttachments

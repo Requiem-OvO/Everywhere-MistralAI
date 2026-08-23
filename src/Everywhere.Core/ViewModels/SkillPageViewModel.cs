@@ -2,6 +2,7 @@ using System.Collections.Specialized;
 using System.Diagnostics.CodeAnalysis;
 using System.Reactive.Disposables;
 using System.Reactive.Disposables.Fluent;
+using Avalonia.Input.Platform;
 using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -41,10 +42,6 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
     [ObservableProperty]
     public partial int FilteredSkillCount { get; private set; }
 
-    [ObservableProperty]
-    public partial IDynamicResourceKey FilteredSkillCountKey { get; private set; } =
-        new FormattedDynamicResourceKey(LocaleKey.SkillPage_CountText, new DirectResourceKey(0));
-
     public IReadOnlyBindableList<SkillSourceFilterItem> SourceFilterItems { get; }
 
     public IReadOnlyBindableList<SkillSourceGroupItem> FilteredSourceGroups { get; }
@@ -67,7 +64,7 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
             {
                 result = null;
                 if (string.IsNullOrWhiteSpace(value)) return false;
-                result = new SkillInformationField(new DynamicResourceKey(labelKey), value, isMonospace);
+                result = new SkillInformationField(new DynamicLocaleKey(labelKey), value, isMonospace);
                 return true;
             }
         }
@@ -80,7 +77,8 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
 
     public bool HasVisibleSourceGroups => _filteredSourceGroups.Count > 0;
 
-    private readonly ISkillManager _skillManager;
+    public ISkillManager SkillManager { get; }
+
     private readonly BindableList<SkillSourceFilterItem> _sourceFilterItems = [];
     private readonly BindableList<SkillSourceGroupItem> _filteredSourceGroups = [];
     private readonly SourceCache<SkillDescriptorWrapper, string> _skills = new(static item => item.Skill.Id);
@@ -88,7 +86,7 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
 
     public SkillPageViewModel(ISkillManager skillManager)
     {
-        _skillManager = skillManager;
+        SkillManager = skillManager;
         SourceFilterItems = _sourceFilterItems;
         FilteredSourceGroups = _filteredSourceGroups;
 
@@ -110,13 +108,6 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
         LifetimeDisposables.Add(Disposable.Create(() => skillManager.SourceGroups.CollectionChanged -= HandleSourceGroupsCollectionChanged));
     }
 
-    partial void OnFilteredSkillCountChanged(int value)
-    {
-        FilteredSkillCountKey = new FormattedDynamicResourceKey(
-            LocaleKey.SkillPage_CountText,
-            new DirectResourceKey(value));
-    }
-
     [RelayCommand(CanExecute = nameof(IsNotBusy))]
     private Task RefreshAsync(CancellationToken cancellationToken)
     {
@@ -124,7 +115,7 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
         return ExecuteBusyTaskAsync(
             async token =>
             {
-                await _skillManager.RefreshAsync(token);
+                await SkillManager.RefreshAsync(token);
                 SyncSkillsFromManager();
                 TrySelectSkill(selectedSkillId);
                 ToastManager.Success(LocaleResolver.SkillPage_RescanSuccessToast_Title);
@@ -194,7 +185,7 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
         try
         {
             await App.Clipboard.SetTextAsync(text);
-            ToastManager.Success(DynamicResourceKey.Resolve(AbstractionsLocaleKey.Common_Copied));
+            ToastManager.Success(DynamicLocaleKey.Resolve(AbstractionsLocaleKey.Common_Copied));
         }
         catch (Exception ex)
         {
@@ -214,7 +205,7 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
         SyncSourceGroupsFromManager();
 
         var items = new List<SkillDescriptorWrapper>();
-        foreach (var group in _skillManager.SourceGroups)
+        foreach (var group in SkillManager.SourceGroups)
         {
             items.AddRange(group.Skills.Select(skill => new SkillDescriptorWrapper(skill, group)));
         }
@@ -226,7 +217,7 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
         });
 
         RebuildSourceFilters();
-        ApplyFilteredSkills(_skills.Items.Where(FilterSkill).ToList());
+        ApplyFilteredSkills([.. _skills.Items.Where(FilterSkill)]);
         OnPropertyChanged(nameof(HasAnySkills));
     }
 
@@ -234,7 +225,7 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
     {
         var activeSourceKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var sourceGroup in _skillManager.SourceGroups)
+        foreach (var sourceGroup in SkillManager.SourceGroups)
         {
             var sourceKey = GetSourceKey(sourceGroup);
             activeSourceKeys.Add(sourceKey);
@@ -261,9 +252,9 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
         _sourceFilterItems.Clear();
         _sourceFilterItems.Add(SkillSourceFilterItem.All);
 
-        foreach (var group in _skillManager.SourceGroups)
+        foreach (var group in SkillManager.SourceGroups)
         {
-            _sourceFilterItems.Add(new SkillSourceFilterItem(GetSourceKey(group), new DirectResourceKey(group.Name)));
+            _sourceFilterItems.Add(new SkillSourceFilterItem(GetSourceKey(group), new DirectLocaleKey(group.Name)));
         }
 
         SelectedSourceFilter =
@@ -280,15 +271,14 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
     {
         var skillsBySourceKey = skills
             .GroupBy(static item => item.SourceKey)
-            .ToDictionary(static group => group.Key, static group => group.ToList(), StringComparer.OrdinalIgnoreCase);
-        var visibleSourceGroups = _skillManager.SourceGroups
+            .ToDictionary(static group => group.Key, static group => group.ToArray(), StringComparer.OrdinalIgnoreCase);
+        var visibleSourceGroups = SkillManager.SourceGroups
             .AsValueEnumerable()
             .Where(IsSourceGroupVisible)
-            .ToList();
+            .ToArray();
 
-        foreach (var sourceGroup in visibleSourceGroups)
+        foreach (var sourceKey in visibleSourceGroups.AsValueEnumerable().Select(GetSourceKey))
         {
-            var sourceKey = GetSourceKey(sourceGroup);
             if (!_sourceGroupItemsByKey.TryGetValue(sourceKey, out var groupItem))
             {
                 continue;
@@ -300,13 +290,12 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
                     .AsValueEnumerable()
                     .OrderBy(static item => item.Skill.Name, StringComparer.OrdinalIgnoreCase)
                     .ThenBy(static item => item.Skill.Id, StringComparer.OrdinalIgnoreCase)
-                    .ToList() ?? []);
+                    .ToArray() ?? []);
         }
 
         _filteredSourceGroups.Clear();
-        foreach (var sourceGroup in visibleSourceGroups)
+        foreach (var sourceKey in visibleSourceGroups.AsValueEnumerable().Select(GetSourceKey))
         {
-            var sourceKey = GetSourceKey(sourceGroup);
             if (_sourceGroupItemsByKey.TryGetValue(sourceKey, out var groupItem))
             {
                 _filteredSourceGroups.Add(groupItem);
@@ -357,10 +346,10 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
                 .FirstOrDefault();
     }
 
-    public sealed record SkillSourceFilterItem(string SourceKey, IDynamicResourceKey Name)
+    public sealed record SkillSourceFilterItem(string SourceKey, IDynamicLocaleKey Name)
     {
         public static SkillSourceFilterItem All { get; } =
-            new("all", new DynamicResourceKey(LocaleKey.SkillPage_SourceFilter_All));
+            new("all", new DynamicLocaleKey(LocaleKey.SkillPage_SourceFilter_All));
 
         public bool IsAll => ReferenceEquals(this, All);
     }
@@ -426,5 +415,5 @@ public sealed partial class SkillPageViewModel : BusyViewModelBase
         }
     }
 
-    public sealed record SkillInformationField(IDynamicResourceKey Label, string Value, bool IsMonospace);
+    public sealed record SkillInformationField(IDynamicLocaleKey Label, string Value, bool IsMonospace);
 }

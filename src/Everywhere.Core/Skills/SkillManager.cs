@@ -1,41 +1,48 @@
-using System.Reactive.Disposables;
 using System.Reactive.Disposables.Fluent;
 using System.Security;
 using System.Text;
-using System.Text.RegularExpressions;
 using Avalonia.Controls.Notifications;
-using DynamicData;
-using DynamicData.Binding;
+using CommunityToolkit.Mvvm.ComponentModel;
+using Everywhere.AI;
 using Everywhere.Collections;
 using Everywhere.Common;
 using Everywhere.Configuration;
 using Microsoft.Extensions.Logging;
-using ZLinq;
 
 namespace Everywhere.Skills;
 
-public sealed partial class SkillManager : ISkillManager, ISkillPromptProvider, IAsyncInitializer, IDisposable
+/// <summary>
+/// Discovers, tracks, and resolves physical and virtual skills and their resources.
+/// </summary>
+public sealed class SkillManager : ObservableObject, ISkillManager, ISkillPromptProvider, IAsyncInitializer
 {
+    /// <inheritdoc />
+    public bool IsRefreshing => Volatile.Read(ref _refreshRequestCount) > 0;
+
     public IReadOnlyBindableList<SkillSourceGroup> SourceGroups { get; }
 
-    public AsyncInitializerIndex Index => AsyncInitializerIndex.Settings + 1;
+    public AsyncInitializerIndex Index => AsyncInitializerIndex.Settings + 2;
 
     private readonly PersistentState _persistentState;
     private readonly SkillSource _skillSource;
+    private readonly IReadOnlyList<IVirtualSkillProvider> _virtualSkillProviders;
     private readonly ILogger<SkillManager> _logger;
     private readonly SourceList<SkillSourceGroup> _sourceGroupsSource = new();
     private readonly CompositeDisposable _disposables = new(1);
-    private readonly CompositeDisposable _skillDescriptorSubscriptions = new();
-    private readonly Lock _refreshLock = new();
-    private Dictionary<string, SkillDescriptor> _skillsById = new(StringComparer.OrdinalIgnoreCase);
+    private readonly SemaphoreSlim _refreshGate = new(1, 1);
+
+    private SkillCatalogState _state = SkillCatalogState.CreateEmpty();
+    private int _refreshRequestCount;
 
     public SkillManager(
         PersistentState persistentState,
         SkillSource skillSource,
+        IEnumerable<IVirtualSkillProvider> providers,
         ILogger<SkillManager> logger)
     {
         _persistentState = persistentState;
         _skillSource = skillSource;
+        _virtualSkillProviders = [.. providers];
         _logger = logger;
         _skillSource.Changed += HandleSkillSourceChanged;
 
@@ -46,44 +53,76 @@ public sealed partial class SkillManager : ISkillManager, ISkillPromptProvider, 
         _disposables.Add(_sourceGroupsSource);
     }
 
-    public Task InitializeAsync()
-    {
-        Task.Run(RefreshCore).Detach(_logger.ToExceptionHandler());
-        return Task.CompletedTask;
-    }
+    /// <inheritdoc />
+    public Task InitializeAsync() => RefreshAsync();
 
-    public Task RefreshAsync(CancellationToken cancellationToken = default)
+    /// <inheritdoc />
+    public async Task RefreshAsync(CancellationToken cancellationToken = default)
     {
-        return Task.Run(
-            () =>
+        cancellationToken.ThrowIfCancellationRequested();
+        var notifyRefreshing = Interlocked.Increment(ref _refreshRequestCount) == 1;
+        try
+        {
+            if (notifyRefreshing) OnPropertyChanged(nameof(IsRefreshing));
+
+            await _refreshGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+            try
             {
-                cancellationToken.ThrowIfCancellationRequested();
-                RefreshCore();
-            },
-            cancellationToken);
+                await RefreshCoreAsync(cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                _refreshGate.Release();
+            }
+        }
+        finally
+        {
+            if (Interlocked.Decrement(ref _refreshRequestCount) == 0)
+            {
+                OnPropertyChanged(nameof(IsRefreshing));
+            }
+        }
     }
 
-    public SkillResolutionResult ResolveSkillReference(string reference) =>
-        SkillReferenceResolver.Resolve(reference, _skillsById.Values);
-
-    public string GetPrompt()
+    /// <inheritdoc />
+    public string GetPrompt(ToolCallStatus toolCallStatus)
     {
-        var enabledSkills =
-            _skillsById.Values
-                .AsValueEnumerable()
-                .Where(skill => skill is { IsEnabled: true, IsValid: true })
-                .OrderBy(skill => skill.SourceRoot)
-                .ThenBy(skill => skill.Id, StringComparer.OrdinalIgnoreCase)
-                .ToList();
-        if (enabledSkills.Count == 0) return string.Empty;
+        var enabledSkills = CurrentState.SkillsById.Values
+            .AsValueEnumerable()
+            .Where(skill => skill is { IsEnabled: true, IsValid: true })
+            .OrderBy(skill => skill.SourceRoot)
+            .ThenBy(skill => skill.Id, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        if (enabledSkills.Length == 0) return string.Empty;
 
         var builder = new StringBuilder();
         // From vscode copilot prompt template, with modifications to fit our markdown-based skill format and instructions.
         builder.AppendLine("<skills>");
         builder.AppendLine("Here is a list of skills that contain domain specific knowledge on a variety of topics.");
         builder.AppendLine("Each skill comes with a description of the topic and a file path that contains the detailed instructions.");
-        builder.AppendLine(
-            "When a user asks you to perform a task that falls within the domain of a skill, use the 'read_file' tool to acquire the full instructions from the file URI.");
+
+        switch (toolCallStatus)
+        {
+            case ToolCallStatus.Enabled:
+                builder.AppendLine(
+                    "When a user asks you to perform a task that falls within the domain of a skill, " +
+                    "read the listed file to acquire the full instructions. " +
+                    "Use the 'read_file' tool for skill:// resources; physical file paths may also be accessed through command-line or script tools. " +
+                    "Ask the user to enable tool calling if unavailable.");
+                break;
+            case ToolCallStatus.Disabled:
+                builder.AppendLine(
+                    "Note that the tool calling is disabled by the user. " +
+                    "You should not attempt to read the skill files, but you can still use the descriptions to inform your responses.");
+                break;
+            case ToolCallStatus.NotSupported:
+                builder.AppendLine(
+                    "Note that you do not support tool calls; this may also be due to user's configuration error. " +
+                    "You should not attempt to read the skill files, but you can still use the descriptions to inform your responses. " +
+                    "Ask the user to check configuration if you can call tools.");
+                break;
+        }
+
         foreach (var skill in enabledSkills)
         {
             builder.AppendLine("<skill>");
@@ -97,121 +136,322 @@ public sealed partial class SkillManager : ISkillManager, ISkillPromptProvider, 
         return builder.TrimEnd().ToString();
     }
 
-    private void RefreshCore()
+    /// <summary>
+    /// Resolves a <c>skill://</c> URI whose host is a complete source-qualified skill ID.
+    /// </summary>
+    public SkillResource ResolveResource(string reference)
     {
-        lock (_refreshLock)
+        if (!TryParseResourceReference(reference, out var skill, out var relativePath, out var error))
         {
-            _skillDescriptorSubscriptions.Clear();
+            throw new FileNotFoundException(error ?? $"Skill resource '{reference}' was not found.");
+        }
+
+        var state = CurrentState;
+        if (skill is null || !state.ResourceStoresById.TryGetValue(skill.Id, out var resourceStore))
+        {
+            throw new FileNotFoundException($"Skill resource '{reference}' was not found.");
+        }
+
+        return resourceStore.Resolve(skill.Id, relativePath);
+    }
+
+    /// <summary>
+    /// Enumerates the files and directories beneath a skill resource.
+    /// </summary>
+    public IEnumerable<SkillResource> EnumerateResources(string reference, bool recurseSubdirectories)
+    {
+        var root = ResolveResource(reference);
+        if (!root.IsDirectory)
+        {
+            yield return root;
+            yield break;
+        }
+
+        if (!TryParseResourceReference(root.Uri, out var skill, out _, out _)) yield break;
+
+        var state = CurrentState;
+        if (skill is null || !state.ResourceStoresById.TryGetValue(skill.Id, out var resourceStore)) yield break;
+
+        foreach (var resource in resourceStore.Enumerate(skill.Id, root.RelativePath, recurseSubdirectories))
+        {
+            yield return resource;
+        }
+    }
+
+    private async Task RefreshCoreAsync(CancellationToken cancellationToken)
+    {
+        var candidateSubscriptions = new CompositeDisposable();
+        var committed = false;
+        try
+        {
             var overrides = GetSkillEnabledOverrides();
-            var groups = DiscoverSkillGroups(overrides);
-            var skills = groups.SelectMany(group => group.Skills).ToList();
-            var defaultEnabledById = skills.ToDictionary(
-                skill => skill.Id,
-                skill => SkillSource.IsDefaultEnabled(skill.SourceRoot),
-                StringComparer.OrdinalIgnoreCase);
-            var cleanedOverrides = overrides
-                .Where(kvp => defaultEnabledById.TryGetValue(kvp.Key, out var isDefaultEnabled) && kvp.Value != isDefaultEnabled)
-                .ToDictionary(StringComparer.OrdinalIgnoreCase);
-            if (!DictionaryEquals(overrides, cleanedOverrides))
+            var seenIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var allSkills = new List<SkillDescriptor>();
+            var entriesById = new Dictionary<string, SkillEntry>(StringComparer.OrdinalIgnoreCase);
+            var groups = new List<SkillSourceGroup>();
+
+            foreach (var root in _skillSource.Roots)
             {
-                _persistentState.SkillEnabledOverrides = ToOrderedStateDictionary(cleanedOverrides);
+                var skills = new BindableList<SkillDescriptor>();
+                var deadline = DateTimeOffset.UtcNow.AddSeconds(10);
+                foreach (var filePath in EnumerateSkillFiles(root.DirectoryPath, deadline))
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    var entry = CreatePhysicalEntry(root, filePath, seenIds);
+                    if (entry is null) continue;
+
+                    var descriptor = CreateSkillDescriptor(entry, overrides, candidateSubscriptions);
+                    skills.Add(descriptor);
+                    allSkills.Add(descriptor);
+                    entriesById.Add(entry.Id, entry);
+                }
+
+                groups.Add(new SkillSourceGroup(root.Root, root.Name, root.DirectoryPath, skills));
             }
 
-            _skillsById = skills.ToDictionary(skill => skill.Id, StringComparer.OrdinalIgnoreCase);
-            _sourceGroupsSource.Reset(groups);
+            await foreach (var virtualSkill in EnumerateVirtualSkillsAsync(cancellationToken).ConfigureAwait(false))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (string.IsNullOrWhiteSpace(virtualSkill.Id))
+                {
+                    _logger.LogWarning("Skipping virtual skill provider item without an id.");
+                    continue;
+                }
+
+                if (!seenIds.Add(virtualSkill.Id))
+                {
+                    _logger.LogWarning("Skipping virtual skill with duplicate id {SkillId}.", virtualSkill.Id);
+                    continue;
+                }
+
+                SkillEntry? entry;
+                try
+                {
+                    entry = CreateVirtualEntry(virtualSkill);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Skipping malformed virtual skill.");
+                    continue;
+                }
+
+                if (entry is null)
+                {
+                    _logger.LogWarning("Skipping virtual skill without a valid id.");
+                    continue;
+                }
+
+                var descriptor = CreateSkillDescriptor(entry, overrides, candidateSubscriptions);
+                allSkills.Add(descriptor);
+                entriesById.Add(entry.Id, entry);
+            }
+
+            var skillsById = allSkills.ToDictionary(skill => skill.Id, StringComparer.OrdinalIgnoreCase);
+            var resourceStoresById = entriesById.ToDictionary(
+                pair => pair.Key,
+                pair => pair.Value.ResourceStore,
+                StringComparer.OrdinalIgnoreCase);
+
+            var cleanedOverrides = overrides
+                .Where(kvp =>
+                    skillsById.TryGetValue(kvp.Key, out var skill) &&
+                    skill.SourceRoot != SkillSourceRoot.BuiltIn &&
+                    kvp.Value != SkillSource.IsDefaultEnabled(skill.SourceRoot))
+                .ToDictionary(StringComparer.OrdinalIgnoreCase);
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var candidateState = new SkillCatalogState(skillsById, resourceStoresById, candidateSubscriptions);
+            var previousState = Interlocked.Exchange(ref _state, candidateState);
+            committed = true;
+            try
+            {
+                _sourceGroupsSource.Reset(groups);
+                if (!DictionaryEquals(overrides, cleanedOverrides))
+                {
+                    _persistentState.SkillEnabledOverrides = ToOrderedStateDictionary(cleanedOverrides);
+                }
+            }
+            finally
+            {
+                previousState.Dispose();
+            }
         }
-    }
-
-    private List<SkillSourceGroup> DiscoverSkillGroups(Dictionary<string, bool> skillEnabledOverrides)
-    {
-        var seenIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        return SkillSource.GetRoots()
-            .AsValueEnumerable()
-            .Select(root => DiscoverSkillGroup(root, seenIds, skillEnabledOverrides))
-            .ToList();
-    }
-
-    private SkillSourceGroup DiscoverSkillGroup(
-        SkillRoot root,
-        HashSet<string> seenIds,
-        Dictionary<string, bool> skillEnabledOverrides)
-    {
-        var skills = new BindableList<SkillDescriptor>();
-        var deadline = DateTimeOffset.UtcNow.AddSeconds(10);
-        foreach (var filePath in EnumerateSkillFiles(root.DirectoryPath, deadline))
+        finally
         {
-            var skill = CreateSkillDescriptor(root, filePath, seenIds, skillEnabledOverrides);
-            if (skill is not null) skills.Add(skill);
+            if (!committed) candidateSubscriptions.Dispose();
         }
-
-        return new SkillSourceGroup(root.Root, root.Name, root.DirectoryPath, skills);
     }
 
-    private SkillDescriptor? CreateSkillDescriptor(
-        SkillRoot root,
-        string filePath,
-        HashSet<string> seenIds,
-        Dictionary<string, bool> skillEnabledOverrides)
+    private async IAsyncEnumerable<VirtualSkill> EnumerateVirtualSkillsAsync([EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var folderName = new DirectoryInfo(Path.GetDirectoryName(filePath) ?? string.Empty).Name;
-        var id = $"{SkillSource.GetSourceId(root.Root)}.{NormalizeId(folderName)}";
+        foreach (var provider in _virtualSkillProviders)
+        {
+            await foreach (var skill in provider.ListAsync(cancellationToken).ConfigureAwait(false))
+            {
+                yield return skill;
+            }
+        }
+    }
+
+    private SkillEntry? CreatePhysicalEntry(SkillRoot root, string filePath, HashSet<string> seenIds)
+    {
+        var skillDirectory = Path.GetDirectoryName(filePath);
+        if (string.IsNullOrWhiteSpace(skillDirectory)) return null;
+
+        var folderName = new DirectoryInfo(skillDirectory).Name;
+        var id = SkillId.FromFolder(root.Root, folderName);
 
         // Case-sensitive file systems may contain folders that differ only by casing.
         // They intentionally collapse to the same id; ignore later duplicates to keep ids stable.
         if (!seenIds.Add(id)) return null;
 
-        var diagnostics = new BindableList<SkillDiagnostic>();
-        SkillParseResult? parseResult = null;
         var markdownContent = string.Empty;
+        Exception? readException = null;
         try
         {
             markdownContent = File.ReadAllText(filePath);
-            parseResult = SkillParser.Parse(filePath, folderName, markdownContent);
-            foreach (var diagnostic in parseResult.Diagnostics)
-            {
-                diagnostics.Add(diagnostic);
-            }
         }
         catch (Exception ex)
         {
+            readException = ex;
             _logger.LogWarning(ex, "Failed to read skill file {FilePath}", filePath);
+        }
+
+        return new SkillEntry(
+            id,
+            folderName,
+            Path.GetFullPath(filePath),
+            root.DirectoryPath,
+            root.Name,
+            root.Root,
+            markdownContent,
+            new LocalSkillResourceStore(skillDirectory),
+            readException);
+    }
+
+    private static SkillEntry? CreateVirtualEntry(VirtualSkill virtualSkill)
+    {
+        if (!SkillId.IsFull(virtualSkill.Id)) return null;
+
+        var folderName = virtualSkill.Id.Split('.').LastOrDefault();
+        if (string.IsNullOrWhiteSpace(folderName)) return null;
+
+        return new SkillEntry(
+            virtualSkill.Id,
+            folderName,
+            $"skill://{virtualSkill.Id}/SKILL.md",
+            $"skill://{virtualSkill.Id}/",
+            "Built-in",
+            SkillSourceRoot.BuiltIn,
+            virtualSkill.MarkdownContent,
+            new VirtualSkillResourceStore(virtualSkill),
+            null);
+    }
+
+    private SkillDescriptor CreateSkillDescriptor(
+        SkillEntry entry,
+        Dictionary<string, bool> skillEnabledOverrides,
+        CompositeDisposable descriptorSubscriptions)
+    {
+        var diagnostics = new BindableList<SkillDiagnostic>();
+        SkillParseResult? parseResult = null;
+        try
+        {
+            if (entry.ReadException is not null) throw entry.ReadException;
+            parseResult = SkillParser.Parse(entry.FilePath, entry.FolderName, entry.MarkdownContent);
+            diagnostics.AddRange(parseResult.Diagnostics);
+        }
+        catch (Exception ex)
+        {
             diagnostics.Add(new SkillDiagnostic("skill.read_failed", ex.GetFriendlyMessage(), NotificationType.Error));
         }
 
-        var isValid = diagnostics.AsValueEnumerable().All(d => d.Type != NotificationType.Error);
-        var isDefaultEnabled = SkillSource.IsDefaultEnabled(root.Root);
-        var isEnabled = skillEnabledOverrides.GetValueOrDefault(id, isDefaultEnabled);
-        var displayName = parseResult?.FrontmatterName ?? parseResult?.HeadingName ?? folderName;
-        var description = parseResult?.FrontmatterDescription ?? parseResult?.FirstParagraph;
-        var directoryName = parseResult?.DirectoryName ?? folderName;
+        var isValid = diagnostics.AsValueEnumerable().All(diagnostic => diagnostic.Type != NotificationType.Error);
+        var isDefaultEnabled = SkillSource.IsDefaultEnabled(entry.SourceRoot);
+        var isEnabled = isValid &&
+            (entry.SourceRoot == SkillSourceRoot.BuiltIn || skillEnabledOverrides.GetValueOrDefault(entry.Id, isDefaultEnabled));
 
-        var skillDescriptor = new SkillDescriptor
+        var descriptor = new SkillDescriptor
         {
-            Id = id,
-            Name = displayName,
-            Description = description,
-            DirectoryName = directoryName,
-            FilePath = Path.GetFullPath(filePath),
-            MarkdownContent = markdownContent,
+            Id = entry.Id,
+            Name = parseResult?.FrontmatterName ?? parseResult?.HeadingName ?? entry.FolderName,
+            Description = parseResult?.FrontmatterDescription ?? parseResult?.FirstParagraph,
+            FilePath = entry.FilePath,
+            MarkdownContent = entry.MarkdownContent,
             MarkdownBody = parseResult?.MarkdownBody ?? string.Empty,
             Metadata = parseResult?.Metadata ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase),
-            SourceRoot = root.Root,
-            SourceName = root.Name,
-            SourceDirectoryPath = root.DirectoryPath,
+            SourceRoot = entry.SourceRoot,
+            SourceName = entry.SourceName,
+            SourceDirectoryPath = entry.SourceDirectoryPath,
             IsValid = isValid,
-            IsEnabled = isValid && isEnabled,
+            IsEnabled = isEnabled,
             Diagnostics = diagnostics
         };
-        skillDescriptor.WhenPropertyChanged(x => x.IsEnabled, false).Subscribe(x =>
-        {
-            var skill = x.Sender;
-            var overrides = GetSkillEnabledOverrides();
-            if (x.Value == SkillSource.IsDefaultEnabled(skill.SourceRoot)) overrides.Remove(skill.Id);
-            else overrides[skill.Id] = x.Value;
-            _persistentState.SkillEnabledOverrides = ToOrderedStateDictionary(overrides);
-        }).DisposeWith(_skillDescriptorSubscriptions);
 
-        return skillDescriptor;
+        if (entry.SourceRoot != SkillSourceRoot.BuiltIn)
+        {
+            descriptor.WhenPropertyChanged(x => x.IsEnabled, false).Subscribe(x =>
+            {
+                var skill = x.Sender;
+                var overrides = GetSkillEnabledOverrides();
+                if (x.Value == SkillSource.IsDefaultEnabled(skill.SourceRoot)) overrides.Remove(skill.Id);
+                else overrides[skill.Id] = x.Value;
+                _persistentState.SkillEnabledOverrides = ToOrderedStateDictionary(overrides);
+            }).DisposeWith(descriptorSubscriptions);
+        }
+
+        return descriptor;
+    }
+
+    private bool TryParseResourceReference(string reference, out SkillDescriptor? skill, out string relativePath, out string? error)
+    {
+        skill = null;
+        relativePath = string.Empty;
+        error = null;
+        if (!Uri.TryCreate(reference, UriKind.Absolute, out var uri) ||
+            !uri.Scheme.Equals("skill", StringComparison.OrdinalIgnoreCase) ||
+            uri.Host.Length == 0 ||
+            uri.Port != -1 ||
+            uri.UserInfo.Length > 0 ||
+            uri.Query.Length > 0 ||
+            uri.Fragment.Length > 0)
+        {
+            error = $"'{reference}' is not a skill URI.";
+            return false;
+        }
+
+        var snapshot = CurrentState;
+        var skillReference = Uri.UnescapeDataString(uri.Host);
+        if (!SkillId.IsFull(skillReference))
+        {
+            error = "Skill URI must use a complete skill ID, such as 'builtin.officecli'.";
+            return false;
+        }
+
+        skill = snapshot.SkillsById.GetValueOrDefault(skillReference);
+        if (skill is null)
+        {
+            error = $"Skill '{skillReference}' was not found.";
+            return false;
+        }
+
+        var segments = uri.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        var decoded = new List<string>(segments.Length);
+        foreach (var segment in segments)
+        {
+            var value = Uri.UnescapeDataString(segment);
+            if (value is "." or ".." || value.Contains('/') || value.Contains('\\') || Path.IsPathRooted(value))
+            {
+                error = "Skill resource path contains an invalid segment.";
+                return false;
+            }
+
+            decoded.Add(value);
+        }
+
+        relativePath = string.Join('/', decoded);
+        return true;
     }
 
     private static IEnumerable<string> EnumerateSkillFiles(string root, DateTimeOffset deadline)
@@ -237,20 +477,17 @@ public sealed partial class SkillManager : ISkillManager, ISkillPromptProvider, 
 
         foreach (var directory in directories.Order(StringComparer.OrdinalIgnoreCase))
         {
-            if (DateTimeOffset.UtcNow >= deadline) yield break;
+            if (DateTimeOffset.UtcNow >= deadline)
+            {
+                throw new TimeoutException($"Skill discovery exceeded its deadline while scanning '{root}'.");
+            }
 
             var file = Path.Combine(directory, "SKILL.md");
             if (File.Exists(file)) yield return file;
         }
     }
 
-    private static string NormalizeId(string value)
-    {
-        var normalized = IdInvalidCharacterRegex()
-            .Replace(value.Trim().ToLowerInvariant(), "-")
-            .Trim('-', '.', '_');
-        return normalized.Length == 0 ? "skill" : normalized;
-    }
+    private SkillCatalogState CurrentState => Volatile.Read(ref _state);
 
     private Dictionary<string, bool> GetSkillEnabledOverrides()
     {
@@ -269,6 +506,7 @@ public sealed partial class SkillManager : ISkillManager, ISkillPromptProvider, 
         overrides.Count == 0 ?
             null :
             overrides
+                .AsValueEnumerable()
                 .OrderBy(kvp => kvp.Key, StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.Value, StringComparer.OrdinalIgnoreCase);
 
@@ -283,19 +521,44 @@ public sealed partial class SkillManager : ISkillManager, ISkillPromptProvider, 
         return true;
     }
 
-    public void Dispose()
-    {
-        _skillSource.Changed -= HandleSkillSourceChanged;
-        _sourceGroupsSource.Dispose();
-        _disposables.Dispose();
-        _skillDescriptorSubscriptions.Dispose();
-    }
-
     private void HandleSkillSourceChanged(object? sender, SkillSourceChangedEventArgs args)
     {
-        Task.Run(RefreshCore).Detach(_logger.ToExceptionHandler());
+        RefreshAsync().Detach(_logger.ToExceptionHandler());
     }
 
-    [GeneratedRegex(@"[^a-z0-9._-]+")]
-    private static partial Regex IdInvalidCharacterRegex();
+    /// <summary>
+    /// Owns one published catalog and the subscriptions attached to its descriptors.
+    /// </summary>
+    private sealed class SkillCatalogState(
+        IReadOnlyDictionary<string, SkillDescriptor> skillsById,
+        IReadOnlyDictionary<string, SkillResourceStore> resourceStoresById,
+        CompositeDisposable descriptorSubscriptions
+    ) : IDisposable
+    {
+        public static SkillCatalogState CreateEmpty() => new(
+            new Dictionary<string, SkillDescriptor>(StringComparer.OrdinalIgnoreCase),
+            new Dictionary<string, SkillResourceStore>(StringComparer.OrdinalIgnoreCase),
+            []);
+
+        public IReadOnlyDictionary<string, SkillDescriptor> SkillsById { get; } = skillsById;
+
+        public IReadOnlyDictionary<string, SkillResourceStore> ResourceStoresById { get; } = resourceStoresById;
+
+        public void Dispose() => descriptorSubscriptions.Dispose();
+    }
+
+    /// <summary>
+    /// Carries the parsed source data and resource store needed to build one descriptor.
+    /// </summary>
+    private sealed record SkillEntry(
+        string Id,
+        string FolderName,
+        string FilePath,
+        string SourceDirectoryPath,
+        string SourceName,
+        SkillSourceRoot SourceRoot,
+        string MarkdownContent,
+        SkillResourceStore ResourceStore,
+        Exception? ReadException
+    );
 }

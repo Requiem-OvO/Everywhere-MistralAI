@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.AI;
@@ -59,11 +60,7 @@ public sealed partial class WelcomeViewModel : BusyViewModelBase
             Name = LocaleResolver.CustomAssistant_Name_Default,
             ConfiguratorType = AssistantConfiguratorType.Official
         };
-        Assistant.PropertyChanged += delegate
-        {
-            // Reset connectivity check when assistant configuration changes
-            if (IsNotBusy) IsConnectivityChecked = false;
-        };
+        Assistant.PropertyChanged += HandleAssistantPropertyChanged;
 
         _steps =
         [
@@ -77,6 +74,12 @@ public sealed partial class WelcomeViewModel : BusyViewModelBase
         ];
 
         CurrentStep = _steps[0];
+    }
+
+    private void HandleAssistantPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        // Reset connectivity check when assistant configuration changes
+        if (IsNotBusy) IsConnectivityChecked = false;
     }
 
     [RelayCommand(CanExecute = nameof(CanMoveNext))]
@@ -108,14 +111,17 @@ public sealed partial class WelcomeViewModel : BusyViewModelBase
     [RelayCommand]
     public void Close()
     {
+        Assistant.PropertyChanged -= HandleAssistantPropertyChanged;
+
         if (IsConnectivityChecked)
         {
             // Save the configured assistant
             Settings.Model.CustomAssistants.Add(Assistant);
+            Settings.Model.SelectedCustomAssistant = Assistant;
         }
 
         CurrentStep?.CancellationTokenSource.Cancel();
-        DialogManager.CloseAll();
+        DialogHost.CloseAll();
     }
 }
 

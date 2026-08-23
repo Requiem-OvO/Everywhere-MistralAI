@@ -3,7 +3,7 @@ using Avalonia.Controls.Templates;
 
 namespace Everywhere.Views;
 
-public class ConditionalContentControl : ContentControl
+public sealed class ConditionalContentControl : Decorator
 {
     /// <summary>
     /// Defines the <see cref="Condition"/> property.
@@ -85,20 +85,28 @@ public class ConditionalContentControl : ContentControl
     {
         base.OnPropertyChanged(change);
 
+        // Ensure that the control is initialized (especially ensure ContentDataBindingProperty is set before the control is initialized)
+        if (!IsInitialized) return;
+
         if (change.Property == ConditionProperty ||
             change.Property == TrueContentProperty ||
             change.Property == FalseContentProperty ||
             change.Property == NullContentProperty)
         {
-            UpdateContent();
+            UpdateContent(true);
         }
         else if (change.Property == ContentDataBindingProperty)
         {
-            if (Content is Control control) control.DataContext = change.NewValue ?? DataContext;
+            UpdateContent(false);
         }
     }
 
-    private void UpdateContent()
+    protected override void OnInitialized()
+    {
+        UpdateContent(true);
+    }
+
+    private void UpdateContent(bool rebuild)
     {
         var content = Condition switch
         {
@@ -106,8 +114,23 @@ public class ConditionalContentControl : ContentControl
             false => FalseContent,
             _ => NullContent,
         };
-        var control = content?.Build(this);
-        control?.DataContext = ContentDataBinding ?? DataContext;
-        Content = control;
+
+        var dataContext = ContentDataBinding ?? DataContext;
+        if (content?.Match(dataContext) is not true)
+        {
+            Child = null;
+            return;
+        }
+
+        if (rebuild)
+        {
+            var control = content.Build(this);
+            control?.DataContext = dataContext; // Set DataContext before setting Child otherwise it will inherit from this control
+            Child = control;
+        }
+        else
+        {
+            Child?.DataContext = dataContext;
+        }
     }
 }

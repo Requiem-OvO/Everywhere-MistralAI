@@ -1,7 +1,5 @@
-﻿using System.Text.Json.Serialization;
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using Lucide.Avalonia;
-using Color = Avalonia.Media.Color;
 
 namespace Everywhere.Common;
 
@@ -16,26 +14,10 @@ public enum ColoredIconType
 /// </summary>
 public partial class ColoredIcon(ColoredIconType type, SerializableColor? foreground = null, SerializableColor? background = null) : ObservableObject
 {
-    [JsonIgnore]
-    public Color? ForegroundColor
-    {
-        get => Foreground;
-        set => Foreground = value;
-    }
-
-    [JsonIgnore]
-    public Color? BackgroundColor
-    {
-        get => Background;
-        set => Background = value;
-    }
-
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ForegroundColor))]
     public partial SerializableColor? Foreground { get; set; } = foreground;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(BackgroundColor))]
     public partial SerializableColor? Background { get; set; } = background;
 
     [ObservableProperty]

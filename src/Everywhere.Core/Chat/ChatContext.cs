@@ -1,24 +1,22 @@
 ﻿using System.Collections.Concurrent;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Reactive.Disposables;
 using System.Reactive.Disposables.Fluent;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
-using DynamicData;
-using Everywhere.AI;
 using Everywhere.Chat.Permissions;
 using Everywhere.Chat.Plugins;
 using Everywhere.Collections;
 using Everywhere.Common;
-using Everywhere.Configuration;
 using Everywhere.Interop;
 using Everywhere.Messages;
 using Everywhere.Utilities;
+using Everywhere.Views;
+using Lucide.Avalonia;
 using MessagePack;
 using Serilog;
-using ZLinq;
 
 namespace Everywhere.Chat;
 
@@ -39,13 +37,43 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     public ChatContextMetadata Metadata { get; }
 
     /// <summary>
-    /// Items in the current branch, excluding the root system prompt node. Used for UI bindings.
+    /// Visible items in the current branch, excluding the hidden root and other hidden internal messages.
     /// </summary>
     [IgnoreMember]
     public IReadOnlyBindableList<ChatMessageNode> DisplayItems { get; }
 
+    [IgnoreMember]
+    public ContextUsageState ContextUsage { get; } = new();
+
+    [IgnoreMember]
+    public ContextCompactionState ContextCompaction { get; } = new();
+
     /// <summary>
-    /// Messages in the current branch.
+    /// Gets the non-serialized presentation companion for this context. It is created lazily so
+    /// nested or background chat contexts pay no projection cost until a view or runtime activity
+    /// actually needs it. Keeping the companion here preserves row identity, expansion state, and
+    /// first-presentation state when a chat view is detached and later reattached.
+    ///
+    /// <para>
+    /// The companion is an Avalonia view-layer object and is therefore UI-thread-affine. UI code may
+    /// access this property directly. Background chat work must use an explicit dispatcher boundary,
+    /// such as <see cref="SetBusyActivityAsync"/>; it must not force lazy construction on its worker
+    /// thread.
+    /// </para>
+    /// </summary>
+    [IgnoreMember]
+    public ChatPresentation Presentation
+    {
+        get
+        {
+            using var _ = _presentationLock.EnterScope();
+            if (_isDisposed) throw new ObjectDisposedException(nameof(ChatContext));
+            return _presentation ??= new ChatPresentation(this);
+        }
+    }
+
+    /// <summary>
+    /// Nodes in the current branch, including the hidden root node.
     /// </summary>
     [IgnoreMember]
     public int Count => _branchNodesSourceList.Count;
@@ -66,21 +94,37 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     public ResilientCache<int, IVisualElement> VisualElements { get; }
 
     /// <summary>
-    /// A map of granted permissions for plugin functions in this chat context (session).
-    /// Key: PluginName.FunctionName
-    /// Value: is granted or not.
+    /// Exact approval-bypass decisions remembered for this chat session.
     /// </summary>
     [IgnoreMember]
-    public ConcurrentDictionary<string, bool> IsPermissionGrantedRecords { get; }
+    public ConcurrentDictionary<string, bool> ToolBypassApprovalRulesets { get; }
 
     /// <summary>
     /// Tool and plugin rulesets for this chat context. This is used to determine which plugins and functions are enabled or disabled in this context.
     /// </summary>
     [IgnoreMember]
-    public ToolRulesets? ToolRulesets { get; }
+    public ToolPatternRulesets? ToolPatternRulesets { get; }
 
     [IgnoreMember]
     public AsyncLocal<FunctionCallContext?> FunctionCallContext { get; } = new();
+
+    /// <summary>
+    /// Enters one invocation context for the current asynchronous execution flow and restores the
+    /// previous value when the returned scope is disposed.
+    /// </summary>
+    /// <remarks>
+    /// Restoring the captured value, rather than assigning <see langword="null"/>, is essential for
+    /// nested tool execution. AsyncLocal then carries each invocation independently when sibling
+    /// operations are scheduled in separate execution contexts.
+    /// </remarks>
+    internal IDisposable EnterFunctionCallContext(FunctionCallContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        var previous = FunctionCallContext.Value;
+        FunctionCallContext.Value = context;
+        return Disposable.Create(() => FunctionCallContext.Value = previous);
+    }
 
     [IgnoreMember]
     public IChatPluginUserInterfaceBroker UserInterfaceBroker { get; }
@@ -94,14 +138,6 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     public partial bool IsBusy { get; private set; }
 
     /// <summary>
-    /// Resource key for the busy message to show when waiting for a response.
-    /// This can be set temporarily using <see cref="SetBusyMessage(IDynamicResourceKey?)"/>.
-    /// </summary>
-    [IgnoreMember]
-    [ObservableProperty]
-    public partial IDynamicResourceKey? BusyMessageKey { get; private set; }
-
-    /// <summary>
     /// Backing store for MessagePack (de)serialization: nodes are persisted as a collection, and linked by Ids.
     /// </summary>
     [Key(1)]
@@ -110,8 +146,7 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
         get
         {
             using var _ = _graphMutationLock.EnterScope();
-
-            return _messageNodeMap.Values.AsValueEnumerable().ToList();
+            return _messageNodeMap.Values.AsValueEnumerable().ToArray();
         }
     }
 
@@ -127,6 +162,8 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     /// </summary>
     [IgnoreMember] private readonly Dictionary<Guid, ChatMessageNode> _messageNodeMap = new();
     [IgnoreMember] private readonly Lock _graphMutationLock = new();
+    [IgnoreMember] private readonly Lock _presentationLock = new();
+    [IgnoreMember] private ChatPresentation? _presentation;
 
     /// <summary>
     /// Nodes on the currently selected branch. [0] is always the root node.
@@ -164,12 +201,14 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
 
         DisplayItems = _branchNodesSourceList
             .Connect()
-            .Filter(node => node != rootNode)
+            // IsHidden is evaluated when the node enters this projection. Runtime visibility
+            // changes require a corresponding change notification to re-evaluate the filter.
+            .Filter(node => !node.Message.IsHidden)
             .ObserveOnAvaloniaDispatcher()
             .BindEx(_disposables);
 
         VisualElements = new ResilientCache<int, IVisualElement>();
-        IsPermissionGrantedRecords = new ConcurrentDictionary<string, bool>();
+        ToolBypassApprovalRulesets = new ConcurrentDictionary<string, bool>();
         UserInterfaceBroker = new ChatPluginUserInterfaceBroker(this).DisposeWith(_disposables);
     }
 
@@ -180,14 +219,14 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
 
     private ChatContext(
         ResilientCache<int, IVisualElement>? visualElements = null,
-        ConcurrentDictionary<string, bool>? isPermissionGrantedRecords = null,
-        ToolRulesets? toolRulesets = null,
+        ConcurrentDictionary<string, bool>? toolSessionBypassApproval = null,
+        ToolPatternRulesets? toolPatternRulesets = null,
         IChatPluginUserInterfaceBroker? userInterfaceBroker = null)
     {
         Metadata = new ChatContextMetadata(Guid.CreateVersion7(), DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, null);
         VisualElements = visualElements ?? new ResilientCache<int, IVisualElement>();
-        IsPermissionGrantedRecords = isPermissionGrantedRecords ?? new ConcurrentDictionary<string, bool>();
-        ToolRulesets = toolRulesets;
+        ToolBypassApprovalRulesets = toolSessionBypassApproval ?? new ConcurrentDictionary<string, bool>();
+        ToolPatternRulesets = toolPatternRulesets;
 
         _rootNode = new ChatMessageNode(Guid.CreateVersion7().SetVersion(0), new RootChatMessage())
         {
@@ -203,7 +242,9 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
 
         DisplayItems = _branchNodesSourceList
             .Connect()
-            .Filter(node => node != _rootNode)
+            // IsHidden is evaluated when the node enters this projection. Runtime visibility
+            // changes require a corresponding change notification to re-evaluate the filter.
+            .Filter(node => !node.Message.IsHidden)
             .ObserveOnAvaloniaDispatcher()
             .BindEx(_disposables);
 
@@ -262,26 +303,49 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     /// This is useful for running sub-agents in a separate context while maintaining the same VisualElements and permissions.
     /// </summary>
     /// <returns></returns>
-    public ChatContext ForkSubagent()
+    public ChatContext ForkSubagent(string topic)
     {
         return new ChatContext(
             VisualElements,
-            IsPermissionGrantedRecords,
-            ToolRulesets.Copy(
-                new ToolRulesets(2)
+            ToolBypassApprovalRulesets,
+            ToolPatternRulesets.TryUnion(
+                new ToolPatternRulesets(2)
                 {
-                    { "builtin.essential.run_subagent", false }, // Disallow run_subagent in sub-agents to prevent infinite recursion
                     {
-                        "builtin.essential.ask_user_question", false
-                    } // Disallow ask_user_question in sub-agents to prevent user interaction in sub-agents
+                        "builtin.essential",
+                        new ToolFunctionPatternRulesets
+                        {
+                            { "run_subagent", false }, // Prevent infinite recursion.
+                            { "ask_user_question", false } // Prevent sub-agents from interacting with the user.
+                        }
+                    }
                 }),
             UserInterfaceBroker)
         {
             Metadata =
             {
+                Topic = topic,
                 IsTemporary = true
             }
         };
+    }
+
+    /// <summary>
+    /// Temporarily clears the invocation context for a nested generation and restores it when the
+    /// generation completes.
+    /// </summary>
+    /// <remarks>
+    /// A subagent is generated from inside the parent tool invocation. The subagent owns a
+    /// different <see cref="ChatContext"/>, but the parent invocation still flows through the
+    /// current asynchronous execution context. Clearing this slot prevents dependency-injection
+    /// lookups made while starting the nested generation from accidentally resolving the parent
+    /// tool's user-interface context. The parent scope is restored before the outer tool resumes.
+    /// </remarks>
+    public IDisposable SuppressFunctionCallContext()
+    {
+        var previous = FunctionCallContext.Value;
+        FunctionCallContext.Value = null;
+        return Disposable.Create(() => FunctionCallContext.Value = previous);
     }
 
     /// <summary>
@@ -403,19 +467,55 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     }
 
     /// <summary>
-    /// Sets the busy message resource key for the duration of the returned IDisposable.
+    /// Adds a non-persisted activity to the current assistant turn for the lifetime of the returned
+    /// scope. Disposing the scope either completes and retains the activity or removes it from the
+    /// current in-memory chronology, according to <paramref name="removeAfterCompletion"/>.
     /// </summary>
-    /// <param name="busyMessage"></param>
-    /// <returns></returns>
-    public IDisposable SetBusyMessage(IDynamicResourceKey? busyMessage)
-    {
-        var previous = BusyMessageKey;
-        BusyMessageKey = busyMessage;
-        return Disposable.Create(() => BusyMessageKey = previous);
-    }
+    /// <remarks>
+    /// ChatPresentation owns DynamicData lists and Avalonia-facing row state. ChatService and
+    /// plugin startup normally call this method from worker tasks, so even lazy construction of
+    /// the presentation must be marshaled to the dispatcher; otherwise a context without an
+    /// attached view could create its projection on a worker and later bind it from the UI.
+    /// </remarks>
+    /// <param name="icon">The reliable icon describing the operation category.</param>
+    /// <param name="headerKey">The localized running activity title.</param>
+    /// <param name="removeAfterCompletion">
+    /// Whether disposing the scope removes this transient activity instead of retaining a completed
+    /// presentation row.
+    /// </param>
+    /// <returns>A scope whose disposal ends the runtime activity.</returns>
+    public Task<IDisposable> SetBusyActivityAsync(LucideIconKind icon, IDynamicLocaleKey headerKey, bool removeAfterCompletion) =>
+        Dispatcher.UIThread.InvokeOnDemandAsync(() => Presentation.SetBusyActivity(icon, headerKey, removeAfterCompletion));
 
     public IObservable<IChangeSet<ChatMessageNode>> Connect(Func<ChatMessageNode, bool>? predicate = null) =>
         _branchNodesSourceList.Connect(predicate);
+
+    /// <summary>
+    /// Connects to the currently selected chat branch while excluding the internal root prompt
+    /// node. Unlike <see cref="DisplayItems"/>, this preserves DynamicData change-set semantics for
+    /// presentation projections that must update incrementally. The observable preserves the
+    /// source notification thread; each consumer is responsible for choosing its own scheduler.
+    /// </summary>
+    public IObservable<IChangeSet<ChatMessageNode>> ConnectDisplayItems() =>
+        // IsHidden is evaluated when the node enters this projection. Runtime visibility changes
+        // require a corresponding change notification to re-evaluate the filter.
+        _branchNodesSourceList.Connect(node => !node.Message.IsHidden);
+
+    public Task ReportContextUsageAsync(ChatUsageDetails usage, string modelId, int contextLimit) =>
+        Dispatcher.UIThread.InvokeOnDemandAsync(() => ContextUsage.Report(usage, modelId, contextLimit));
+
+    public Task MarkContextCompactedAsync(string modelId, int contextLimit) =>
+        Dispatcher.UIThread.InvokeOnDemandAsync(() => ContextUsage.MarkCompacted(modelId, contextLimit));
+
+    /// <summary>
+    /// Starts a context compression operation and returns an asynchronous scope that restores the
+    /// idle state when disposed.
+    /// </summary>
+    public async Task<IAsyncDisposable> BeginContextCompactionAsync()
+    {
+        await Dispatcher.UIThread.InvokeOnDemandAsync(ContextCompaction.Start);
+        return new ContextCompactionScope(this);
+    }
 
     public IObservable<IChangeSet<ChatMessageNode>> Preview(Func<ChatMessageNode, bool>? predicate = null) =>
         _branchNodesSourceList.Preview(predicate);
@@ -499,6 +599,10 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
 
     public void Dispose()
     {
+        // ChatPresentation owns Avalonia-facing DynamicData lists. ChatContext disposal is therefore
+        // expected to be initiated by the UI lifetime owner, just like construction through the
+        // Presentation property. Background operations only publish their final state; they do not
+        // dispose the view projection directly.
         Debug.Assert(!_isDisposed);
         if (_isDisposed)
         {
@@ -507,6 +611,17 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
         }
 
         _isDisposed = true;
+
+        // The presentation subscribes to the branch and must be torn down before the branch source
+        // itself. Clear the field under its dedicated lock so no concurrent lazy getter can publish
+        // a new companion after disposal has started.
+        ChatPresentation? presentation;
+        using (_presentationLock.EnterScope())
+        {
+            presentation = _presentation;
+            _presentation = null;
+        }
+        presentation?.Dispose();
 
         using (_graphMutationLock.EnterScope())
         {
@@ -551,19 +666,6 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     public string EnsureWorkingDirectory() =>
         RuntimeConstants.EnsureWritableDataFolderPath("plugins", Metadata.DateCreated.ToString("yyyy-MM-dd"));
 
-    public IDictionary<string, Func<string>> GetPromptVariables()
-    {
-        return new Dictionary<string, Func<string>>(
-        [
-            new KeyValuePair<string, Func<string>>("Date", () => DateTime.Now.ToString("D")),
-            new KeyValuePair<string, Func<string>>("Time", () => DateTime.Now.ToString("F")),
-            new KeyValuePair<string, Func<string>>("OS", () => Environment.OSVersion.ToString()),
-            new KeyValuePair<string, Func<string>>("SystemLanguage", () => LocaleManager.CurrentLocale.ToEnglishName()),
-            new KeyValuePair<string, Func<string>>("WorkingDirectory", EnsureWorkingDirectory),
-            new KeyValuePair<string, Func<string>>("DefaultSystemPrompt", () => Prompts.DefaultSystemPrompt),
-        ]);
-    }
-
     public readonly record struct PersistenceNodeSnapshot(
         Guid Id,
         Guid? ParentId,
@@ -576,10 +678,9 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
     {
         public IReadOnlyBindableList<ChatPluginUserInterfaceItem> ChatPluginUserInterfaceItems { get; }
 
-        public IReadOnlyBindableList<ChatPluginTodoItem> TodoItems { get; }
+        public IChatPluginTodoItemsList TodoItems { get; }
 
         private readonly SourceList<ChatPluginUserInterfaceItem> _chatPluginUserInterfaceItemsSourceList = new();
-        private readonly SourceList<ChatPluginTodoItem> _todoItemsSourceList = new();
         private readonly CompositeDisposable _disposables = new(3);
 
         public ChatPluginUserInterfaceBroker(ChatContext owner)
@@ -588,10 +689,7 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
                 .Connect()
                 .ObserveOnAvaloniaDispatcher()
                 .BindEx(_disposables);
-            TodoItems = _todoItemsSourceList
-                .Connect()
-                .ObserveOnAvaloniaDispatcher()
-                .BindEx(_disposables);
+            TodoItems = new ChatPluginTodoItemsList().DisposeWith(_disposables);
             _chatPluginUserInterfaceItemsSourceList.CountChanged
                 .ObserveOnAvaloniaDispatcher()
                 .Subscribe(count =>
@@ -602,18 +700,14 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
                 }).DisposeWith(_disposables);
         }
 
-        public void SetTodoItems(IReadOnlyList<ChatPluginTodoItem> items)
-        {
-            _todoItemsSourceList.Edit(list => list.Reset(items));
-        }
-
-        public async Task<ConsentDecisionResult> HandleConsentRequestAsync(
-            IDynamicResourceKey headerKey,
+        public async Task<ConsentDecision> HandleConsentRequestAsync(
+            IDynamicLocaleKey headerKey,
             ChatPluginDisplayBlock? content,
             RequestConsentRememberMasks rememberMasks,
+            IReadOnlyList<RequestConsentCustomOption>? customOptions,
             CancellationToken cancellationToken)
         {
-            var item = new ChatPluginUserInterfaceConsentRequestItem(headerKey, content, rememberMasks, cancellationToken);
+            var item = new ChatPluginUserInterfaceConsentRequestItem(headerKey, content, rememberMasks, customOptions, cancellationToken);
             _chatPluginUserInterfaceItemsSourceList.Add(item);
             WeakReferenceMessenger.Default.Send(new FlashChatWindowMessage(item.HeaderKey.ToString()));
 
@@ -648,8 +742,96 @@ public sealed partial class ChatContext : ObservableObject, IObservableList<Chat
         public void Dispose()
         {
             _chatPluginUserInterfaceItemsSourceList.Dispose();
-            _todoItemsSourceList.Dispose();
             _disposables.Dispose();
+        }
+
+        private sealed class ChatPluginTodoItemsList : ObservableObject, IChatPluginTodoItemsList, IList, IDisposable
+        {
+            public ISourceList<ChatPluginTodoItem> SourceList { get; }
+            public int Count => _observableList.Count;
+            public int CompletedCount => _observableList.AsValueEnumerable().Count(item => item.Status == ChatPluginTodoStatus.Completed);
+            public bool IsSynchronized => false;
+            public object SyncRoot => _observableList;
+            public bool IsFixedSize => false;
+            public bool IsReadOnly => true;
+
+            object? IList.this[int index]
+            {
+                get => _observableList[index];
+                set => throw new InvalidOperationException();
+            }
+
+            public ChatPluginTodoItem this[int index] => _observableList[index];
+
+            public event NotifyCollectionChangedEventHandler? CollectionChanged;
+
+            private readonly IReadOnlyBindableList<ChatPluginTodoItem> _observableList;
+            private readonly IDisposable _subscription;
+
+            public ChatPluginTodoItemsList()
+            {
+                SourceList = new SourceList<ChatPluginTodoItem>();
+                _observableList = SourceList.Connect().ObserveOnAvaloniaDispatcher().BindEx(out _subscription);
+                _observableList.CollectionChanged += HandleObservableListCollectionChanged;
+                _observableList.PropertyChanged += HandleObservableListPropertyChanged;
+            }
+
+            private void HandleObservableListCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+            {
+                CollectionChanged?.Invoke(this, e);
+                OnPropertyChanged(nameof(CompletedCount));
+            }
+
+            private void HandleObservableListPropertyChanged(object? sender, PropertyChangedEventArgs e)
+            {
+                OnPropertyChanged(e);
+            }
+
+            public bool Contains(object? value) => ((IList)_observableList).Contains(value);
+
+            public int IndexOf(object? value) => ((IList)_observableList).IndexOf(value);
+
+            public void CopyTo(Array array, int index) => ((IList)_observableList).CopyTo(array, index);
+
+            public int Add(object? value) => throw new InvalidOperationException();
+
+            public void Clear() => throw new InvalidOperationException();
+
+            public void Insert(int index, object? value) => throw new InvalidOperationException();
+
+            public void Remove(object? value) => throw new InvalidOperationException();
+
+            public void RemoveAt(int index) => throw new InvalidOperationException();
+
+            public IEnumerator<ChatPluginTodoItem> GetEnumerator()
+            {
+                return _observableList.GetEnumerator();
+            }
+
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return ((IEnumerable)_observableList).GetEnumerator();
+            }
+
+            public void Dispose()
+            {
+                _subscription.Dispose();
+                SourceList.Dispose();
+                _observableList.CollectionChanged -= HandleObservableListCollectionChanged;
+                _observableList.PropertyChanged -= HandleObservableListPropertyChanged;
+            }
+        }
+    }
+
+    private sealed class ContextCompactionScope(ChatContext context) : IAsyncDisposable
+    {
+        private int _disposed;
+
+        public async ValueTask DisposeAsync()
+        {
+            if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
+
+            await Dispatcher.UIThread.InvokeOnDemandAsync(context.ContextCompaction.Finish);
         }
     }
 }

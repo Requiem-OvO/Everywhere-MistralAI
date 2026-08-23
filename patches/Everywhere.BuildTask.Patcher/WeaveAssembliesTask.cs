@@ -65,7 +65,7 @@ public partial class WeaveAssembliesTask : Task
                 .ToList();
 
             // For any ref/ directory, also add the corresponding lib/ directory
-            foreach (var dir in depDirs.ToList())
+            foreach (var dir in depDirs.ToArray())
             {
                 var libDir = TryGetLibDirectory(dir);
                 if (libDir != null && !depDirs.Contains(libDir))

@@ -6,7 +6,6 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
-using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.AttachedProperties;
 using Everywhere.Chat;
@@ -14,25 +13,18 @@ using Everywhere.Configuration;
 using Everywhere.Interop;
 using Everywhere.Messages;
 using Everywhere.Utilities;
-using LiveMarkdown.Avalonia;
 using Lucide.Avalonia;
 using Serilog;
-using ShadUI;
 
 namespace Everywhere.Views;
 
 public partial class ChatWindow :
     ReactiveShadWindow<ChatWindowViewModel>,
-    IReactiveHost,
     IRecipient<CloakChatWindowMessage>,
     IRecipient<FlashChatWindowMessage>,
     IRecipient<ApplicationMessage>,
     IVisualElementAnimationTarget
 {
-    public DialogHost DialogHost => PART_DialogHost;
-
-    public ToastHost ToastHost => PART_ToastHost;
-
     /// <summary>
     /// Defines the <see cref="IsWindowPinned"/> property.
     /// </summary>
@@ -82,6 +74,7 @@ public partial class ChatWindow :
 
         InitializeComponent();
         AddHandler(KeyDownEvent, HandleKeyDown, RoutingStrategies.Tunnel, true);
+        ViewModel.TextSearch.FocusRequested += HandleTextSearchFocusRequested;
 
         ChatInputArea.AddDisposableHandler(TextBox.TextChangedEvent, HandleChatInputAreaTextChanged);
         ChatInputArea.AddDisposableHandler(TextBox.PastingFromClipboardEvent, HandleChatInputAreaPastingFromClipboard);
@@ -112,6 +105,7 @@ public partial class ChatWindow :
         ApplyStyling();
         ApplyTemplate();
 
+        _windowHelper.InitializeWindow(this);
         _windowHelper.SetCloaked(this, true);
 
         // Setup window placement saving after initialization
@@ -125,7 +119,11 @@ public partial class ChatWindow :
         {
             case { Key: Key.Escape }:
             {
-                if (ViewModel.EditingUserMessageNode is not null)
+                if (ViewModel.TextSearch.IsOpen)
+                {
+                    ViewModel.TextSearch.CloseSearchCommand.Execute(null);
+                }
+                else if (ViewModel.EditingMessageNode is not null)
                 {
                     ViewModel.CancelEditing();
                 }
@@ -137,6 +135,12 @@ public partial class ChatWindow :
                 e.Handled = true;
                 break;
             }
+            case { Key: Key.F, KeyModifiers: KeyModifiers.Control }:
+            {
+                ViewModel.TextSearch.OpenSearchCommand.Execute(null);
+                e.Handled = true;
+                break;
+            }
             case { Key: Key.H, KeyModifiers: KeyModifiers.Control }:
             {
                 _persistentState.IsChatWindowHistoryOpened = !_persistentState.IsChatWindowHistoryOpened;
@@ -145,11 +149,25 @@ public partial class ChatWindow :
             }
             case { Key: Key.T, KeyModifiers: KeyModifiers.Control }:
             {
-                _persistentState.IsToolCallEnabled = !_persistentState.IsToolCallEnabled;
-                e.Handled = true;
+                if (ViewModel.Settings.Model.SelectedCustomAssistant is { } assistant)
+                {
+                    assistant.IsToolCallEnabled = !assistant.IsToolCallEnabled;
+                    e.Handled = true;
+                }
                 break;
             }
         }
+    }
+
+    private void HandleTextSearchFocusRequested(object? sender, EventArgs e)
+    {
+        Dispatcher.UIThread.Post(
+            () =>
+            {
+                ChatTextSearchTextBox.Focus();
+                ChatTextSearchTextBox.SelectAll();
+            },
+            DispatcherPriority.Input);
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -236,7 +254,7 @@ public partial class ChatWindow :
         return new Size(width, height);
     }
 
-    protected override void OnLostFocus(RoutedEventArgs e)
+    protected override void OnLostFocus(FocusChangedEventArgs e)
     {
         base.OnLostFocus(e);
 
@@ -249,13 +267,6 @@ public partial class ChatWindow :
     protected override AutomationPeer OnCreateAutomationPeer()
     {
         return new NoneAutomationPeer(this); // Disable automation peer to avoid being detected by self
-    }
-
-    protected override void OnPointerPressed(PointerPressedEventArgs e)
-    {
-        base.OnPointerPressed(e);
-        if (TitleBarBorder.Bounds.Contains(e.GetCurrentPoint(this).Position))
-            BeginMoveDrag(e);
     }
 
     void IRecipient<CloakChatWindowMessage>.Receive(CloakChatWindowMessage message)
@@ -377,13 +388,6 @@ public partial class ChatWindow :
             Log.ForContext<ChatWindow>().Error("Chat window was closed unexpectedly. This should not happen.");
     }
 
-    [RelayCommand]
-    private static Task LaunchLink(LinkClickedEventArgs e)
-    {
-        // currently we only support http(s) links for safety reasons
-        return e.HRef is not { Scheme: "http" or "https" } uri ? Task.CompletedTask : App.Launcher.LaunchUriAsync(uri);
-    }
-
     private void HandleDragEnter(object? sender, DragEventArgs e)
     {
         UpdateDragVisuals(e);
@@ -485,7 +489,7 @@ public partial class ChatWindow :
         DragDropOverlay.IsVisible = false;
         e.Handled = true;
 
-        HandleDropAsync().Detach(ToastHost.ToExceptionHandler());
+        HandleDropAsync().Detach(PART_ToastHost.ToExceptionHandler());
 
         async Task HandleDropAsync()
         {

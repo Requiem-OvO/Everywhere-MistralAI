@@ -1,4 +1,5 @@
-﻿using Everywhere.Common;
+﻿using Everywhere.AI.Prompts;
+using Everywhere.Common;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 
@@ -63,7 +64,7 @@ public abstract class KernelMixin(Assistant assistant, ModelConnection connectio
         await foreach (var _ in ChatCompletionService.GetStreamingChatMessageContentsAsync(
                            [
                                new ChatMessageContent(AuthorRole.System, "You're a helpful assistant."),
-                               new ChatMessageContent(AuthorRole.User, Prompts.TestPrompt)
+                               new ChatMessageContent(AuthorRole.User, DefaultPrompts.TestPrompt)
                            ],
                            GetPromptExecutionSettings(),
                            cancellationToken: linkedCancellationTokenSource.Token))

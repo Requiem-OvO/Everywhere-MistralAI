@@ -90,7 +90,7 @@ public partial class VisualElementContext(
             return null;
         }
 
-        var windows = desktopLifetime.Windows.AsValueEnumerable().Where(w => w.IsVisible).ToList();
+        var windows = desktopLifetime.Windows.AsValueEnumerable().Where(w => w.IsVisible).ToArray();
         foreach (var window in windows) window.Hide();
         var result = await ElementPicker.PickAsync(this, backend, initialMode);
         foreach (var window in windows) window.IsVisible = true;
@@ -104,7 +104,7 @@ public partial class VisualElementContext(
             return null;
         }
 
-        var windows = desktopLifetime.Windows.AsValueEnumerable().Where(w => w.IsVisible).ToList();
+        var windows = desktopLifetime.Windows.AsValueEnumerable().Where(w => w.IsVisible).ToArray();
         foreach (var window in windows) window.Hide();
 
         var result = await ScreenshotPicker.TakeAsync(this, backend, initialMode);

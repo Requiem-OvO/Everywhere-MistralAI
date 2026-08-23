@@ -6,8 +6,9 @@
     TargetType="v:SettingsGroupPanel">
     <Setter Property="Template">
       <ControlTemplate>
-        <StackPanel Spacing="12">
+        <StackPanel Spacing="8">
           <TextBlock
+            Margin="0,4,0,0"
             IsVisible="{Binding $self.Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
             Text="{TemplateBinding Header}"/>
           <ItemsPresenter/>

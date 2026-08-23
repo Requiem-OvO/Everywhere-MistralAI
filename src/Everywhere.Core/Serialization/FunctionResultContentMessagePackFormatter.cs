@@ -1,14 +1,17 @@
 ﻿using Everywhere.Chat;
+using Everywhere.Chat.Documents;
 using MessagePack;
 using Microsoft.SemanticKernel;
 
 namespace Everywhere.Serialization;
 
+/// <summary>
+/// Serializes function results, including structured prompt nodes, in one canonical representation.
+/// </summary>
 public class FunctionResultContentMessagePackFormatter : FunctionContentMessagePackFormatter<FunctionResultContent>
 {
     protected override void SerializeCore(ref MessagePackWriter writer, FunctionResultContent value, MessagePackSerializerOptions options)
     {
-        // Use array for backward compatibility
         writer.WriteArrayHeader(5);
 
         writer.Write(value.CallId);
@@ -20,9 +23,16 @@ public class FunctionResultContentMessagePackFormatter : FunctionContentMessageP
         {
             case ChatAttachment chatAttachment:
             {
-                var formatter = options.Resolver.GetFormatterWithVerify<ChatAttachment>();
                 writer.Write(1);
+                var formatter = options.Resolver.GetFormatterWithVerify<ChatAttachment>();
                 formatter.Serialize(ref writer, chatAttachment, options);
+                break;
+            }
+            case PromptNode promptNode:
+            {
+                writer.Write(2);
+                var formatter = options.Resolver.GetFormatterWithVerify<PromptNode>();
+                formatter.Serialize(ref writer, promptNode, options);
                 break;
             }
             default:
@@ -57,41 +67,27 @@ public class FunctionResultContentMessagePackFormatter : FunctionContentMessageP
                     functionName = reader.ReadString();
                     break;
                 case 3:
-                {
                     if (reader.ReadArrayHeader() != 2)
                     {
                         throw new MessagePackSerializationException("FunctionResultContent result array header must be 2.");
                     }
 
                     var valueType = reader.ReadInt32();
-                    switch (valueType)
+                    result = valueType switch
                     {
-                        case 0:
-                        {
-                            result = reader.ReadString();
-                            break;
-                        }
-                        case 1:
-                        {
-                            var formatter = options.Resolver.GetFormatterWithVerify<ChatAttachment>();
-                            result = formatter.Deserialize(ref reader, options);
-                            break;
-                        }
-                    }
-
+                        0 => reader.ReadString(),
+                        1 => options.Resolver.GetFormatterWithVerify<ChatAttachment>().Deserialize(ref reader, options),
+                        2 => options.Resolver.GetFormatterWithVerify<PromptNode>().Deserialize(ref reader, options),
+                        _ => throw new MessagePackSerializationException($"Unknown FunctionResultContent result type '{valueType}'.")
+                    };
                     break;
-                }
                 case 4:
-                {
                     metadata = MetadataDictionaryMessagePackFormatter.Deserialize(ref reader, options);
                     break;
-                }
                 default:
-                {
-                    // Skip unknown fields for forward compatibility
+                    // Canonical fields are append-only; older clients may have persisted a longer layout.
                     reader.Skip();
                     break;
-                }
             }
         }
 
@@ -113,7 +109,7 @@ public class FunctionResultContentMessagePackFormatter : FunctionContentMessageP
         }
 
         var valueType = reader.ReadInt32();
-        object? value = null;
+        object? value;
         switch (valueType)
         {
             case 0:
@@ -126,6 +122,10 @@ public class FunctionResultContentMessagePackFormatter : FunctionContentMessageP
                 var formatter = options.Resolver.GetFormatterWithVerify<ChatAttachment>();
                 value = formatter.Deserialize(ref reader, options);
                 break;
+            }
+            default:
+            {
+                throw new MessagePackSerializationException($"Unknown FunctionResultContent value type '{valueType}'.");
             }
         }
 
