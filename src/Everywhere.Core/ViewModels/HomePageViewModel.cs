@@ -1,10 +1,12 @@
 using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.Globalization;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using DynamicData;
+using DynamicData.Binding;
 using Everywhere.Chat.Plugins;
 using Everywhere.Cloud;
 using Everywhere.Collections;
@@ -34,20 +36,20 @@ public sealed partial class HomePageViewModel : ReactiveViewModelBase
 
     [ObservableProperty] public partial StatisticsOverview? MonthlyOverview { get; private set; }
 
-    [ObservableProperty] public partial IDynamicLocaleKey TurnAverageKey { get; private set; } =
-        new FormattedDynamicLocaleKey(LocaleKey.HomePage_TurnAverage, new DirectLocaleKey("0"));
+    [ObservableProperty] public partial IDynamicResourceKey TurnAverageKey { get; private set; } =
+        new FormattedDynamicResourceKey(LocaleKey.HomePage_TurnAverage, new DirectResourceKey("0"));
 
-    [ObservableProperty] public partial IDynamicLocaleKey HeatmapSummaryKey { get; private set; } =
-        new FormattedDynamicLocaleKey(
+    [ObservableProperty] public partial IDynamicResourceKey HeatmapSummaryKey { get; private set; } =
+        new FormattedDynamicResourceKey(
             LocaleKey.HomePage_HeatmapSummary,
-            new FormattedDynamicLocaleKey(
+            new FormattedDynamicResourceKey(
                 LocaleKey.HomePage_HeatmapValueLabel,
-                new DirectLocaleKey("0"),
-                new DynamicLocaleKey(LocaleKey.HomePage_Topics)),
-            new DirectLocaleKey("0"));
+                new DirectResourceKey("0"),
+                new DynamicResourceKey(LocaleKey.HomePage_Topics)),
+            new DirectResourceKey("0"));
 
-    [ObservableProperty] public partial IDynamicLocaleKey HeatmapRangeKey { get; private set; } =
-        new FormattedDynamicLocaleKey(LocaleKey.HomePage_LastMonths, new DirectLocaleKey(HeatmapMonths.ToString(CultureInfo.CurrentCulture)));
+    [ObservableProperty] public partial IDynamicResourceKey HeatmapRangeKey { get; private set; } =
+        new FormattedDynamicResourceKey(LocaleKey.HomePage_LastMonths, new DirectResourceKey(HeatmapMonths.ToString(CultureInfo.CurrentCulture)));
 
     [ObservableProperty] public partial HeatmapMetricTabItem? SelectedHeatmapMetricItem { get; set; }
 
@@ -110,9 +112,9 @@ public sealed partial class HomePageViewModel : ReactiveViewModelBase
     {
         var now = DateTimeOffset.Now;
         TodayText = now.ToString("D", CultureInfo.CurrentCulture);
-        HeatmapRangeKey = new FormattedDynamicLocaleKey(
+        HeatmapRangeKey = new FormattedDynamicResourceKey(
             LocaleKey.HomePage_LastMonths,
-            new DirectLocaleKey(HeatmapMonths.ToString(CultureInfo.CurrentCulture)));
+            new DirectResourceKey(HeatmapMonths.ToString(CultureInfo.CurrentCulture)));
 
         var monthStart = new DateTimeOffset(new DateTime(now.Year, now.Month, 1), now.Offset);
         var nextMonthStart = monthStart.AddMonths(1);
@@ -126,9 +128,9 @@ public sealed partial class HomePageViewModel : ReactiveViewModelBase
             StatisticsDeviceScope.AllDevices,
             cancellationToken);
         Overview = overview;
-        TurnAverageKey = new FormattedDynamicLocaleKey(
+        TurnAverageKey = new FormattedDynamicResourceKey(
             LocaleKey.HomePage_TurnAverage,
-            new DirectLocaleKey(
+            new DirectResourceKey(
                 overview.TopicCount > 0 ? ((double)overview.TurnCount / overview.TopicCount).ToString("0.#", CultureInfo.CurrentCulture) : "0"));
 
         await RefreshHeatmapAsync(SelectedHeatmapMetricItem, cancellationToken);
@@ -175,7 +177,7 @@ public sealed partial class HomePageViewModel : ReactiveViewModelBase
     [RelayCommand]
     private void OpenWelcomeDialog()
     {
-        DialogHost
+        DialogManager
             .CreateCustomDialog(_serviceProvider.GetRequiredService<WelcomeView>())
             .ShowAsync();
     }
@@ -189,35 +191,35 @@ public sealed partial class HomePageViewModel : ReactiveViewModelBase
 
     private void InitializeHeatmapMetrics()
     {
-        HeatmapMetrics.Add(new HeatmapMetricTabItem(new DynamicLocaleKey(LocaleKey.HomePage_Topics), StatisticsHeatmapMetric.Topics));
-        HeatmapMetrics.Add(new HeatmapMetricTabItem(new DynamicLocaleKey(LocaleKey.HomePage_Turns), StatisticsHeatmapMetric.Turns));
-        HeatmapMetrics.Add(new HeatmapMetricTabItem(new DynamicLocaleKey(LocaleKey.HomePage_Tokens), StatisticsHeatmapMetric.Tokens));
-        HeatmapMetrics.Add(new HeatmapMetricTabItem(new DynamicLocaleKey(LocaleKey.HomePage_VisualContext), StatisticsHeatmapMetric.VisualContext));
-        HeatmapMetrics.Add(new HeatmapMetricTabItem(new DynamicLocaleKey(LocaleKey.HomePage_ToolUsage), StatisticsHeatmapMetric.ToolUsage));
+        HeatmapMetrics.Add(new HeatmapMetricTabItem(new DynamicResourceKey(LocaleKey.HomePage_Topics), StatisticsHeatmapMetric.Topics));
+        HeatmapMetrics.Add(new HeatmapMetricTabItem(new DynamicResourceKey(LocaleKey.HomePage_Turns), StatisticsHeatmapMetric.Turns));
+        HeatmapMetrics.Add(new HeatmapMetricTabItem(new DynamicResourceKey(LocaleKey.HomePage_Tokens), StatisticsHeatmapMetric.Tokens));
+        HeatmapMetrics.Add(new HeatmapMetricTabItem(new DynamicResourceKey(LocaleKey.HomePage_VisualContext), StatisticsHeatmapMetric.VisualContext));
+        HeatmapMetrics.Add(new HeatmapMetricTabItem(new DynamicResourceKey(LocaleKey.HomePage_ToolUsage), StatisticsHeatmapMetric.ToolUsage));
         SelectedHeatmapMetricItem = HeatmapMetrics[0];
     }
 
-    private static FormattedDynamicLocaleKey CreateHeatmapSummaryKey(StatisticsHeatmapMetric metric, IReadOnlyList<IStatisticsHeatmapDay> days)
+    private static FormattedDynamicResourceKey CreateHeatmapSummaryKey(StatisticsHeatmapMetric metric, IReadOnlyList<IStatisticsHeatmapDay> days)
     {
         var total = days.Sum(x => x.Value);
         var streak = GetLongestStreak(days);
-        var valueLabelKey = new FormattedDynamicLocaleKey(
+        var valueLabelKey = new FormattedDynamicResourceKey(
             LocaleKey.HomePage_HeatmapValueLabel,
-            new DirectLocaleKey(Humanizer.HumanizeNumber(total)),
+            new DirectResourceKey(Humanizer.HumanizeNumber(total)),
             GetMetricLabelKey(metric));
-        return new FormattedDynamicLocaleKey(
+        return new FormattedDynamicResourceKey(
             LocaleKey.HomePage_HeatmapSummary,
             valueLabelKey,
-            new DirectLocaleKey(streak.ToString("N0", CultureInfo.CurrentCulture)));
+            new DirectResourceKey(streak.ToString("N0", CultureInfo.CurrentCulture)));
     }
 
-    private static DynamicLocaleKey GetMetricLabelKey(StatisticsHeatmapMetric metric) => metric switch
+    private static DynamicResourceKey GetMetricLabelKey(StatisticsHeatmapMetric metric) => metric switch
     {
-        StatisticsHeatmapMetric.Topics => new DynamicLocaleKey(LocaleKey.HomePage_Topics),
-        StatisticsHeatmapMetric.Turns => new DynamicLocaleKey(LocaleKey.HomePage_Turns),
-        StatisticsHeatmapMetric.Tokens => new DynamicLocaleKey(LocaleKey.HomePage_Tokens),
-        StatisticsHeatmapMetric.VisualContext => new DynamicLocaleKey(LocaleKey.HomePage_VisualContext),
-        StatisticsHeatmapMetric.ToolUsage => new DynamicLocaleKey(LocaleKey.HomePage_ToolUsage),
+        StatisticsHeatmapMetric.Topics => new DynamicResourceKey(LocaleKey.HomePage_Topics),
+        StatisticsHeatmapMetric.Turns => new DynamicResourceKey(LocaleKey.HomePage_Turns),
+        StatisticsHeatmapMetric.Tokens => new DynamicResourceKey(LocaleKey.HomePage_Tokens),
+        StatisticsHeatmapMetric.VisualContext => new DynamicResourceKey(LocaleKey.HomePage_VisualContext),
+        StatisticsHeatmapMetric.ToolUsage => new DynamicResourceKey(LocaleKey.HomePage_ToolUsage),
         _ => throw new ArgumentOutOfRangeException(nameof(metric), metric, null)
     };
 
@@ -251,14 +253,14 @@ public sealed partial class HomePageViewModel : ReactiveViewModelBase
     /// </summary>
     /// <param name="Name"></param>
     /// <param name="Metric"></param>
-    public sealed record HeatmapMetricTabItem(IDynamicLocaleKey Name, StatisticsHeatmapMetric Metric);
+    public sealed record HeatmapMetricTabItem(IDynamicResourceKey Name, StatisticsHeatmapMetric Metric);
 
     /// <summary>
     /// Bindable quick configuration card shown on the home dashboard.
     /// </summary>
-    public sealed partial class QuickConfigurationCardItem(IDynamicLocaleKey name, LucideIconKind icon, string route) : ObservableObject
+    public sealed partial class QuickConfigurationCardItem(IDynamicResourceKey name, LucideIconKind icon, string route) : ObservableObject
     {
-        public IDynamicLocaleKey Name { get; } = name;
+        public IDynamicResourceKey Name { get; } = name;
 
         public LucideIconKind Icon { get; } = icon;
 
@@ -275,21 +277,21 @@ public sealed partial class HomePageViewModel : ReactiveViewModelBase
         public IReadOnlyList<QuickConfigurationCardItem> Cards { get; } =
         [
             new(
-                new DynamicLocaleKey(LocaleKey.HomePage_Assistants),
+                new DynamicResourceKey(LocaleKey.HomePage_Assistants),
                 LucideIconKind.Bot,
-                MainViewNavigateMessage.CustomAssistantPageRoute),
+                "CustomAssistantPage"),
             new(
-                new DynamicLocaleKey(LocaleKey.HomePage_BuiltInTools),
+                new DynamicResourceKey(LocaleKey.HomePage_BuiltInTools),
                 LucideIconKind.Hammer,
-                MainViewNavigateMessage.ChatPluginPageRoute),
+                "ChatPluginPage"),
             new(
-                new DynamicLocaleKey(LocaleKey.HomePage_Mcp),
+                new DynamicResourceKey(LocaleKey.HomePage_Mcp),
                 LucideIconKind.Unplug,
-                MainViewNavigateMessage.ChatPluginPageRoute),
+                "ChatPluginPage"),
             new(
-                new DynamicLocaleKey(LocaleKey.HomePage_Skills),
+                new DynamicResourceKey(LocaleKey.HomePage_Skills),
                 LucideIconKind.Box,
-                MainViewNavigateMessage.SkillPageRoute)
+                "SkillPage")
         ];
 
         private readonly Settings _settings;
@@ -311,7 +313,6 @@ public sealed partial class HomePageViewModel : ReactiveViewModelBase
                     CreateAssistantChanges(),
                     CreateMcpChanges(),
                     CreateBuiltInToolChanges(),
-                    CreateToolSettingsChanges(),
                     CreateSkillChanges())
                 .StartWith(0)
                 .ObserveOnAvaloniaDispatcher()
@@ -328,6 +329,7 @@ public sealed partial class HomePageViewModel : ReactiveViewModelBase
         private IObservable<int> CreateMcpChanges() =>
             _chatPluginManager.McpPlugins
                 .ToObservableChangeSet<IReadOnlyBindableList<McpChatPlugin>, McpChatPlugin>()
+                .AutoRefresh(static x => x.IsEnabled)
                 .ToCollection()
                 .Select(static _ => 0);
 
@@ -342,18 +344,12 @@ public sealed partial class HomePageViewModel : ReactiveViewModelBase
                 .ToObservableChangeSet<IReadOnlyBindableList<BuiltInChatPlugin>, BuiltInChatPlugin>()
                 .MergeMany(static plugin => plugin.Functions
                     .ToObservableChangeSet<IReadOnlyBindableList<ChatFunction>, ChatFunction>()
+                    .AutoRefresh(static function => function.IsEnabled)
                     .ToCollection()
                     .Select(static _ => 0));
 
             return pluginChanges.Merge(functionChanges);
         }
-
-        private IObservable<int> CreateToolSettingsChanges() =>
-            Observable
-                .FromEventPattern<NotifyCollectionChangedEventHandler, NotifyCollectionChangedEventArgs>(
-                    handler => _settings.Plugin.ToolEnablementRulesets.CollectionChanged += handler,
-                    handler => _settings.Plugin.ToolEnablementRulesets.CollectionChanged -= handler)
-                .Select(static _ => 0);
 
         private IObservable<int> CreateSkillChanges()
         {
@@ -377,27 +373,22 @@ public sealed partial class HomePageViewModel : ReactiveViewModelBase
         {
             var assistantsCount = _settings.Model.CustomAssistants.Count;
             var mcpTotal = _chatPluginManager.McpPlugins.Count;
-            var mcpEnabled = _chatPluginManager.McpPlugins.Count(plugin =>
-                _settings.Plugin.ToolEnablementRulesets.GetPluginRule(plugin) ?? plugin.IsDefaultEnabled);
+            var mcpEnabled = _chatPluginManager.McpPlugins.Count(static x => x.IsEnabled);
 
             var builtInFunctions = _chatPluginManager.BuiltInPlugins
                 .SelectMany(static plugin => plugin.GetChatFunctions())
                 .Where(static function => function.IsVisible)
-                .ToArray();
+                .ToList();
 
             var skills = _skillManager.SourceGroups
                 .SelectMany(static group => group.Skills)
                 .Where(static skill => skill.IsValid)
-                .ToArray();
+                .ToList();
 
             Cards[0].CountText = assistantsCount.ToString("N0", CultureInfo.CurrentCulture);
-            Cards[1].CountText = FormatCapabilityCount(
-                builtInFunctions.Length,
-                _chatPluginManager.BuiltInPlugins.Sum(plugin => plugin.GetChatFunctions().Count(function =>
-                    function.IsVisible &&
-                    (_settings.Plugin.ToolEnablementRulesets.GetFunctionRule(plugin, function) ?? function.IsDefaultEnabled))));
+            Cards[1].CountText = FormatCapabilityCount(builtInFunctions.Count, builtInFunctions.Count(static x => x.IsEnabled));
             Cards[2].CountText = FormatCapabilityCount(mcpTotal, mcpEnabled);
-            Cards[3].CountText = FormatCapabilityCount(skills.Length, skills.Count(static x => x.IsEnabled));
+            Cards[3].CountText = FormatCapabilityCount(skills.Count, skills.Count(static x => x.IsEnabled));
         }
 
         private static string FormatCapabilityCount(int totalCount, int enabledCount) =>

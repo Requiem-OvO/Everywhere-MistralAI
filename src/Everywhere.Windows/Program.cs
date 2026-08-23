@@ -5,8 +5,10 @@ using Windows.Win32.UI.Shell;
 using Avalonia;
 using Avalonia.Controls;
 using Everywhere.Chat.Plugins;
+using Everywhere.Chat.Plugins.BuiltIn;
 using Everywhere.Cloud;
 using Everywhere.Common;
+using Everywhere.Configuration;
 using Everywhere.Extensions;
 using Everywhere.Initialization;
 using Everywhere.Interop;
@@ -58,6 +60,7 @@ public static class Program
                 .AddSettings()
                 .AddWatchdogManager()
                 .ConfigureNetwork()
+                .AddAvaloniaBasicServices()
                 .AddViewsAndViewModels()
                 .AddDatabaseAndStorage()
                 .AddCloudClient()

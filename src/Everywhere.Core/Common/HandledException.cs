@@ -24,7 +24,7 @@ public class HandledException : Exception
     /// <summary>
     /// Gets the key for a localized, user-friendly error message.
     /// </summary>
-    public virtual IDynamicLocaleKey FriendlyMessageKey { get; }
+    public virtual IDynamicResourceKey FriendlyMessageKey { get; }
 
     /// <summary>
     /// Gets a value indicating whether the error is a general, non-technical error that can be shown to the user.
@@ -47,27 +47,19 @@ public class HandledException : Exception
         }
     }
 
-    public HandledException(Exception originalException, string friendlyMessageKey, bool isExpected = true, bool showDetails = false) : this(
-        originalException,
-        new DynamicLocaleKey(friendlyMessageKey),
-        isExpected,
-        showDetails)
-    {
-    }
-
     public HandledException(
         Exception originalException,
-        IDynamicLocaleKey friendlyMessageKey,
+        IDynamicResourceKey friendlyMessageKey,
         bool isExpected = true,
-        bool showDetails = false
+        bool showDetails = true
     ) : base(null, originalException)
     {
         IsExpected = isExpected;
         FriendlyMessageKey = showDetails ?
-            new AggregateDynamicLocaleKey(
+            new AggregateDynamicResourceKey(
                 [
                     friendlyMessageKey,
-                    new DirectLocaleKey(originalException.Message.Trim())
+                    new DirectResourceKey(originalException.Message.Trim())
                 ],
                 "\n") :
             friendlyMessageKey;
@@ -75,7 +67,7 @@ public class HandledException : Exception
 
     protected HandledException(Exception originalException) : base(originalException.Message, originalException)
     {
-        FriendlyMessageKey = new DirectLocaleKey(originalException.Message.Trim());
+        FriendlyMessageKey = new DirectResourceKey(originalException.Message.Trim());
     }
 
     protected readonly struct NetworkExceptionAnalysis
@@ -291,11 +283,11 @@ public class HandledSystemException : HandledException
     public HandledSystemException(
         Exception originalException,
         HandledSystemExceptionType type,
-        IDynamicLocaleKey? customFriendlyMessageKey = null,
+        IDynamicResourceKey? customFriendlyMessageKey = null,
         bool isExpected = true
     ) : base(
         originalException,
-        customFriendlyMessageKey ?? new DynamicLocaleKey(
+        customFriendlyMessageKey ?? new DynamicResourceKey(
             type switch
             {
                 HandledSystemExceptionType.FileNotFound => LocaleKey.HandledSystemException_FileNotFound,
@@ -714,7 +706,7 @@ public enum HandledChatExceptionType
 public class HandledChatException(
     Exception originalException,
     HandledChatExceptionType type,
-    DynamicLocaleKey? customFriendlyMessageKey = null,
+    DynamicResourceKey? customFriendlyMessageKey = null,
     string? detailedMessage = null
 ) : HandledException(originalException)
 {
@@ -724,15 +716,15 @@ public class HandledChatException(
     /// </summary>
     public override bool IsExpected => ExceptionType != HandledChatExceptionType.Unknown;
 
-    public override IDynamicLocaleKey FriendlyMessageKey
+    public override IDynamicResourceKey FriendlyMessageKey
     {
         get
         {
             if (field is not null) return field;
 
-            var parts = new List<IDynamicLocaleKey>
+            var parts = new List<IDynamicResourceKey>
             {
-                customFriendlyMessageKey ?? new DynamicLocaleKey(
+                customFriendlyMessageKey ?? new DynamicResourceKey(
                     ExceptionType switch
                     {
                         HandledChatExceptionType.InvalidConfiguration => LocaleKey.HandledChatException_InvalidConfiguration,
@@ -764,15 +756,15 @@ public class HandledChatException(
 
             if (Message.Trim() is { Length: > 0 } trimmedMessage)
             {
-                parts.Add(new DirectLocaleKey(trimmedMessage));
+                parts.Add(new DirectResourceKey(trimmedMessage));
             }
 
             if (detailedMessage?.Trim() is { Length: > 0 } trimmedDetailedMessage)
             {
-                parts.Add(new DirectLocaleKey(trimmedDetailedMessage));
+                parts.Add(new DirectResourceKey(trimmedDetailedMessage));
             }
 
-            return field = new AggregateDynamicLocaleKey(parts, "\n");
+            return field = new AggregateDynamicResourceKey(parts, "\n");
         }
     }
 
@@ -1232,7 +1224,7 @@ public sealed partial class HandledFunctionInvokingException : HandledSystemExce
         Exception originalException,
         HandledFunctionInvokingExceptionType subType,
         HandledSystemExceptionType type,
-        IDynamicLocaleKey? customFriendlyMessageKey = null,
+        IDynamicResourceKey? customFriendlyMessageKey = null,
         bool isExpected = true) : base(originalException, type, customFriendlyMessageKey, isExpected)
     {
         SubExceptionType = subType;
@@ -1242,7 +1234,7 @@ public sealed partial class HandledFunctionInvokingException : HandledSystemExce
         HandledFunctionInvokingExceptionType type,
         string name,
         Exception? customException = null,
-        IDynamicLocaleKey? customFriendlyMessageKey = null) : this(
+        IDynamicResourceKey? customFriendlyMessageKey = null) : this(
         customException ?? MakeException(type, name),
         type,
         HandledSystemExceptionType.FunctionInvoking,
@@ -1259,20 +1251,20 @@ public sealed partial class HandledFunctionInvokingException : HandledSystemExce
         _ => new Exception("An unknown function invoking error occurred.")
     };
 
-    private static FormattedDynamicLocaleKey? MakeFriendlyMessageKey(HandledFunctionInvokingExceptionType type, string name) => type switch
+    private static FormattedDynamicResourceKey? MakeFriendlyMessageKey(HandledFunctionInvokingExceptionType type, string name) => type switch
     {
-        HandledFunctionInvokingExceptionType.ArgumentError => new FormattedDynamicLocaleKey(
-            new DynamicLocaleKey(LocaleKey.HandledFunctionInvokingException_ArgumentError),
-            new DirectLocaleKey(name)),
-        HandledFunctionInvokingExceptionType.ArgumentMissing => new FormattedDynamicLocaleKey(
-            new DynamicLocaleKey(LocaleKey.HandledFunctionInvokingException_ArgumentMissing),
-            new DirectLocaleKey(name)),
-        HandledFunctionInvokingExceptionType.FunctionNotFound => new FormattedDynamicLocaleKey(
-            new DynamicLocaleKey(LocaleKey.HandledFunctionInvokingException_FunctionNotFound),
-            new DirectLocaleKey(name)),
-        HandledFunctionInvokingExceptionType.InvalidResult => new FormattedDynamicLocaleKey(
-            new DynamicLocaleKey(LocaleKey.HandledFunctionInvokingException_InvalidResult),
-            new DirectLocaleKey(name)),
+        HandledFunctionInvokingExceptionType.ArgumentError => new FormattedDynamicResourceKey(
+            new DynamicResourceKey(LocaleKey.HandledFunctionInvokingException_ArgumentError),
+            new DirectResourceKey(name)),
+        HandledFunctionInvokingExceptionType.ArgumentMissing => new FormattedDynamicResourceKey(
+            new DynamicResourceKey(LocaleKey.HandledFunctionInvokingException_ArgumentMissing),
+            new DirectResourceKey(name)),
+        HandledFunctionInvokingExceptionType.FunctionNotFound => new FormattedDynamicResourceKey(
+            new DynamicResourceKey(LocaleKey.HandledFunctionInvokingException_FunctionNotFound),
+            new DirectResourceKey(name)),
+        HandledFunctionInvokingExceptionType.InvalidResult => new FormattedDynamicResourceKey(
+            new DynamicResourceKey(LocaleKey.HandledFunctionInvokingException_InvalidResult),
+            new DirectResourceKey(name)),
         _ => null, // HandledSystemException will use its own Unknown key
     };
 

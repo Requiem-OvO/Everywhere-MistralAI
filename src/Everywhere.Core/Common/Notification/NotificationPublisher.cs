@@ -15,11 +15,11 @@ public sealed class NotificationPublisher<TCategory>(INotificationCenter notific
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Push(
         string id,
-        IDynamicLocaleKey contentKey,
+        IDynamicResourceKey contentKey,
         NotificationType type = NotificationType.Information,
         bool canDismiss = true,
         bool forceShow = false,
-        IDynamicLocaleKey? actionButtonContentKey = null,
+        IDynamicResourceKey? actionButtonContentKey = null,
         ICommand? actionCommand = null)
     {
         _publisher.Push(id, contentKey, type, canDismiss, forceShow, actionButtonContentKey, actionCommand);

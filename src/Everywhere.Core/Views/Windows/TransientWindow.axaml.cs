@@ -2,19 +2,11 @@
 
 namespace Everywhere.Views;
 
-public sealed partial class TransientWindow : ShadWindow
+public sealed partial class TransientWindow : ShadWindow, IReactiveHost
 {
-    /// <summary>
-    /// Defines the <see cref="TitleBarContentOverride"/> property, which allows overriding the default title bar content of the TransientWindow.
-    /// </summary>
-    public static readonly StyledProperty<object?> TitleBarContentOverrideProperty =
-        AvaloniaProperty.Register<TransientWindow, object?>(nameof(TitleBarContentOverride));
+    public DialogHost DialogHost => PART_DialogHost;
 
-    public object? TitleBarContentOverride
-    {
-        get => GetValue(TitleBarContentOverrideProperty);
-        set => SetValue(TitleBarContentOverrideProperty, value);
-    }
+    public ToastHost ToastHost => PART_ToastHost;
 
     public TransientWindow()
     {

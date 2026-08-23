@@ -1,12 +1,11 @@
 ﻿using System.Collections.ObjectModel;
-using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
-using Avalonia.Input.Platform;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DynamicData;
 using DynamicData.Binding;
 using Everywhere.Collections;
+using Everywhere.Common;
 using Everywhere.Configuration;
 using ShadUI;
 using ZLinq;
@@ -83,9 +82,9 @@ public sealed partial class ManageApiKeyForm : TemplatedControl, IDisposable
 
     public static readonly DirectProperty<ManageApiKeyForm, bool?> IsApiKeysCheckedProperty =
         AvaloniaProperty.RegisterDirect<ManageApiKeyForm, bool?>(
-            nameof(IsApiKeysChecked),
-            o => o.IsApiKeysChecked,
-            (o, v) => o.IsApiKeysChecked = v);
+        nameof(IsApiKeysChecked),
+        o => o.IsApiKeysChecked,
+        (o, v) => o.IsApiKeysChecked = v);
 
     public bool? IsApiKeysChecked
     {
@@ -125,8 +124,8 @@ public sealed partial class ManageApiKeyForm : TemplatedControl, IDisposable
 
     public static readonly DirectProperty<ManageApiKeyForm, bool> CanDeleteApiKeysProperty =
         AvaloniaProperty.RegisterDirect<ManageApiKeyForm, bool>(
-            nameof(CanDeleteApiKeys),
-            o => o.CanDeleteApiKeys);
+        nameof(CanDeleteApiKeys),
+        o => o.CanDeleteApiKeys);
 
     public bool CanDeleteApiKeys => ItemsSource.AsValueEnumerable().Any(item => item.IsChecked);
 
@@ -168,8 +167,8 @@ public sealed partial class ManageApiKeyForm : TemplatedControl, IDisposable
     private async Task AddApiKeyAsync(CancellationToken cancellationToken)
     {
         var form = new CreateApiKeyForm(_defaultName);
-        var result = await DialogManager
-            .CreateDialog(form, LocaleResolver.ApiKeyComboBox_AddApiKey, TopLevel.GetTopLevel(this))
+        var result = await ServiceLocator.Resolve<DialogManager>()
+            .CreateDialog(form, LocaleResolver.ApiKeyComboBox_AddApiKey)
             .WithPrimaryButton(
                 LocaleResolver.Common_OK,
                 (_, e) => e.Cancel = !form.ApiKey.ValidateAndSave())
@@ -193,14 +192,13 @@ public sealed partial class ManageApiKeyForm : TemplatedControl, IDisposable
             .AsValueEnumerable()
             .Where(item => item.IsChecked)
             .Select(item => item.ApiKey)
-            .ToArray();
+            .ToList();
 
-        if (keysToDelete.Length == 0) return;
+        if (keysToDelete.Count == 0) return;
 
-        var result = await DialogManager.CreateDialog(
-                LocaleResolver.ManageApiKeyForm_DeleteApiKeys_Dialog_Message.Format(keysToDelete.Length),
-                LocaleResolver.Common_Warning,
-                TopLevel.GetTopLevel(this))
+        var result = await ServiceLocator.Resolve<DialogManager>().CreateDialog(
+                LocaleResolver.ManageApiKeyForm_DeleteApiKeys_Dialog_Message.Format(keysToDelete.Count),
+                LocaleResolver.Common_Warning)
             .WithPrimaryButton(LocaleResolver.Common_Yes)
             .WithCancelButton(LocaleResolver.Common_No)
             .ShowAsync();

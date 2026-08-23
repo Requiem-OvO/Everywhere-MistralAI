@@ -3,7 +3,7 @@ using Avalonia.Controls.Templates;
 
 namespace Everywhere.Views;
 
-public sealed class ConditionalContentControl : Decorator
+public class ConditionalContentControl : ContentControl
 {
     /// <summary>
     /// Defines the <see cref="Condition"/> property.
@@ -85,28 +85,20 @@ public sealed class ConditionalContentControl : Decorator
     {
         base.OnPropertyChanged(change);
 
-        // Ensure that the control is initialized (especially ensure ContentDataBindingProperty is set before the control is initialized)
-        if (!IsInitialized) return;
-
         if (change.Property == ConditionProperty ||
             change.Property == TrueContentProperty ||
             change.Property == FalseContentProperty ||
             change.Property == NullContentProperty)
         {
-            UpdateContent(true);
+            UpdateContent();
         }
         else if (change.Property == ContentDataBindingProperty)
         {
-            UpdateContent(false);
+            if (Content is Control control) control.DataContext = change.NewValue ?? DataContext;
         }
     }
 
-    protected override void OnInitialized()
-    {
-        UpdateContent(true);
-    }
-
-    private void UpdateContent(bool rebuild)
+    private void UpdateContent()
     {
         var content = Condition switch
         {
@@ -114,23 +106,8 @@ public sealed class ConditionalContentControl : Decorator
             false => FalseContent,
             _ => NullContent,
         };
-
-        var dataContext = ContentDataBinding ?? DataContext;
-        if (content?.Match(dataContext) is not true)
-        {
-            Child = null;
-            return;
-        }
-
-        if (rebuild)
-        {
-            var control = content.Build(this);
-            control?.DataContext = dataContext; // Set DataContext before setting Child otherwise it will inherit from this control
-            Child = control;
-        }
-        else
-        {
-            Child?.DataContext = dataContext;
-        }
+        var control = content?.Build(this);
+        control?.DataContext = ContentDataBinding ?? DataContext;
+        Content = control;
     }
 }

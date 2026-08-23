@@ -1,5 +1,5 @@
 using System.Text;
-using Everywhere.Common;
+using Everywhere.Configuration;
 
 namespace Everywhere.Terminal;
 

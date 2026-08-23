@@ -15,9 +15,9 @@ namespace Everywhere.Common.Notification;
 /// <param name="ActionCommand"></param>
 public readonly record struct DynamicNotificationDescriptor(
     string Id,
-    IDynamicLocaleKey ContentKey,
+    IDynamicResourceKey ContentKey,
     NotificationType Type = NotificationType.Information,
     bool CanDismiss = true,
     bool ForceShow = false,
-    IDynamicLocaleKey? ActionButtonContentKey = null,
+    IDynamicResourceKey? ActionButtonContentKey = null,
     ICommand? ActionCommand = null);

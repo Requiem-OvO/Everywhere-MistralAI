@@ -1,6 +1,6 @@
 ﻿#if DEBUG
 
-using Everywhere.Common;
+using Everywhere.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 

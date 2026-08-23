@@ -1,9 +1,13 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using System.Text.Json.Serialization;
+using System.Diagnostics.Metrics;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Everywhere.Web;
 
 namespace Everywhere.Configuration;
+
+public abstract class SettingsBase : ObservableObject
+{
+    protected static readonly Meter Meter = new(typeof(Settings).FullName.NotNull(), App.Version);
+}
 
 /// <summary>
 /// Represents the application settings.
@@ -12,33 +16,28 @@ namespace Everywhere.Configuration;
 /// </summary>
 [Serializable]
 [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
-public sealed partial class Settings(IServiceProvider serviceProvider) : SettingsBase(serviceProvider)
+public sealed partial class Settings : SettingsBase
 {
     [ObservableProperty]
     public partial string? Version { get; set; }
 
     #region Common
 
-    public CommonSettings Common { get; } = new(serviceProvider);
+    public CommonSettings Common { get; set; } = new();
 
-    public DisplaySettings Display { get; } = new(serviceProvider);
+    public DisplaySettings Display { get; set; } = new();
 
-    public ShortcutSettings Shortcut { get; } = new(serviceProvider);
+    public ShortcutSettings Shortcut { get; set; } = new();
 
-    public ProxySettings Proxy { get; } = new(serviceProvider);
+    public ProxySettings Proxy { get; set; } = new();
 
     #endregion
 
-    public ModelSettings Model { get; } = new(serviceProvider);
+    public ModelSettings Model { get; set; } = new();
 
-    public SystemAssistantSettings SystemAssistant { get; } = new(serviceProvider);
+    public SystemAssistantSettings SystemAssistant { get; set; } = new();
 
-    public ChatWindowSettings ChatWindow { get; } = new(serviceProvider);
+    public ChatWindowSettings ChatWindow { get; set; } = new();
 
-    public PluginSettings Plugin { get; } = new(serviceProvider);
+    public PluginSettings Plugin { get; set; } = new();
 }
-
-[JsonSourceGenerationOptions(WriteIndented = true, GenerationMode = JsonSourceGenerationMode.Metadata)]
-[JsonSerializable(typeof(Settings))]
-[JsonSerializable(typeof(OfficialConnector))]
-public partial class SettingsJsonSerializerContext : JsonSerializerContext;

@@ -9,19 +9,11 @@ namespace Everywhere.Chat;
 [MessagePackObject]
 public partial class ChatUsageDetails : ObservableObject
 {
-    /// <remarks>
-    /// This flag describes only the current model invocation. It is ignored during serialization,
-    /// so it remains false after deserialization even when persisted token counts are present.
-    /// </remarks>
-    [IgnoreMember]
-    public bool HasUsage { get; private set; }
-
     /// <summary>
     /// Gets the number of input tokens used. Including <see cref="CachedInputTokenCount"/>
     /// </summary>
     [Key(0)]
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CachedInputHitRate))]
     public partial long InputTokenCount { get; set; }
 
     /// <summary>
@@ -29,7 +21,6 @@ public partial class ChatUsageDetails : ObservableObject
     /// </summary>
     [Key(1)]
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CachedInputHitRate))]
     public partial long CachedInputTokenCount { get; set; }
 
     /// <summary>
@@ -62,27 +53,8 @@ public partial class ChatUsageDetails : ObservableObject
     [NotifyPropertyChangedFor(nameof(TokensPerSecond))]
     public partial double TotalGenerationSeconds { get; set; }
 
-    /// <summary>
-    /// Gets whether the model API explicitly reported the cached input token count.
-    /// This distinguishes an actual zero cache hit rate from providers that omit cache usage data.
-    /// </summary>
-    [Key(6)]
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CachedInputHitRate))]
-    public partial bool HasCachedInputTokenCount { get; set; }
-
     [IgnoreMember]
     public double TokensPerSecond => TotalGenerationSeconds > 0d ? OutputTokenCount / TotalGenerationSeconds : 0d;
-
-    /// <summary>
-    /// Gets the proportion of input tokens served from cache, or <see langword="null"/> when it is unavailable.
-    /// A positive cached count remains available for chat histories saved before
-    /// <see cref="HasCachedInputTokenCount"/> was persisted.
-    /// </summary>
-    [IgnoreMember]
-    public double? CachedInputHitRate => InputTokenCount > 0 && (CachedInputTokenCount > 0 || HasCachedInputTokenCount)
-        ? Math.Clamp((double)CachedInputTokenCount / InputTokenCount, 0d, 1d)
-        : null;
 
     /// <summary>
     /// Updates the usage details from the given <see cref="StreamingKernelContent"/>. Used in streaming scenarios.
@@ -122,8 +94,6 @@ public partial class ChatUsageDetails : ObservableObject
         TotalTokenCount += other.TotalTokenCount;
 
         TotalGenerationSeconds += generationSeconds;
-        HasUsage |= other.HasUsage;
-        HasCachedInputTokenCount |= other.HasCachedInputTokenCount;
     }
 
     private void Update(object? usage)
@@ -132,8 +102,6 @@ public partial class ChatUsageDetails : ObservableObject
         {
             case UsageContent usageContent:
             {
-                HasUsage = true;
-                HasCachedInputTokenCount |= usageContent.Details.CachedInputTokenCount.HasValue;
                 InputTokenCount = Max(InputTokenCount, usageContent.Details.InputTokenCount);
                 CachedInputTokenCount = Max(CachedInputTokenCount, usageContent.Details.CachedInputTokenCount);
                 OutputTokenCount = Max(OutputTokenCount, usageContent.Details.OutputTokenCount);
@@ -143,8 +111,6 @@ public partial class ChatUsageDetails : ObservableObject
             }
             case UsageDetails usageDetails:
             {
-                HasUsage = true;
-                HasCachedInputTokenCount |= usageDetails.CachedInputTokenCount.HasValue;
                 InputTokenCount = Max(InputTokenCount, usageDetails.InputTokenCount);
                 CachedInputTokenCount = Max(CachedInputTokenCount, usageDetails.CachedInputTokenCount);
                 OutputTokenCount = Max(OutputTokenCount, usageDetails.OutputTokenCount);
@@ -154,8 +120,6 @@ public partial class ChatUsageDetails : ObservableObject
             }
             case ChatTokenUsage chatTokenUsage: // OpenAI
             {
-                HasUsage = true;
-                HasCachedInputTokenCount = true;
                 InputTokenCount = Max(InputTokenCount, chatTokenUsage.InputTokenCount);
                 CachedInputTokenCount = Max(CachedInputTokenCount, chatTokenUsage.InputTokenDetails.CachedTokenCount);
                 OutputTokenCount = Max(OutputTokenCount, chatTokenUsage.OutputTokenCount);

@@ -72,15 +72,15 @@ public sealed partial record Strategy
     public IReadOnlyList<StrategySource> Includes { get; init; } = [];
     public bool Enabled { get; init; } = true;
 
-    public required IDynamicLocaleKey NameKey { get; init; }
-    public IDynamicLocaleKey? DescriptionKey { get; init; }
+    public required IDynamicResourceKey NameKey { get; init; }
+    public IDynamicResourceKey? DescriptionKey { get; init; }
     public ColoredIcon? Icon { get; init; }
     public int Priority { get; init; }
 
     public IStrategyCondition? Condition { get; init; }
     public string? Body { get; init; }
     public string? SystemPrompt { get; init; }
-    public ToolPatternRulesets? ToolPatternRulesets { get; init; }
+    public ToolRulesets? ToolRulesets { get; init; }
     public IReadOnlyList<string> Preprocessors { get; init; } = [];
     public StrategyOptions Options { get; init; } = StrategyOptions.Default;
 
@@ -173,7 +173,7 @@ Normalizer responsibilities:
 6. Parse durations to `TimeSpan`.
 7. Compile condition DSL into condition AST.
 8. Parse visual queries.
-9. Convert `tools` into `ToolPatternRulesets`.
+9. Convert `tools` into `ToolRulesets`.
 10. Validate preprocessor IDs when registry is available.
 11. Preserve include/source references for diagnostics.
 12. Produce diagnostics instead of throwing for ordinary user-file errors.
@@ -258,7 +258,7 @@ Supported source forms:
 | --- | --- | --- |
 | Relative path | `./SKILL.md` | Required. Resolved relative to current strategy file. |
 | Absolute path | `E:\Skills\Writer\SKILL.md` | Required. |
-| Managed skill URI | `skill://everywhere.my-writing-style` | Required once skill import UI exists. |
+| Managed skill URI | `skill://my-writing-style` | Required once skill import UI exists. |
 | URL | `https://example.com/strategy.md` | Interface-ready; implementation may block network until later. |
 
 Supported `kind` values:
@@ -457,26 +457,23 @@ public sealed record StrategyCandidate
 
 Only matched candidates are shown in the normal UI. Unmatched and null-result candidates should be available in a diagnostics view.
 
-## 14. ToolPatternRulesets
+## 14. ToolRulesets
 
-`ToolPatternRulesets` separates plugin matching from function matching.
+The existing `ToolRulesets` dictionary remains the v1 rule format.
 
 ```yaml
 tools:
-  builtin.web:
-    "*": true
-    web_search: false
-  builtin.file_system:
-    read_file: true
+  builtin.web.*: true
+  builtin.web.web_search: false
+  builtin.filesystem.read_file: true
 ```
 
-Semantics:
+Semantics remain:
 
-1. Outer keys are plugin-key glob patterns.
-2. Inner keys are function-name glob patterns.
-3. Inner values are allow/deny booleans.
-4. Later/stronger rule sources override earlier sources through `ToolRulesetsPipeline`.
-5. Strategy tool rules are applied to the user request that executes that Strategy.
+1. Keys are plugin or plugin-function globs.
+2. Values are allow/deny booleans.
+3. Later/stronger layers override earlier layers according to existing `ToolRulesets` union semantics.
+4. Strategy tool rules are applied to the user request that executes that Strategy.
 
 ## 15. Permissions
 
@@ -486,7 +483,7 @@ The engine should be able to report permissions implied by:
 2. Preprocessors.
 3. Tool rules that enable tools with permissions.
 
-Permission display must use `IDynamicLocaleKey` so the UI can show natural language text:
+Permission display must use `IDynamicResourceKey` so the UI can show natural language text:
 
 ```text
 Reads clipboard text

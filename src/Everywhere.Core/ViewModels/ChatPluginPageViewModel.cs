@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using Avalonia.Input.Platform;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Everywhere.Chat.Plugins;
@@ -9,21 +8,21 @@ using Everywhere.Configuration;
 using Everywhere.Views;
 using ModelContextProtocol.Client;
 using ShadUI;
+using ZLinq;
 
 namespace Everywhere.ViewModels;
 
-public partial class ChatPluginPageViewModel : BusyViewModelBase
+public partial class ChatPluginPageViewModel(IChatPluginManager manager) : BusyViewModelBase
 {
-    public ToolSettingsPresentation ToolSettings { get; }
+    public IChatPluginManager Manager => manager;
 
-    public ToolPluginPresentation? SelectedPlugin
+    public ChatPlugin? SelectedPlugin
     {
         get;
         set
         {
             if (!SetProperty(ref field, value)) return;
             OnPropertyChanged(nameof(SelectedBuiltInPlugin));
-            OnPropertyChanged(nameof(SelectedMcpPluginPresentation));
             OnPropertyChanged(nameof(SelectedMcpPlugin));
 
             _contentTabItems.Clear();
@@ -31,12 +30,12 @@ public partial class ChatPluginPageViewModel : BusyViewModelBase
 
             _contentTabItems.Add(new FunctionsTabItem(value));
 
-            if (value.Plugin.SettingsItems is { Count: > 0 } settingsItems)
+            if (value.SettingsItems is { Count: > 0 } settingsItems)
             {
                 _contentTabItems.Add(new SettingsTabItem(settingsItems));
             }
 
-            if (value.Plugin is McpChatPlugin mcpPlugin)
+            if (value is McpChatPlugin mcpPlugin)
             {
                 _contentTabItems.Add(new LogsTabItem(mcpPlugin.LogEntries));
             }
@@ -46,9 +45,9 @@ public partial class ChatPluginPageViewModel : BusyViewModelBase
     /// <summary>
     /// Helper property to get the selected plugin as a BuiltInChatPlugin.
     /// </summary>
-    public ToolPluginPresentation? SelectedBuiltInPlugin
+    public BuiltInChatPlugin? SelectedBuiltInPlugin
     {
-        get => SelectedPlugin?.Plugin is BuiltInChatPlugin ? SelectedPlugin : null;
+        get => SelectedPlugin as BuiltInChatPlugin;
         set
         {
             if (value is not null)
@@ -61,9 +60,9 @@ public partial class ChatPluginPageViewModel : BusyViewModelBase
     /// <summary>
     /// Helper property to get the selected plugin as a McpChatPlugin.
     /// </summary>
-    public ToolPluginPresentation? SelectedMcpPluginPresentation
+    public McpChatPlugin? SelectedMcpPlugin
     {
-        get => SelectedPlugin?.Plugin is McpChatPlugin ? SelectedPlugin : null;
+        get => SelectedPlugin as McpChatPlugin;
         set
         {
             if (value is not null)
@@ -73,28 +72,15 @@ public partial class ChatPluginPageViewModel : BusyViewModelBase
         }
     }
 
-    public McpChatPlugin? SelectedMcpPlugin => SelectedMcpPluginPresentation?.Plugin as McpChatPlugin;
-
     public IReadOnlyBindableList<IContentTabItem> ContentTabItems => _contentTabItems;
 
     private readonly BindableList<IContentTabItem> _contentTabItems = [];
-
-    private readonly IChatPluginManager _manager;
-
-    public ChatPluginPageViewModel(IChatPluginManager manager, Settings settings)
-    {
-        _manager = manager;
-        ToolSettings = new ToolSettingsPresentation(
-            manager,
-            ToolSettingsContext.CreateGlobal(settings.Plugin.ToolEnablementRulesets, settings.Plugin.ToolBypassApprovalRulesets));
-        LifetimeDisposables.Add(ToolSettings);
-    }
 
     [RelayCommand]
     private async Task AddMcpPluginAsync(CancellationToken cancellationToken)
     {
         var form = new McpTransportConfigurationForm();
-        var result = await DialogHost
+        var result = await DialogManager
             .CreateDialog(form, LocaleResolver.ChatPluginPageViewModel_AddMcpPlugin_DialogTitle)
             .WithPrimaryButton(
                 LocaleResolver.Common_OK,
@@ -106,8 +92,7 @@ public partial class ChatPluginPageViewModel : BusyViewModelBase
 
         try
         {
-            var plugin = _manager.CreateMcpPlugin(form.Configuration);
-            SelectedPlugin = ToolSettings.Plugins.FirstOrDefault(item => ReferenceEquals(item.Plugin, plugin));
+            SelectedPlugin = manager.CreateMcpPlugin(form.Configuration);
         }
         catch (Exception e)
         {
@@ -115,14 +100,14 @@ public partial class ChatPluginPageViewModel : BusyViewModelBase
             return;
         }
 
-        _manager.RefreshMcpRuntimeWarnings();
+        manager.RefreshMcpRuntimeWarnings();
     }
 
     [RelayCommand]
     private async Task ImportMcpPluginAsync()
     {
         var form = new McpImportForm();
-        var result = await DialogHost
+        var result = await DialogManager
             .CreateDialog(form, LocaleResolver.ChatPluginPageViewModel_ImportMcpPlugin_DialogTitle)
             .WithPrimaryButton(LocaleResolver.Common_OK)
             .WithCancelButton(LocaleResolver.Common_Cancel)
@@ -136,7 +121,7 @@ public partial class ChatPluginPageViewModel : BusyViewModelBase
             var count = 0;
             foreach (var configuration in configurations.AsValueEnumerable().Where(c => c.Validate()))
             {
-                _manager.CreateMcpPlugin(configuration);
+                manager.CreateMcpPlugin(configuration);
                 count++;
             }
 
@@ -319,7 +304,7 @@ public partial class ChatPluginPageViewModel : BusyViewModelBase
         if (plugin is null) return Task.CompletedTask;
 
         return ExecuteBusyTaskAsync(
-            token => Task.Run(() => _manager.StartMcpClientAsync(plugin, token), token),
+            token => Task.Run(() => manager.StartMcpClientAsync(plugin, token), token),
             ToastExceptionHandler,
             cancellationToken: cancellationToken);
     }
@@ -330,7 +315,7 @@ public partial class ChatPluginPageViewModel : BusyViewModelBase
         if (plugin is null) return Task.CompletedTask;
 
         return ExecuteBusyTaskAsync(
-            token => Task.Run(() => _manager.StopMcpClientAsync(plugin), token),
+            token => Task.Run(() => manager.StopMcpClientAsync(plugin), token),
             ToastExceptionHandler,
             cancellationToken: cancellationToken);
     }
@@ -351,7 +336,7 @@ public partial class ChatPluginPageViewModel : BusyViewModelBase
                             McpTransportConfigurationJsonSerializerContext.Default.McpTransportConfiguration),
                         McpTransportConfigurationJsonSerializerContext.Default.McpTransportConfiguration) ?? new StdioMcpTransportConfiguration()
                 };
-                var result = await DialogHost
+                var result = await DialogManager
                     .CreateDialog(form, LocaleResolver.ChatPluginPageViewModel_EditMcpPlugin_DialogTitle)
                     .WithPrimaryButton(
                         LocaleResolver.Common_OK,
@@ -361,7 +346,7 @@ public partial class ChatPluginPageViewModel : BusyViewModelBase
                 if (result != DialogResult.Primary) return;
                 if (form.Configuration.HasErrors) return;
 
-                await Task.Run(() => _manager.UpdateMcpPluginAsync(plugin, form.Configuration), token);
+                await Task.Run(() => manager.UpdateMcpPluginAsync(plugin, form.Configuration), token);
             },
             ToastExceptionHandler,
             cancellationToken: cancellationToken);
@@ -375,16 +360,16 @@ public partial class ChatPluginPageViewModel : BusyViewModelBase
         return ExecuteBusyTaskAsync(
             async token =>
             {
-                var result = await DialogHost
+                var result = await DialogManager
                     .CreateDialog(LocaleResolver.ChatPluginPageViewModel_RemoveMcpPlugin_ConfirmationMessage.Format(plugin.HeaderKey))
                     .WithPrimaryButton(LocaleResolver.Common_Yes)
                     .WithCancelButton(LocaleResolver.Common_No)
                     .ShowAsync(token);
                 if (result != DialogResult.Primary) return;
 
-                await Task.Run(() => _manager.RemoveMcpPluginAsync(plugin), token);
+                await Task.Run(() => manager.RemoveMcpPluginAsync(plugin), token);
 
-                if (ReferenceEquals(SelectedPlugin?.Plugin, plugin)) SelectedPlugin = null;
+                if (SelectedPlugin == plugin) SelectedPlugin = null;
             },
             ToastExceptionHandler,
             cancellationToken: cancellationToken);
@@ -417,26 +402,26 @@ public partial class ChatPluginPageViewModel : BusyViewModelBase
 
     public interface IContentTabItem
     {
-        IDynamicLocaleKey Header { get; }
+        IDynamicResourceKey Header { get; }
     }
 
     public class SettingsTabItem(IReadOnlyList<SettingsItem> settingsItems) : IContentTabItem
     {
-        public IDynamicLocaleKey Header => new DynamicLocaleKey(LocaleKey.ChatPluginPage_TabItem_Settings_Header);
+        public IDynamicResourceKey Header => new DynamicResourceKey(LocaleKey.ChatPluginPage_TabItem_Settings_Header);
 
         public IReadOnlyList<SettingsItem> SettingsItems { get; } = settingsItems;
     }
 
-    public class FunctionsTabItem(ToolPluginPresentation plugin) : IContentTabItem
+    public class FunctionsTabItem(ChatPlugin plugin) : IContentTabItem
     {
-        public IDynamicLocaleKey Header => new DynamicLocaleKey(LocaleKey.ChatPluginPage_TabItem_Functions_Header);
+        public IDynamicResourceKey Header => new DynamicResourceKey(LocaleKey.ChatPluginPage_TabItem_Functions_Header);
 
-        public ToolPluginPresentation Plugin { get; } = plugin;
+        public ChatPlugin Plugin { get; } = plugin;
     }
 
     public partial class LogsTabItem(IReadOnlyBindableList<McpChatPlugin.LogEntry> logEntries) : ObservableObject, IContentTabItem
     {
-        public IDynamicLocaleKey Header => new DynamicLocaleKey(LocaleKey.ChatPluginPage_TabItem_Logs_Header);
+        public IDynamicResourceKey Header => new DynamicResourceKey(LocaleKey.ChatPluginPage_TabItem_Logs_Header);
 
         public IReadOnlyBindableList<McpChatPlugin.LogEntry> LogEntries { get; } = logEntries;
 

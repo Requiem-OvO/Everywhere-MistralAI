@@ -2,7 +2,6 @@ using Everywhere.Chat;
 using Everywhere.Configuration;
 using Everywhere.Statistics;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Everywhere.Core.Tests.Statistics;
@@ -13,7 +12,7 @@ public sealed class StatisticsRecorderTests
     public async Task RecordTurn_CreatesOneTopicAndSeparateTurns_ForUserRequests()
     {
         using var database = StatisticsTestDatabase.Create();
-        var settings = new Settings(new ServiceCollection().BuildServiceProvider());
+        var settings = new Settings();
         var recorder = new StatisticsRecorder(
             database.Factory,
             settings,
@@ -50,7 +49,7 @@ public sealed class StatisticsRecorderTests
         using var database = StatisticsTestDatabase.Create();
         var recorder = new StatisticsRecorder(
             database.Factory,
-            new Settings(new ServiceCollection().BuildServiceProvider()),
+            new Settings(),
             NullLogger<StatisticsRecorder>.Instance);
         var chatContextId = Guid.CreateVersion7();
         var turnEventId = Guid.CreateVersion7();
@@ -128,7 +127,7 @@ public sealed class StatisticsRecorderTests
     public async Task RecordingMethods_DoNotWriteNewRows_WhenStatisticsAreDisabled()
     {
         using var database = StatisticsTestDatabase.Create();
-        var settings = new Settings(new ServiceCollection().BuildServiceProvider())
+        var settings = new Settings
         {
             Common =
             {

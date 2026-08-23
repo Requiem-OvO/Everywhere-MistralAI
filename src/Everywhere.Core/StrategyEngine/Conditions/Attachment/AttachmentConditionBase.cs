@@ -27,13 +27,13 @@ public abstract class AttachmentConditionBase<T> : IAttachmentCondition where T 
 
     public bool Evaluate(StrategyContext context)
     {
-        var matchingAttachments = context.Attachments.AsValueEnumerable().OfType<T>().Where(MatchesAttachment).ToArray();
-        if (matchingAttachments.Length < MinCount)
+        var matchingAttachments = context.Attachments.AsValueEnumerable().OfType<T>().Where(MatchesAttachment).ToList();
+        if (matchingAttachments.Count < MinCount)
         {
             return false;
         }
 
-        if (MaxCount >= 0 && matchingAttachments.Length > MaxCount)
+        if (MaxCount >= 0 && matchingAttachments.Count > MaxCount)
         {
             return false;
         }

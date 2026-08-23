@@ -9,10 +9,10 @@ public interface IWebBrowserHost
     Task OpenBrowserAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Extracts the main content of the given URL as <see cref="WebPageExtractionResult"/> using the browser extraction pipeline.
+    /// Extracts the main content of the given URL as Markdown text using a headless browser and Readability.js.
     /// </summary>
     /// <param name="url"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task<WebPageExtractionResult> ExtractPageAsync(string url, CancellationToken cancellationToken = default);
+    Task<string> ExtractAsync(string url, CancellationToken cancellationToken = default);
 }

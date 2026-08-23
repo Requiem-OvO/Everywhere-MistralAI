@@ -1,7 +1,6 @@
 <a id="readme-top"></a>
 
 <a href="https://github.com/Sylinko/Everywhere/blob/main/README-zh-cn.md">前往中文版本 »</a>
-<a href="https://github.com/Sylinko/Everywhere/blob/main/README-ja-jp.md">日本語バージョン »</a>
 
 <div align="center">
   <img src="https://github.com/user-attachments/assets/fdc68ffd-9660-4185-a236-6ec985c00e88" alt="Banner"/>
@@ -234,11 +233,11 @@ Thanks [pasical](https://github.com/pasical) for the banner kawaii logo design.
 
 <br/>
 
-<a href="https://star-history.dera.page/#Sylinko/Everywhere&type=date">
+<a href="https://www.star-history.com/?type=date&repos=Sylinko%2FEverywhere">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://star-history.dera.page/svg?repos=Sylinko/Everywhere&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://star-history.dera.page/svg?repos=Sylinko/Everywhere&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://star-history.dera.page/svg?repos=Sylinko/Everywhere&type=date&legend=top-left" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=Sylinko/Everywhere&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=Sylinko/Everywhere&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=Sylinko/Everywhere&type=date&legend=top-left" />
  </picture>
 </a>
 

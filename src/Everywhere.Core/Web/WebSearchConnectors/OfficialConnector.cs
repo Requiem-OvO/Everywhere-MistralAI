@@ -50,8 +50,8 @@ public sealed partial class OfficialConnector(
         {
             throw new HandledException(
                 new UserNotLoginException(
-                    "The configured official web-search provider requires the user to sign in. Ask the user to sign in or configure a third-party search provider."),
-                new DynamicLocaleKey(LocaleKey.HandledSystemException_UserNotLogin),
+                    "Everywhere cloud search service requires user login. Please instruct the user to login or configure 3rd-party search services"),
+                new DynamicResourceKey(LocaleKey.HandledSystemException_UserNotLogin),
                 showDetails: false);
         }
 
@@ -61,37 +61,37 @@ public sealed partial class OfficialConnector(
     [TypeConverter(typeof(FallbackEnumConverter))]
     public enum SearchDepth
     {
-        [DynamicLocaleKey(LocaleKey.OfficialConnector_SearchDepth_Basic)]
+        [DynamicResourceKey(LocaleKey.OfficialConnector_SearchDepth_Basic)]
         Basic,
-        [DynamicLocaleKey(LocaleKey.OfficialConnector_SearchDepth_Fast)]
+        [DynamicResourceKey(LocaleKey.OfficialConnector_SearchDepth_Fast)]
         Fast,
-        [DynamicLocaleKey(LocaleKey.OfficialConnector_SearchDepth_UltraFast)]
+        [DynamicResourceKey(LocaleKey.OfficialConnector_SearchDepth_UltraFast)]
         UltraFast
     }
 
     [TypeConverter(typeof(FallbackEnumConverter))]
     public enum SearchTopic
     {
-        [DynamicLocaleKey(LocaleKey.OfficialConnector_SearchTopic_General)]
+        [DynamicResourceKey(LocaleKey.OfficialConnector_SearchTopic_General)]
         General,
-        [DynamicLocaleKey(LocaleKey.OfficialConnector_SearchTopic_News)]
+        [DynamicResourceKey(LocaleKey.OfficialConnector_SearchTopic_News)]
         News,
-        [DynamicLocaleKey(LocaleKey.OfficialConnector_SearchTopic_Finance)]
+        [DynamicResourceKey(LocaleKey.OfficialConnector_SearchTopic_Finance)]
         Finance
     }
 
     [TypeConverter(typeof(FallbackEnumConverter))]
     public enum SearchTimeRange
     {
-        [DynamicLocaleKey(LocaleKey.Common_Default)]
+        [DynamicResourceKey(LocaleKey.Common_Default)]
         Default,
-        [DynamicLocaleKey(LocaleKey.OfficialConnector_SearchTimeRange_Day)]
+        [DynamicResourceKey(LocaleKey.OfficialConnector_SearchTimeRange_Day)]
         Day,
-        [DynamicLocaleKey(LocaleKey.OfficialConnector_SearchTimeRange_Month)]
+        [DynamicResourceKey(LocaleKey.OfficialConnector_SearchTimeRange_Month)]
         Week,
-        [DynamicLocaleKey(LocaleKey.OfficialConnector_SearchTimeRange_Month)]
+        [DynamicResourceKey(LocaleKey.OfficialConnector_SearchTimeRange_Month)]
         Month,
-        [DynamicLocaleKey(LocaleKey.OfficialConnector_SearchTimeRange_Year)]
+        [DynamicResourceKey(LocaleKey.OfficialConnector_SearchTimeRange_Year)]
         Year
     }
 

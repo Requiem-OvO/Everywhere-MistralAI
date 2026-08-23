@@ -3,6 +3,7 @@ using System.Reactive.Linq;
 using System.Text.Json.Serialization;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
+using DynamicData;
 using Everywhere.Chat.Permissions;
 using Everywhere.Collections;
 using Everywhere.Common;
@@ -11,6 +12,7 @@ using Everywhere.Utilities;
 using Lucide.Avalonia;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
+using ZLinq;
 
 namespace Everywhere.Chat.Plugins;
 
@@ -20,10 +22,10 @@ public abstract partial class ChatPlugin : KernelPlugin, IDisposable
     public abstract string Key { get; }
 
     [JsonIgnore]
-    public abstract IDynamicLocaleKey HeaderKey { get; }
+    public abstract IDynamicResourceKey HeaderKey { get; }
 
     [JsonIgnore]
-    public abstract IDynamicLocaleKey DescriptionKey { get; }
+    public abstract IDynamicResourceKey DescriptionKey { get; }
 
     [JsonIgnore]
     public virtual LucideIconKind? Icon => null;
@@ -34,7 +36,8 @@ public abstract partial class ChatPlugin : KernelPlugin, IDisposable
     [JsonIgnore]
     public virtual string? BeautifulIcon => null;
 
-    public virtual bool IsDefaultEnabled => false;
+    [ObservableProperty]
+    public partial bool IsEnabled { get; set; }
 
     /// <summary>
     /// Gets the list of warnings for this plugin to be displayed in the UI.
@@ -52,8 +55,6 @@ public abstract partial class ChatPlugin : KernelPlugin, IDisposable
     /// </summary>
     public virtual IReadOnlyList<SettingsItem>? SettingsItems => null;
 
-    public abstract bool IsMcp { get; }
-
     private readonly SourceCache<ChatPluginWarning, string> _warningsSource = new(x => x.Key);
     private readonly IDisposable _warningsConnection;
 
@@ -70,7 +71,7 @@ public abstract partial class ChatPlugin : KernelPlugin, IDisposable
     /// <returns></returns>
     public abstract IReadOnlyList<ChatFunction> GetChatFunctions();
 
-    public virtual ValueTask<IReadOnlyList<ChatFunction>> GetAvailableFunctionsAsync(CancellationToken cancellationToken) =>
+    public virtual ValueTask<IReadOnlyList<ChatFunction>> GetAvailableFunctionsAsync(ChatPluginFunctionContext context) =>
         ValueTask.FromResult(GetChatFunctions());
 
     public virtual void Dispose()
@@ -80,7 +81,7 @@ public abstract partial class ChatPlugin : KernelPlugin, IDisposable
         GC.SuppressFinalize(this);
     }
 
-    public void SetWarning(string key, IDynamicLocaleKey? messageKey, ICommand? command = null)
+    public void SetWarning(string key, IDynamicResourceKey? messageKey, ICommand? command = null)
     {
         if (messageKey is not null)
         {
@@ -95,10 +96,10 @@ public abstract partial class ChatPlugin : KernelPlugin, IDisposable
     public void RemoveWarning(string key) => _warningsSource.RemoveKey(key);
 }
 
-public sealed record ChatPluginWarning(string Key, IDynamicLocaleKey MessageKey, ICommand? Command = null)
+public sealed record ChatPluginWarning(string Key, IDynamicResourceKey MessageKey, ICommand? Command = null)
 {
-    public IDynamicLocaleKey? ActionButtonContentKey =>
-        Command is null ? null : new DynamicLocaleKey(LocaleKey.ChatPluginPage_WarningActionButton_Content);
+    public IDynamicResourceKey? ActionButtonContentKey =>
+        Command is null ? null : new DynamicResourceKey(LocaleKey.ChatPluginPage_WarningActionButton_Content);
 }
 
 public abstract class ChatPlugin<TChatFunction> : ChatPlugin where TChatFunction : ChatFunction
@@ -110,7 +111,10 @@ public abstract class ChatPlugin<TChatFunction> : ChatPlugin where TChatFunction
         get
         {
             var count = 0;
-            _functionsSource.Edit(list => count = list.Count);
+            _functionsSource.Edit(list =>
+            {
+                count = list.AsValueEnumerable().Count(f => f.IsEnabled); // Use edit to avoid copy
+            });
             return count;
         }
     }
@@ -131,12 +135,13 @@ public abstract class ChatPlugin<TChatFunction> : ChatPlugin where TChatFunction
     public override IReadOnlyList<ChatFunction> GetChatFunctions() => _functionsSource.Items;
 
     public override IEnumerator<KernelFunction> GetEnumerator() =>
-        _functionsSource.Items.Select(f => f.KernelFunction).GetEnumerator();
+        _functionsSource.Items.Where(f => f.IsEnabled).Select(f => f.KernelFunction).GetEnumerator();
 
     public override bool TryGetFunction(string name, [NotNullWhen(true)] out KernelFunction? function)
     {
         function = _functionsSource.Items
             .AsValueEnumerable()
+            .Where(f => f.IsEnabled)
             .Select(f => f.KernelFunction)
             .FirstOrDefault(f => f.Name == name);
         return function is not null;
@@ -160,20 +165,23 @@ public abstract class BuiltInChatPlugin(string name) : ChatPlugin<BuiltInChatFun
 {
     public override sealed string Key => $"builtin.{Name}";
 
+    public virtual bool IsDefaultEnabled => false;
+
     /// <summary>
     /// Indicates whether this plugin should be visible to users in the UI.
     /// Some plugins may be hidden but still enabled for internal use or by other plugins.
     /// </summary>
     public virtual bool IsVisible => true;
 
-    public override bool IsMcp => false;
-
     public bool HasVisibleFunctions
     {
         get
         {
             var result = false;
-            _functionsSource.Edit(list => result = list.AsValueEnumerable().Any(f => f.IsVisible));
+            _functionsSource.Edit(list =>
+            {
+                result = list.AsValueEnumerable().Any(f => f.IsVisible);
+            });
             return result;
         }
     }
@@ -205,9 +213,9 @@ public sealed partial class McpChatPlugin : ChatPlugin<McpChatFunction>, ILogger
 
     public override string Key => $"mcp.{Id}";
 
-    public override DynamicLocaleKey HeaderKey => new DirectLocaleKey(TransportConfiguration?.Name ?? string.Empty);
+    public override DynamicResourceKey HeaderKey => new DirectResourceKey(TransportConfiguration?.Name ?? string.Empty);
 
-    public override DynamicLocaleKey DescriptionKey => new DirectLocaleKey(TransportConfiguration?.Description ?? string.Empty);
+    public override DynamicResourceKey DescriptionKey => new DirectResourceKey(TransportConfiguration?.Description ?? string.Empty);
 
     public override LucideIconKind? Icon => TransportConfiguration switch
     {
@@ -236,7 +244,7 @@ public sealed partial class McpChatPlugin : ChatPlugin<McpChatFunction>, ILogger
     /// <summary>
     /// Gets the log entries of this plugin.
     /// </summary>
-    [DeepObserverIgnore]
+    [ObjectObserverIgnore]
     public IReadOnlyBindableList<LogEntry> LogEntries { get; }
 
     private const int MaxLogEntries = 1000;
@@ -302,8 +310,6 @@ public sealed partial class McpChatPlugin : ChatPlugin<McpChatFunction>, ILogger
     bool ILogger.IsEnabled(LogLevel logLevel) => true;
 
     IDisposable? ILogger.BeginScope<TState>(TState state) => null;
-
-    public override bool IsMcp => true;
 
     public override void Dispose()
     {

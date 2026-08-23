@@ -4,7 +4,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using Everywhere.Chat.Permissions;
 using Everywhere.Collections;
-using Lucide.Avalonia;
 
 namespace Everywhere.Chat.Plugins;
 
@@ -18,28 +17,20 @@ public enum ChatPluginTodoStatus
 
 [Serializable]
 [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
-public sealed record ChatPluginTodoItem
+public sealed class ChatPluginTodoItem
 {
-    [Description("ID of the todo item. Reset IDs must be unique; update IDs must already exist.")]
-    public required int Id { get; init; }
+    [Description("1-based unique identifier for the todo item.")]
+    public required int Id { get; set; }
 
     [MaxLength(300)]
-    [Description("Todo title. Required for reset; omit during update to keep the current title.")]
-    public string? Title { get; init; }
+    [Description("Concise action-oriented todo label displayed in UI.")]
+    public required string Title { get; set; }
 
     [MaxLength(300)]
-    [Description("Todo description. Omit during update to keep it; use an empty string to clear it.")]
-    public string? Description { get; init; }
+    [Description("Optional detailed context, requirements, or implementation notes.")]
+    public string? Description { get; set; }
 
-    [Description("Todo status. Omit during reset for NotStarted; omit during update to keep the current status.")]
-    public ChatPluginTodoStatus? Status { get; init; }
-}
-
-public interface IChatPluginTodoItemsList : IReadOnlyBindableList<ChatPluginTodoItem>
-{
-    int CompletedCount { get; }
-
-    ISourceList<ChatPluginTodoItem> SourceList { get; }
+    public ChatPluginTodoStatus Status { get; set; } = ChatPluginTodoStatus.NotStarted;
 }
 
 [Serializable]
@@ -88,28 +79,16 @@ public enum RequestConsentRememberMasks
     AllowOnce = 0x1,
     AllowSession = 0x2,
     AlwaysAllow = 0x4,
+    Custom = 0x8,
 
-    All = AllowOnce | AllowSession | AlwaysAllow
+    All = AllowOnce | AllowSession | AlwaysAllow | Custom
 }
 
-public sealed record RequestConsentCustomOption(object Key, IDynamicLocaleKey HeaderKey, LucideIconKind? Icon);
-
-/// <summary>
-/// Represents the effective result of a consent request returned to a chat plugin.
-/// </summary>
-/// <remarks>
-/// Unlike <see cref="ConsentDecision"/>, this value is produced after the invocation context has
-/// applied remembered approval state and converted the user's raw decision into an accepted or
-/// denied outcome. Chat plugins generally only need <see cref="IsAccepted"/> and an optional
-/// <see cref="CustomOption"/>; they do not need to interpret the original remember policy.
-/// </remarks>
-public readonly record struct RequestConsentResult(bool IsAccepted, string? Reason, RequestConsentCustomOption? CustomOption = null)
+public readonly record struct RequestConsentResult(bool IsAccepted, string? Reason)
 {
-    public static RequestConsentResult Accept => new(true, null);
+    public static RequestConsentResult Accepted => new(true, null);
 
-    public static RequestConsentResult Deny(string? reason = null) => new(false, reason);
-
-    public static RequestConsentResult Custom(RequestConsentCustomOption customOption) => new(true, null, customOption);
+    public static RequestConsentResult Denied(string? reason = null) => new(false, reason);
 
     public static implicit operator bool(RequestConsentResult result) => result.IsAccepted;
 
@@ -131,17 +110,6 @@ public interface IChatPluginUserInterface
     IChatPluginDisplaySink DisplaySink { get; }
 
     /// <summary>
-    /// Gets or sets the lightweight, runtime-only preview for the current tool invocation.
-    /// </summary>
-    /// <remarks>
-    /// This property belongs to the invocation context rather than <see cref="DisplaySink"/>:
-    /// detailed display blocks are durable message content, while a preview is visible only while
-    /// its invocation is alive. Assigning <see langword="null"/> hides the preview early; otherwise
-    /// the invocation scope removes it automatically when the tool call completes.
-    /// </remarks>
-    ChatPluginActivityPreview? ActivityPreview { get; set; }
-
-    /// <summary>
     /// Requests user consent for a permission request.
     /// </summary>
     /// <remarks>
@@ -151,15 +119,13 @@ public interface IChatPluginUserInterface
     /// <param name="headerKey"></param>
     /// <param name="content"></param>
     /// <param name="rememberMasks"></param>
-    /// <param name="customOptions"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     Task<RequestConsentResult> RequestConsentAsync(
         string? id,
-        IDynamicLocaleKey headerKey,
+        IDynamicResourceKey headerKey,
         ChatPluginDisplayBlock? content = null,
         RequestConsentRememberMasks rememberMasks = RequestConsentRememberMasks.All,
-        IReadOnlyList<RequestConsentCustomOption>? customOptions = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -186,7 +152,13 @@ public interface IChatPluginUserInterfaceBroker
     /// <summary>
     /// Gets a list of todo items to be displayed in the UI. The plugin can update this list to add/remove/modify todo items, and the UI will reactively update accordingly.
     /// </summary>
-    IChatPluginTodoItemsList TodoItems { get; }
+    IReadOnlyBindableList<ChatPluginTodoItem> TodoItems { get; }
+
+    /// <summary>
+    /// Replaces the todo list displayed in the UI.
+    /// </summary>
+    /// <param name="items"></param>
+    void SetTodoItems(IReadOnlyList<ChatPluginTodoItem> items);
 
     /// <summary>
     /// Shows a consent request dialog to the user and returns their decision.
@@ -194,14 +166,12 @@ public interface IChatPluginUserInterfaceBroker
     /// <param name="headerKey"></param>
     /// <param name="content"></param>
     /// <param name="rememberMasks"></param>
-    /// <param name="customOptions"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task<ConsentDecision> HandleConsentRequestAsync(
-        IDynamicLocaleKey headerKey,
+    Task<ConsentDecisionResult> HandleConsentRequestAsync(
+        IDynamicResourceKey headerKey,
         ChatPluginDisplayBlock? content,
         RequestConsentRememberMasks rememberMasks,
-        IReadOnlyList<RequestConsentCustomOption>? customOptions,
         CancellationToken cancellationToken);
 
     /// <summary>

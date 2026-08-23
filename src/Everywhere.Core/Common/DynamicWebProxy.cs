@@ -60,7 +60,7 @@ public sealed class DynamicWebProxy : IWebProxy
             {
                 throw new HandledException(
                     new InvalidOperationException("Proxy server address is required."),
-                    new DynamicLocaleKey(LocaleKey.DynamicWebProxy_ApplyProxySettings_EndpointRequired_ErrorMessage),
+                    new DynamicResourceKey(LocaleKey.DynamicWebProxy_ApplyProxySettings_EndpointRequired_ErrorMessage),
                     showDetails: false);
             }
 
@@ -77,7 +77,7 @@ public sealed class DynamicWebProxy : IWebProxy
         {
             throw new HandledException(
                 new InvalidOperationException("Proxy server address is invalid."),
-                new DynamicLocaleKey(LocaleKey.DynamicWebProxy_CreateProxy_EndpointInvalid_ErrorMessage),
+                new DynamicResourceKey(LocaleKey.DynamicWebProxy_CreateProxy_EndpointInvalid_ErrorMessage),
                 showDetails: false);
         }
 
@@ -85,7 +85,7 @@ public sealed class DynamicWebProxy : IWebProxy
         {
             throw new HandledException(
                 new InvalidOperationException("Proxy server host is required."),
-                new DynamicLocaleKey(LocaleKey.DynamicWebProxy_CreateProxy_EndpointInvalid_ErrorMessage),
+                new DynamicResourceKey(LocaleKey.DynamicWebProxy_CreateProxy_EndpointInvalid_ErrorMessage),
                 showDetails: false);
         }
 
@@ -93,9 +93,9 @@ public sealed class DynamicWebProxy : IWebProxy
         {
             throw new HandledException(
                 new NotSupportedException($"Proxy server scheme '{proxyUri.Scheme}' is not supported."),
-                new FormattedDynamicLocaleKey(
+                new FormattedDynamicResourceKey(
                     LocaleKey.DynamicWebProxy_CreateProxy_EndpointSchemeUnsupported_ErrorMessage,
-                    new DirectLocaleKey(proxyUri.Scheme)),
+                    new DirectResourceKey(proxyUri.Scheme)),
                 showDetails: false);
         }
 

@@ -1,7 +1,8 @@
-﻿using System.Collections.Concurrent;
-using System.Diagnostics;
+﻿using System.Diagnostics;
+using System.Reactive.Disposables;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
+using DynamicData;
 using Everywhere.Chat.Plugins;
 using Everywhere.Collections;
 using Everywhere.Common;
@@ -29,10 +30,10 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     /// Obsolete: Use HeaderKey instead.
     /// </summary>
     [Key(2)]
-    private DynamicLocaleKey? ObsoleteHeaderKey
+    private DynamicResourceKey? ObsoleteHeaderKey
     {
         get => null; // for forward compatibility
-        init => HeaderKey = value;
+        set => HeaderKey = value;
     }
 
     [Key(3)]
@@ -40,7 +41,7 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
 
     [Key(4)]
     [ObservableProperty]
-    public partial IDynamicLocaleKey? ErrorMessageKey { get; set; }
+    public partial IDynamicResourceKey? ErrorMessageKey { get; set; }
 
     [Key(5)]
     [ObservableProperty]
@@ -48,18 +49,10 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     public partial DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
     [Key(6)]
-    public IReadOnlyList<FunctionCallContent> Calls
-    {
-        get => _calls;
-        private init => _calls = value as List<FunctionCallContent> ?? [.. value];
-    }
+    public List<FunctionCallContent> Calls { get; set; } = [];
 
     [Key(7)]
-    public IReadOnlyList<FunctionResultContent> Results
-    {
-        get => _results;
-        private init => _results = value as List<FunctionResultContent> ?? [.. value];
-    }
+    public List<FunctionResultContent> Results { get; set; } = [];
 
     [Key(8)]
     [ObservableProperty]
@@ -73,13 +66,13 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
 
     [Key(9)]
     [ObservableProperty]
-    public partial IDynamicLocaleKey? HeaderKey { get; set; }
+    public partial IDynamicResourceKey? HeaderKey { get; set; }
 
     [Key(10)]
     private IEnumerable<ChatPluginDisplayBlock> SerializableDisplayBlocks
     {
         get => _displaySink.Items;
-        init => _displaySink.Reset(value);
+        set => _displaySink.Edit(list => list.Reset(value));
     }
 
     /// <summary>
@@ -104,41 +97,13 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     [IgnoreMember]
     public IChatPluginDisplaySink DisplaySink => _displaySink;
 
-    /// <summary>
-    /// Gets the most recently updated preview among the tool invocations that are still active in
-    /// this function-call message.
-    /// </summary>
-    /// <remarks>
-    /// Presentation slots are runtime-only and are never serialized. Each invocation writes only to its
-    /// own slot; this aggregate getter is read by the presentation layer and therefore does not
-    /// expose registration or cleanup operations to plugins.
-    /// </remarks>
-    [IgnoreMember]
-    [JsonIgnore]
-    public ChatPluginActivityPreview? ActivityPreview
-    {
-        get
-        {
-            ActivityPreviewSnapshot? latest = null;
-            foreach (var pair in _activityPresentationSlots)
-            {
-                var snapshot = pair.Value.Snapshot;
-                if (snapshot.Preview is null || latest is not null && snapshot.Revision <= latest.Revision) continue;
-                latest = snapshot;
-            }
-
-            return latest?.Preview;
-        }
-    }
-
     // [Key(11)]
     // [ObservableProperty]
     // public partial bool IsExpanded { get; set; } = true;
 
     [IgnoreMember]
     [JsonIgnore]
-    public bool IsWaitingForUserInput =>
-        _activityPresentationSlots.AsValueEnumerable().Any(pair => pair.Value.IsWaitingForUserInput);
+    public bool IsWaitingForUserInput => _displaySink.Any(db => db.IsWaitingForUserInput);
 
     /// <summary>
     /// Attachments associated with this action message. Used to provide additional context of a tool call result.
@@ -146,13 +111,8 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
     [IgnoreMember]
     public IEnumerable<ChatAttachment> Attachments => Results.Select(r => r.Result).OfType<ChatAttachment>();
 
-    [IgnoreMember] private readonly List<FunctionCallContent> _calls = [];
-    [IgnoreMember] private readonly List<FunctionResultContent> _results = [];
     [IgnoreMember] private readonly ChatPluginDisplaySink _displaySink = new();
-    [IgnoreMember] private readonly ConcurrentDictionary<string, ActivityPresentationSlot> _activityPresentationSlots = new();
-    [IgnoreMember] private readonly CompositeDisposable _disposables = new(2);
-    [IgnoreMember] private readonly IDisposable _displayPersistenceConnection;
-    [IgnoreMember] private long _activityPreviewRevision;
+    [IgnoreMember] private readonly CompositeDisposable _disposables = new(3);
 
     [SerializationConstructor]
     private FunctionCallChatMessage() : this(default, null)
@@ -161,7 +121,7 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
         // The pipeline is set up in the primary constructor.
     }
 
-    public FunctionCallChatMessage(LucideIconKind icon, IDynamicLocaleKey? headerKey)
+    public FunctionCallChatMessage(LucideIconKind icon, IDynamicResourceKey? headerKey)
     {
         Icon = icon;
         HeaderKey = headerKey;
@@ -172,131 +132,18 @@ public sealed partial class FunctionCallChatMessage : ChatMessage, IHaveChatAtta
             .ObserveOnAvaloniaDispatcher()
             .BindEx(_disposables);
 
-        // Keep persistence observation independent from the UI binding. DynamicData owns
-        // the per-block subscriptions and removes them when blocks leave the sink, which
-        // prevents a completed or discarded block from retaining this message.
-        _displayPersistenceConnection = _displaySink
-            .Connect()
-            .AutoRefresh()
-            .Subscribe(_ => OnPropertyChanged(nameof(DisplayBlocks)));
+        // Monitor IsWaitingForUserInput changes
+        _disposables.Add(
+            _displaySink
+                .Connect()
+                .WhenAnyPropertyChanged(nameof(ChatPluginDisplayBlock.IsWaitingForUserInput))
+                .Subscribe(_ => OnPropertyChanged(nameof(IsWaitingForUserInput))));
 
         _disposables.Add(_displaySink);
     }
 
-    /// <summary>
-    /// Adds a function call and notifies owners that the serialized call list changed.
-    /// Keeping the mutation here makes in-progress tool calls visible to persistence before
-    /// the enclosing function-call message finishes.
-    /// </summary>
-    public void AddCall(FunctionCallContent call)
-    {
-        _calls.Add(call);
-        OnPropertyChanged(nameof(Calls));
-    }
-
-    /// <summary>
-    /// Adds a function result and notifies owners that the serialized result list changed.
-    /// </summary>
-    public void AddResult(FunctionResultContent result)
-    {
-        _results.Add(result);
-        OnPropertyChanged(nameof(Results));
-    }
-
-    /// <summary>
-    /// Registers the runtime presentation slot owned by one concrete tool invocation.
-    /// </summary>
-    /// <remarks>
-    /// The slot itself is stable for the invocation lifetime and carries both its latest lightweight
-    /// preview and its transient user-input wait count. Updating either value never mutates the
-    /// registry, so a late writer cannot accidentally re-register a slot after its invocation has
-    /// ended. The concurrent dictionary is needed only for the much rarer registration/removal
-    /// operations when multiple tool invocations overlap.
-    /// </remarks>
-    internal ActivityPresentationSlot RegisterActivityPresentation(string invocationId)
-    {
-        var slot = new ActivityPresentationSlot(this);
-        if (!_activityPresentationSlots.TryAdd(invocationId, slot))
-            throw new InvalidOperationException($"Activity presentation state is already registered for invocation '{invocationId}'.");
-
-        return slot;
-    }
-
-    /// <summary>
-    /// Removes an invocation's complete presentation slot. Remaining invocations are left untouched;
-    /// the aggregate getters naturally fall back to the latest remaining preview and wait state.
-    /// </summary>
-    internal void UnregisterActivityPresentation(string invocationId, ActivityPresentationSlot slot)
-    {
-        if (!_activityPresentationSlots.TryGetValue(invocationId, out var registered) || !ReferenceEquals(registered, slot)) return;
-        if (!_activityPresentationSlots.TryRemove(invocationId, out _)) return;
-        NotifyActivityPreviewChanged();
-        if (slot.IsWaitingForUserInput) NotifyUserInputWaitChanged();
-    }
-
-    private long NextActivityPreviewRevision() => Interlocked.Increment(ref _activityPreviewRevision);
-
-    private void NotifyActivityPreviewChanged() => OnPropertyChanged(nameof(ActivityPreview));
-
-    private void NotifyUserInputWaitChanged() => OnPropertyChanged(nameof(IsWaitingForUserInput));
-
     public void Dispose()
     {
-        _activityPresentationSlots.Clear();
-        _displayPersistenceConnection.Dispose();
         _disposables.Dispose();
     }
-
-    /// <summary>
-    /// Stores transient presentation state for one invocation. Preview replacement and wait-count
-    /// transitions are independent atomic operations: plugins have one logical preview writer, but
-    /// one invocation may have overlapping user interactions and therefore uses a counter rather
-    /// than a Boolean flag.
-    /// </summary>
-    internal sealed class ActivityPresentationSlot(FunctionCallChatMessage owner)
-    {
-        private ActivityPreviewSnapshot _snapshot = new(null, 0);
-        private int _userInputWaitCount;
-
-        public ChatPluginActivityPreview? Preview
-        {
-            get => Volatile.Read(ref _snapshot).Preview;
-            set
-            {
-                var revision = value is null ? 0 : owner.NextActivityPreviewRevision();
-                Interlocked.Exchange(ref _snapshot, new ActivityPreviewSnapshot(value, revision));
-                owner.NotifyActivityPreviewChanged();
-            }
-        }
-
-        /// <summary>
-        /// Gets whether at least one interaction owned by this invocation is waiting for the user.
-        /// </summary>
-        public bool IsWaitingForUserInput => Volatile.Read(ref _userInputWaitCount) > 0;
-
-        public ActivityPreviewSnapshot Snapshot => Volatile.Read(ref _snapshot);
-
-        /// <summary>
-        /// Starts one invocation-local user interaction. Only the zero-to-one transition changes
-        /// the aggregate property, avoiding redundant presentation refreshes for overlapping waits.
-        /// </summary>
-        public void EnterUserInputWait()
-        {
-            if (Interlocked.Increment(ref _userInputWaitCount) == 1)
-                owner.NotifyUserInputWaitChanged();
-        }
-
-        /// <summary>
-        /// Completes one invocation-local user interaction. A count is required because separate
-        /// asynchronous operations may overlap even though each operation has a single owner.
-        /// </summary>
-        public void ExitUserInputWait()
-        {
-            var count = Interlocked.Decrement(ref _userInputWaitCount);
-            Debug.Assert(count >= 0, "User-input wait scopes must be exited exactly once.");
-            if (count == 0) owner.NotifyUserInputWaitChanged();
-        }
-    }
-
-    internal sealed record ActivityPreviewSnapshot(ChatPluginActivityPreview? Preview, long Revision);
 }

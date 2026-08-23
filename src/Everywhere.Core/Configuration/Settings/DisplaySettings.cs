@@ -4,14 +4,13 @@ using Avalonia.Threading;
 using Everywhere.Common;
 using Everywhere.Views;
 using Lucide.Avalonia;
-using Microsoft.Extensions.DependencyInjection;
 using ShadUI;
 using ShadUI.Themes;
 
 namespace Everywhere.Configuration;
 
 [GeneratedSettingsItems]
-public sealed partial class DisplaySettings(IServiceProvider serviceProvider) : SettingsBase(serviceProvider), ISettingsCategory
+public sealed partial class DisplaySettings : SettingsBase, ISettingsCategory
 {
     [SettingsItemIgnore]
     public int Index => 1;
@@ -20,10 +19,10 @@ public sealed partial class DisplaySettings(IServiceProvider serviceProvider) : 
     public LucideIconKind Icon => LucideIconKind.MonitorCog;
 
     [SettingsItemIgnore]
-    public IDynamicLocaleKey TitleKey { get; } = new DynamicLocaleKey(LocaleKey.SettingsCategory_Settings_Display_Header);
+    public IDynamicResourceKey TitleKey { get; } = new DynamicResourceKey(LocaleKey.SettingsCategory_Settings_Display_Header);
 
     [SettingsItemIgnore]
-    public IDynamicLocaleKey? DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.SettingsCategory_Settings_Display_Description);
+    public IDynamicResourceKey? DescriptionKey { get; } = new DynamicResourceKey(LocaleKey.SettingsCategory_Settings_Display_Description);
 
     /// <summary>
     /// Gets or sets the current application language.
@@ -34,7 +33,7 @@ public sealed partial class DisplaySettings(IServiceProvider serviceProvider) : 
     /// <example>
     /// default, zh-hans, ru, de, ja, it, fr, es, ko, pt-br, zh-hant, zh-hant-hk
     /// </example>
-    [DynamicLocaleKey(
+    [DynamicResourceKey(
         LocaleKey.DisplaySettings_Language_Header,
         LocaleKey.DisplaySettings_Language_Description)]
     [SettingsItem(Group = "_")]
@@ -50,7 +49,7 @@ public sealed partial class DisplaySettings(IServiceProvider serviceProvider) : 
         }
     }
 
-    [DynamicLocaleKey(
+    [DynamicResourceKey(
         LocaleKey.DisplaySettings_Theme_Header,
         LocaleKey.DisplaySettings_Theme_Description)]
     [SettingsItem(Group = "_")]
@@ -75,80 +74,96 @@ public sealed partial class DisplaySettings(IServiceProvider serviceProvider) : 
         }
     }
 
-    [DynamicLocaleKey(
+    [DynamicResourceKey(
         LocaleKey.DisplaySettings_AccentColor_Header,
         LocaleKey.DisplaySettings_AccentColor_Description)]
     [SettingsItem(Group = "_")]
-    public SettingsControl<AccentColorSelector> AccentColorControl => new(
-        new AccentColorSelector
-        {
-            [!AccentColorSelector.SelectedColorProperty] = CompiledBinding.Create(
-                (DisplaySettings x) => x.AccentColor,
-                source: this,
-                mode: BindingMode.TwoWay,
-                converter: SerializableColorValueConverters.ToColor)
-        });
-
-    /// <summary>
-    /// Gets or sets the primary UI font family name. A null value restores the resource-defined default.
-    /// </summary>
-    [SettingsItemIgnore]
-    public string? FontFamily
+    public SettingsControl<AccentColorSelector> AccentColorControl => new(new AccentColorSelector
     {
-        get;
-        set
+        [!AccentColorSelector.SelectedColorProperty] = new Binding(nameof(AccentColor))
         {
-            value = value?.Trim();
-            if (string.Equals(field, value, StringComparison.OrdinalIgnoreCase)) return;
-
-            Dispatcher.UIThread.Invoke(() => AppearanceManager.Shared.FontFamily = value);
-
-            field = value;
-            OnPropertyChanged();
-        }
-    }
-
-    /// <summary>
-    /// Gets the font family picker used by the generated settings page.
-    /// </summary>
-    [DynamicLocaleKey(
-        LocaleKey.DisplaySettings_Font_Header,
-        LocaleKey.DisplaySettings_Font_Description)]
-    [SettingsItem(Group = "_")]
-    public SettingsControl<FontFamilyPicker> FontFamilyControl => new(x => new FontFamilyPicker(x.GetRequiredService<FontFamilyCatalog>())
-    {
-        [!FontFamilyPicker.SelectedFontFamilyNameProperty] = CompiledBinding.Create(
-            (DisplaySettings settings) => settings.FontFamily,
-            source: this,
-            mode: BindingMode.TwoWay)
+            Source = this,
+            Mode = BindingMode.TwoWay,
+            Converter = SerializableColorValueConverters.ToColor
+        },
     });
 
     /// <summary>
     /// Application font size.
     /// </summary>
-    [DynamicLocaleKey(
+    [DynamicResourceKey(
         LocaleKey.DisplaySettings_FontSize_Header,
         LocaleKey.DisplaySettings_FontSize_Description)]
     [SettingsItem(Group = "_")]
     [SettingsIntegerItem(Min = -1, Max = 3, IsTextBoxVisible = false)]
     public int FontSize
     {
-        get;
+        get
+        {
+            return Dispatcher.UIThread.Invoke(GetFontSize);
+
+            int GetFontSize()
+            {
+                if (Application.Current is not { } app) return 0;
+
+                var fontSizeM = app.Resources["FontSizeM"] as double? ?? 14;
+                return fontSizeM switch
+                {
+                    < 14 => -1,
+                    15 => 1,
+                    16 => 2,
+                    > 16 => 3,
+                    _ => 0,
+                };
+            }
+        }
         set
         {
-            if (field == value) return;
-
-            Dispatcher.UIThread.Invoke(() => AppearanceManager.Shared.FontSize = value switch
-            {
-                -1 => 12d,
-                1 => 15d,
-                2 => 16d,
-                3 => 18d,
-                _ => 14d,
-            });
-
-            field = value;
+            Dispatcher.UIThread.Invoke(SetFontSize);
             OnPropertyChanged();
+
+            void SetFontSize()
+            {
+                if (Application.Current is not { } app) return;
+
+                // <system:Double x:Key="FontSizeXs">10</system:Double>
+                // <system:Double x:Key="FontSizeS">12.8</system:Double>
+                // <system:Double x:Key="FontSizeM">14</system:Double>
+                // <system:Double x:Key="FontSizeL">16</system:Double>
+                // <system:Double x:Key="FontSizeXl">20</system:Double>
+                // <system:Double x:Key="FontSize2Xl">24</system:Double>
+                // <system:Double x:Key="FontSize3Xl">30</system:Double>
+                // <system:Double x:Key="FontSize4Xl">48</system:Double>
+
+                // value: -1, 0(default), 1, 2, 3
+
+                var fontSizeM = value switch
+                {
+                    -1 => 12d,
+                    1 => 15d,
+                    2 => 16d,
+                    3 => 18d,
+                    _ => 14d,
+                };
+                app.Resources["FontSizeXs"] = fontSizeM * 0.714;
+                app.Resources["FontSizeS"] = fontSizeM * 0.914;
+                app.Resources["FontSizeM"] = fontSizeM;
+                app.Resources["FontSizeL"] = fontSizeM * 1.142;
+                app.Resources["FontSizeXl"] = fontSizeM * 1.428;
+                app.Resources["FontSize2Xl"] = fontSizeM * 1.714;
+                app.Resources["FontSize3Xl"] = fontSizeM * 2.142;
+                app.Resources["FontSize4Xl"] = fontSizeM * 3.428;
+
+                var lineHeightM = fontSizeM / 2 * 3;
+                app.Resources["LineHeightXs"] = lineHeightM * 0.714;
+                app.Resources["LineHeightS"] = lineHeightM * 0.914;
+                app.Resources["LineHeightM"] = lineHeightM;
+                app.Resources["LineHeightL"] = lineHeightM * 1.142;
+                app.Resources["LineHeightXl"] = lineHeightM * 1.428;
+                app.Resources["LineHeight2Xl"] = lineHeightM * 1.714;
+                app.Resources["LineHeight3Xl"] = lineHeightM * 2.142;
+                app.Resources["LineHeight4Xl"] = lineHeightM * 3.428;
+            }
         }
     }
 }

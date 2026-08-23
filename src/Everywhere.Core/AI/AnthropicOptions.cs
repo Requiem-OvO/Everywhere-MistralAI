@@ -5,19 +5,19 @@ namespace Everywhere.AI;
 
 public enum AnthropicRequestThinkingConfig
 {
-    [DynamicLocaleKey(LocaleKey.AnthropicRequestThinkingConfig_Default)]
+    [DynamicResourceKey(LocaleKey.AnthropicRequestThinkingConfig_Default)]
     Default = 0,
-    [DynamicLocaleKey(LocaleKey.AnthropicRequestThinkingConfig_Disabled)]
+    [DynamicResourceKey(LocaleKey.AnthropicRequestThinkingConfig_Disabled)]
     Disabled = 1,
-    [DynamicLocaleKey(LocaleKey.AnthropicRequestThinkingConfig_Adaptive)]
+    [DynamicResourceKey(LocaleKey.AnthropicRequestThinkingConfig_Adaptive)]
     Adaptive = 2
 }
 
 public enum AnthropicRequestCacheControl
 {
-    [DynamicLocaleKey(LocaleKey.AnthropicRequestCacheControl_Ephemeral)]
+    [DynamicResourceKey(LocaleKey.AnthropicRequestCacheControl_Ephemeral)]
     Ephemeral = 0,
-    [DynamicLocaleKey(LocaleKey.AnthropicRequestCacheControl_NoCache)]
+    [DynamicResourceKey(LocaleKey.AnthropicRequestCacheControl_NoCache)]
     NoCache = 1,
 }
 
@@ -25,46 +25,46 @@ public enum AnthropicRequestCacheControl
 public sealed partial class AnthropicOptions : ObservableObject
 {
     [ObservableProperty]
-    [DynamicLocaleKey(
+    [DynamicResourceKey(
         LocaleKey.AnthropicOptions_ThinkingConfig_Header,
         LocaleKey.AnthropicOptions_ThinkingConfig_Description)]
     [SettingsItem(Group = "_", DocumentUrl = "https://platform.claude.com/docs/en/build-with-claude/extended-thinking")]
     public partial AnthropicRequestThinkingConfig ThinkingConfig { get; set; } = AnthropicRequestThinkingConfig.Default;
 
     [ObservableProperty]
-    [DynamicLocaleKey(
+    [DynamicResourceKey(
         LocaleKey.AnthropicOptions_BudgetTokens_Header,
         LocaleKey.AnthropicOptions_BudgetTokens_Description)]
     [SettingsItem(Group = "_", DocumentUrl = "https://platform.claude.com/docs/en/build-with-claude/extended-thinking")]
     public partial int BudgetTokens { get; set; } = 2048;
 
     [ObservableProperty]
-    [DynamicLocaleKey(
+    [DynamicResourceKey(
         LocaleKey.AnthropicOptions_ThinkingEffort_Header,
         LocaleKey.AnthropicOptions_ThinkingEffort_Description)]
     [SettingsItem(Group = "_", DocumentUrl = "https://platform.claude.com/docs/en/build-with-claude/adaptive-thinking")]
     public partial string? ThinkingEffort { get; set; }
 
     [ObservableProperty]
-    [DynamicLocaleKey(
+    [DynamicResourceKey(
         LocaleKey.AnthropicOptions_CacheControl_Header,
         LocaleKey.AnthropicOptions_CacheControl_Description)]
     [SettingsItem(Group = "_", DocumentUrl = "https://platform.claude.com/docs/en/build-with-claude/prompt-caching")]
     public partial AnthropicRequestCacheControl CacheControl { get; set; } = AnthropicRequestCacheControl.Ephemeral;
 
-    [DynamicLocaleKey(
+    [DynamicResourceKey(
         LocaleKey.Assistant_Temperature_Header,
         LocaleKey.Assistant_Temperature_Description)]
     [SettingsItem(Group = "_", DocumentUrl = "https://platform.claude.com/docs/en/api/beta/messages/create#create.temperature")]
     public string? Temperature { get; set; }
 
-    [DynamicLocaleKey(
+    [DynamicResourceKey(
         LocaleKey.Assistant_TopP_Header,
         LocaleKey.Assistant_TopP_Description)]
     [SettingsItem(Group = "_", DocumentUrl = "https://platform.claude.com/docs/en/api/beta/messages/create#create.top_p")]
     public string? TopP { get; set; }
 
-    [DynamicLocaleKey(
+    [DynamicResourceKey(
         LocaleKey.Assistant_TopK_Header,
         LocaleKey.Assistant_TopK_Description)]
     [SettingsItem(Group = "_", DocumentUrl = "https://platform.claude.com/docs/en/api/beta/messages/create#create.top_k")]

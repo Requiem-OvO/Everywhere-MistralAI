@@ -112,17 +112,17 @@ public sealed class UpdaterInitializer(
 
         notificationPublisher.Push(
             UpdateNotificationId,
-            new FormattedDynamicLocaleKey(
+            new FormattedDynamicResourceKey(
                 latestUpdate.IsReady ?
                     LocaleKey.HomeNotification_UpdateReady :
                     LocaleKey.HomeNotification_UpdateAvailable,
-                new DirectLocaleKey(latestUpdate.Version.ToString())),
+                new DirectResourceKey(latestUpdate.Version.ToString())),
             NotificationType.Information,
             canDismiss: true,
             forceShow: true,
             latestUpdate.IsReady ?
-                new DynamicLocaleKey(LocaleKey.HomeNotification_InstallUpdate) :
-                new DynamicLocaleKey(LocaleKey.HomeNotification_ViewUpdate),
+                new DynamicResourceKey(LocaleKey.HomeNotification_InstallUpdate) :
+                new DynamicResourceKey(LocaleKey.HomeNotification_ViewUpdate),
             latestUpdate.IsReady ?
                 new AsyncRelayCommand(() => softwareUpdater.PerformUpdateAsync()) :
                 new RelayCommand(OpenChangeLog));

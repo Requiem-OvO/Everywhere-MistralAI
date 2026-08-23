@@ -11,12 +11,5 @@ internal static class KnownAttributes
     public const string SettingsSelectionItem = "Everywhere.Configuration.SettingsSelectionItemAttribute";
     public const string SettingsTemplatedItem = "Everywhere.Configuration.SettingsTemplatedItemAttribute";
     public const string SettingsItems = "Everywhere.Configuration.SettingsItemsAttribute";
-    public const string SettingsSerializedSubtree = "Everywhere.Configuration.SettingsSerializedSubtreeAttribute";
-    public const string SettingsUnknownMemberHandling = "Everywhere.Configuration.SettingsUnknownMemberHandlingAttribute";
-    public const string DynamicLocaleKey = "Everywhere.I18N.DynamicLocaleKeyAttribute";
-    public const string JsonIgnore = "System.Text.Json.Serialization.JsonIgnoreAttribute";
-    public const string JsonPropertyName = "System.Text.Json.Serialization.JsonPropertyNameAttribute";
-    public const string TypeConverter = "System.ComponentModel.TypeConverterAttribute";
-    public const string AllowNull = "System.Diagnostics.CodeAnalysis.AllowNullAttribute";
-    public const string DisallowNull = "System.Diagnostics.CodeAnalysis.DisallowNullAttribute";
+    public const string DynamicResourceKey = "Everywhere.I18N.DynamicResourceKeyAttribute";
 }

@@ -15,9 +15,8 @@
     <Setter Property="ClipToBounds" Value="False"/>
     <Setter Property="Template">
       <ControlTemplate TargetType="views:McpImportForm">
-        <DockPanel VerticalSpacing="8">
-          <DockPanel
-            Margin="0,-8,0,0" Dock="Top">
+        <StackPanel Spacing="8">
+          <DockPanel Margin="0,-8,0,0">
             <Button
               Classes="Secondary" DockPanel.Dock="Right"
               Margin="0,-16,0,0" VerticalAlignment="Top"
@@ -33,12 +32,11 @@
             CornerRadius="{DynamicResource LgCornerRadius}">
             <avaloniaEdit:TextEditor
               x:Name="PART_TextEditor" Height="420"
-              Margin="0,2"
-              FontFamily="{DynamicResource MonospaceFontFamily}"
+              Margin="0,2" FontFamily="Cascadia Code,Consolas,Menlo,Monospace"
               ShowLineNumbers="True"
               Watermark="{x:Static views:McpImportForm.McpJsonWatermark}"/>
           </Border>
-        </DockPanel>
+        </StackPanel>
       </ControlTemplate>
     </Setter>
   </ControlTheme>

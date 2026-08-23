@@ -47,10 +47,4 @@ public interface IWindowHelper
     /// </summary>
     /// <param name="window"></param>
     void RequestUserAttention(Window window);
-
-    /// <summary>
-    /// Initialize the window properties by its type
-    /// </summary>
-    /// <param name="window"></param>
-    void InitializeWindow(Window window);
 }

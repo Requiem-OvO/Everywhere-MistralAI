@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Text;
 using System.Text.RegularExpressions;
+using DynamicData;
 using Everywhere.AI;
 using Everywhere.Chat.Permissions;
 using Everywhere.Common;
@@ -11,6 +12,7 @@ using Lucide.Avalonia;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Porta.Pty;
+using ZLinq;
 
 namespace Everywhere.Chat.Plugins.BuiltIn;
 
@@ -21,11 +23,12 @@ namespace Everywhere.Chat.Plugins.BuiltIn;
 /// </summary>
 public sealed partial class TerminalPlugin : BuiltInChatPlugin
 {
-    public override IDynamicLocaleKey HeaderKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Terminal_Header);
-    public override IDynamicLocaleKey DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Terminal_Description);
+    public override IDynamicResourceKey HeaderKey { get; } = new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Terminal_Header);
+
+    public override IDynamicResourceKey DescriptionKey { get; } = new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Terminal_Description);
+
     public override LucideIconKind? Icon => LucideIconKind.SquareTerminal;
-    // TODO: uncomment this after Agentic Approval is done
-    // public override bool IsDefaultEnabled => true;
+
     public override IReadOnlyList<SettingsItem> SettingsItems => _pluginSettings.SettingsItems;
 
     private readonly TerminalPluginSettings _pluginSettings;
@@ -41,12 +44,13 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
         _functionsSource.Add(
             new BuiltInChatFunction(
                 ExecuteInTerminalAsync,
-                permissions: ChatFunctionPermissions.ShellExecute,
-                canBypassApproval: false,
+                ChatFunctionPermissions.ShellExecute,
+                isExperimental: true,
+                isAutoApproveAllowed: false,
                 onPermissionConsent: _ => true));
     }
 
-    public override ValueTask<IReadOnlyList<ChatFunction>> GetAvailableFunctionsAsync(CancellationToken cancellationToken)
+    public override ValueTask<IReadOnlyList<ChatFunction>> GetAvailableFunctionsAsync(ChatPluginFunctionContext context)
     {
         var configuredFunction = _functionsSource.Items[0];
         var (shellPath, shellType) = DetectShell();
@@ -69,22 +73,24 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
             ExecuteInTerminalAsync,
             configuredFunction.Permissions,
             icon: configuredFunction.Icon,
-            isDefaultEnabled: configuredFunction.IsDefaultEnabled,
-            isDefaultBypassApproval: configuredFunction.IsDefaultBypassApproval,
-            canBypassApproval: configuredFunction.CanBypassApproval,
+            isAutoApproveAllowed: configuredFunction.IsAutoApproveAllowed,
             isExperimental: configuredFunction.IsExperimental,
+            isEnabled: configuredFunction.IsEnabled,
             isVisible: configuredFunction.IsVisible,
             onPermissionConsent: configuredFunction.OnPermissionConsent,
             functionName: "execute_in_terminal",
             description: description,
             headerKey: configuredFunction.HeaderKey,
-            descriptionKey: configuredFunction.DescriptionKey);
+            descriptionKey: configuredFunction.DescriptionKey)
+        {
+            AutoApprove = configuredFunction.AutoApprove
+        };
 
         return ValueTask.FromResult<IReadOnlyList<ChatFunction>>([runtimeFunction]);
     }
 
     [KernelFunction("execute_in_terminal")]
-    [DynamicLocaleKey(
+    [DynamicResourceKey(
         LocaleKey.BuiltInChatPlugin_Terminal_ExecuteScript_Header,
         LocaleKey.BuiltInChatPlugin_Terminal_ExecuteScript_Description)]
     private async Task<string> ExecuteInTerminalAsync(
@@ -101,24 +107,21 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
             throw new ArgumentException("Script cannot be empty or whitespace.", nameof(command));
         }
 
-        // The command preview remains a single lightweight TextBlock while the detailed terminal
-        // block below is created only when the activity item is explicitly expanded.
-        userInterface.ActivityPreview = new ChatPluginCommandActivityPreview(command);
-
         var (shellPath, shellType) = DetectShell();
         if (shellType == ShellType.Unknown)
         {
             throw new HandledException(
                 new NotSupportedException(
-                    $"The configured shell '{shellPath}' is unavailable or unsupported. Supported shells are PowerShell (pwsh), Windows PowerShell (powershell), zsh, and bash. Ask the user to check the Terminal plugin's shell-path setting."),
-                LocaleKey.BuiltInChatPlugin_Terminal_UnsupportedShell);
+                    $"Unsupported shell or not found: {shellPath}. Only PowerShell (pwsh), Windows PowerShell (powershell), zsh, and bash are supported."),
+                new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Terminal_UnsupportedShell),
+                showDetails: false);
         }
 
-        if (!_pluginSettings.BypassesApproval)
+        if (!_pluginSettings.AutoApprove)
         {
             var consent = await userInterface.RequestConsentAsync(
                 null,
-                new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_Terminal_ExecuteScript_ScriptConsent_Header),
+                new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Terminal_ExecuteScript_ScriptConsent_Header),
                 new ChatPluginContainerDisplayBlock
                 {
                     new ChatPluginTextDisplayBlock(description),
@@ -129,10 +132,9 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
             if (!consent)
             {
                 throw new HandledException(
-                    new UnauthorizedAccessException(
-                        consent.FormatReason(
-                            "The user denied the shell-script execution approval request, so the command was not run.")),
-                    LocaleKey.BuiltInChatPlugin_Terminal_ExecuteScript_DenyMessage);
+                    new UnauthorizedAccessException(consent.FormatReason("User denied consent for shell script execution.")),
+                    new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_Terminal_ExecuteScript_DenyMessage),
+                    showDetails: false);
             }
         }
 
@@ -207,9 +209,9 @@ public sealed partial class TerminalPlugin : BuiltInChatPlugin
             }
         }
 
-        var outputs = terminalRuns.AsValueEnumerable().Select(run => run.OutputText.Trim()).ToArray();
+        var outputs = terminalRuns.AsValueEnumerable().Select(run => run.OutputText.Trim()).ToList();
         var budgets = TokenBudget.Allocate(
-            outputs.AsValueEnumerable().Select(TokenHelper.EstimateTokenCount).ToArray().AsSpan(),
+            outputs.AsValueEnumerable().Select(TokenHelper.EstimateTokenCount).ToList().AsSpan(),
             40000);
 
         var resultBuilder = new StringBuilder();

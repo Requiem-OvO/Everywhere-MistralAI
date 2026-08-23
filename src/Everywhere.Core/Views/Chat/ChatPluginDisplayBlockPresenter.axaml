@@ -1,8 +1,8 @@
 ﻿<ResourceDictionary
   xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia" xmlns:plugins="clr-namespace:Everywhere.Chat.Plugins"
-  xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:v="using:Everywhere.Views"
-  xmlns:vc="clr-namespace:Everywhere.ValueConverters">
+  xmlns:in="clr-namespace:Everywhere.Interactions" xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
+  xmlns:plugins="clr-namespace:Everywhere.Chat.Plugins" xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI"
+  xmlns:v="using:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters">
   <Design.PreviewWith>
     <v:ChatPluginDisplayBlockPresenter/>
   </Design.PreviewWith>
@@ -10,12 +10,18 @@
   <ControlTheme
     x:Key="{x:Type v:ChatPluginDisplayBlockPresenter}"
     TargetType="v:ChatPluginDisplayBlockPresenter">
+    <Setter Property="Background" Value="{DynamicResource CardBackgroundColor}"/>
     <Setter Property="Template">
       <ControlTemplate TargetType="v:ChatPluginDisplayBlockPresenter">
-        <ContentPresenter
-          x:Name="PART_ContentPresenter"
-          Content="{TemplateBinding Content}"
-          ContentTemplate="{TemplateBinding ContentTemplate}"/>
+        <Border
+          Padding="4"
+          Background="{TemplateBinding Background}"
+          CornerRadius="4">
+          <ContentPresenter
+            x:Name="PART_ContentPresenter"
+            Content="{TemplateBinding Content}"
+            ContentTemplate="{TemplateBinding ContentTemplate}"/>
+        </Border>
       </ControlTemplate>
     </Setter>
 
@@ -23,11 +29,6 @@
       <DataTemplates>
         <DataTemplate DataType="plugins:ChatPluginContainerDisplayBlock">
           <ItemsControl ItemsSource="{Binding Children}">
-            <ItemsControl.ItemsPanel>
-              <ItemsPanelTemplate>
-                <StackPanel Spacing="4"/>
-              </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
               <DataTemplate>
                 <v:ChatPluginDisplayBlockPresenter Content="{Binding}"/>
@@ -45,7 +46,7 @@
           </ScrollViewer>
         </DataTemplate>
 
-        <DataTemplate DataType="plugins:ChatPluginDynamicLocaleKeyDisplayBlock">
+        <DataTemplate DataType="plugins:ChatPluginDynamicResourceKeyDisplayBlock">
           <SelectableTextBlock
             shadui:ControlAssist.ClassName="{Binding ClassName}"
             Text="{Binding Key^}"
@@ -82,6 +83,7 @@
               <ItemsControl.ItemTemplate>
                 <DataTemplate DataType="plugins:ChatPluginFileReference">
                   <HyperlinkButton
+                    Padding="2"
                     Command="{Binding OpenFileLocationCommand}"
                     TextBlock.TextTrimming="CharacterEllipsis">
                     <HyperlinkButton.Content>
@@ -92,12 +94,9 @@
                           Size="14"/>
                         <TextBlock
                           FontSize="{DynamicResource FontSizeS}"
-                          Text="{Binding FullPath, Mode=OneTime}"
-                          TextTrimming="PathSegmentEllipsis">
-                          <Interaction.Behaviors>
-                            <shadui:TextTrimmedToolTipBehavior Tip="{Binding FullPath, Mode=OneTime}"/>
-                          </Interaction.Behaviors>
-                        </TextBlock>
+                          Text="{Binding FullPath}"
+                          TextTrimming="PathSegmentEllipsis"
+                          ToolTip.Tip="{Binding FullPath}"/>
                       </StackPanel>
                     </HyperlinkButton.Content>
                   </HyperlinkButton>
@@ -114,14 +113,7 @@
 
         <DataTemplate DataType="plugins:ChatPluginFileDifferenceDisplayBlock">
           <v:TextDifferenceSummaryView
-            AddedLineCount="{Binding AddedLineCount}"
-            CanReview="{Binding CanReview}"
-            FilePath="{Binding FilePath}"
-            HasLineChanges="{Binding HasLineChanges}"
             OriginalText="{Binding OriginalText}"
-            RemovedLineCount="{Binding RemovedLineCount}"
-            ReviewKind="{Binding ReviewKind}"
-            SourcePath="{Binding SourcePath}"
             TextDifference="{Binding Difference}"/>
         </DataTemplate>
 
@@ -157,7 +149,7 @@
                     Classes="Ghost Compact Link"
                     Command="{Binding $parent[v:ChatPluginDisplayBlockPresenter].OpenUrlCommand}"
                     CommandParameter="{Binding Url}"
-                    ToolTip.Tip="{Binding Url}">
+                    ToolTip.Tip="{Binding DisplayNameKey^}">
                     <StackPanel Orientation="Horizontal">
                       <Image
                         x:Name="FaviconImage" MaxWidth="12"
@@ -169,7 +161,7 @@
                       <TextBlock
                         Margin="4,0,0,0"
                         FontSize="{DynamicResource FontSizeS}"
-                        Text="{Binding DisplayNameKey^}"/>
+                        Text="{Binding Url, Converter={x:Static vc:UrlConverters.ToHost}}"/>
                     </StackPanel>
                   </Button>
                 </DataTemplate>
@@ -190,20 +182,19 @@
             Language="{Binding Language}"/>
         </DataTemplate>
 
-        <DataTemplate DataType="plugins:ChatPluginSubagentDisplayBlock">
-          <Button
-            Classes="Ghost Compact" HorizontalAlignment="Left"
-            Command="{Binding $parent[v:ChatMessageItemsControl].OpenSubagentCommand}"
-            CommandParameter="{Binding}"
-            CornerRadius="{DynamicResource FullCornerRadius}"
-            ToolTip.Tip="{I18N {x:Static LocaleKey.ChatPluginDisplayBlockPresenter_OpenSubagent}}">
-            <TextBlock
-              MaxWidth="200"
-              FontSize="{DynamicResource FontSizeS}"
-              MaxLines="1"
-              Text="{Binding ChatContext.Metadata.Topic}"
-              TextTrimming="CharacterEllipsis"/>
-          </Button>
+        <DataTemplate DataType="plugins:ChatPluginChatContextDisplayBlock">
+          <ScrollViewer
+            MaxHeight="600" HorizontalScrollBarVisibility="Disabled"
+            VerticalScrollBarVisibility="Auto">
+            <Interaction.Behaviors>
+              <in:AutoScrollBehavior/>
+            </Interaction.Behaviors>
+
+            <v:ChatMessageItemsControl
+              Margin="4,0" Padding="8,0"
+              IsReadonly="True"
+              ItemsSource="{Binding ChatContext.DisplayItems}"/>
+          </ScrollViewer>
         </DataTemplate>
 
         <DataTemplate DataType="plugins:ChatPluginTerminalDisplayBlock">

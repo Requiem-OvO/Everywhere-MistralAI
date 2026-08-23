@@ -23,7 +23,7 @@ public class VisualContextRecorder(
         IList<string> childrenIds;
         try 
         {
-            childrenIds = element.Children.AsValueEnumerable().OfType<IVisualElement>().Take(100).Select(child => child.Id).ToArray();
+            childrenIds = element.Children.AsValueEnumerable().OfType<IVisualElement>().Take(100).Select(child => child.Id).ToList();
         }
         catch 
         {

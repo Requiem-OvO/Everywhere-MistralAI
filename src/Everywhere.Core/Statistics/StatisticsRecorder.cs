@@ -1,5 +1,4 @@
 using Everywhere.Chat;
-using Everywhere.Common;
 using Everywhere.Configuration;
 using Everywhere.Statistics.Database;
 using Microsoft.EntityFrameworkCore;

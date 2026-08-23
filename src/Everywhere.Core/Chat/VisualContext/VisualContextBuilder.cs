@@ -57,9 +57,9 @@ public sealed partial class VisualContextBuilder(
             .Select(x => (Attachment: x, Element: x.Element?.Target))
             .Where(t => t.Element is not null)
             .Select(t => (t.Attachment, Element: t.Element!))
-            .ToArray();
+            .ToList();
 
-        if (validAttachments.Length == 0)
+        if (validAttachments.Count == 0)
         {
             return result;
         }
@@ -79,13 +79,13 @@ public sealed partial class VisualContextBuilder(
             })
             .ToArray();
 
-        var totalElements = validAttachments.Length;
+        var totalElements = validAttachments.Count;
         var totalBuiltElements = 0;
 
         foreach (var group in groups.AsValueEnumerable())
         {
-            var groupElements = group.AsValueEnumerable().Select(x => x.Element).ToArray();
-            var groupCount = groupElements.Length;
+            var groupElements = group.AsValueEnumerable().Select(x => x.Element).ToList();
+            var groupCount = groupElements.Count;
 
             // 2. Build XML for each root group
             // Allocate token limit relative to the number of elements in the group

@@ -5,86 +5,18 @@ using Microsoft.SemanticKernel;
 namespace Everywhere.Chat;
 
 /// <summary>
-/// Represents the ambient state of one concrete tool invocation.
+/// A frame that contains all context duration one function calling
 /// </summary>
-/// <remarks>
-/// A <see cref="FunctionCallChatMessage"/> may aggregate multiple calls to the same function. This
-/// context intentionally belongs to one <see cref="FunctionCallContent"/> instead of that aggregate
-/// message, allowing its AsyncLocal value and activity preview to remain unambiguous when calls are
-/// executed concurrently in the future.
-/// </remarks>
-public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
+public sealed record FunctionCallContext(
+    Kernel Kernel,
+    ChatContext ChatContext,
+    ChatPlugin ChatPlugin,
+    ChatFunction ChatFunction,
+    FunctionCallChatMessage FunctionCallChatMessage,
+    IDictionary<string, bool> IsPermissionGrantedRecords
+) : IChatPluginUserInterface
 {
-    public Kernel Kernel { get; }
-
-    public ChatContext ChatContext { get; }
-
-    public ChatPlugin ChatPlugin { get; }
-
-    public ChatFunction ChatFunction { get; }
-
-    public FunctionCallChatMessage FunctionCallChatMessage { get; }
-
-    public FunctionCallContent FunctionCallContent { get; }
-
-    /// <summary>Gets the stable tool-call ID used to isolate transient invocation state.</summary>
-    public string InvocationId { get; }
-
-    public ObservableToolRulesets ToolBypassApprovalRulesets { get; }
-
-    public IChatPluginDisplaySink DisplaySink { get; }
-
-    /// <summary>
-    /// Gets or sets the lightweight preview owned exclusively by this invocation.
-    /// </summary>
-    /// <remarks>
-    /// Assigning the property replaces one stable slot; it does not mutate the aggregate
-    /// invocation registry. The slot is removed as a whole when this context is disposed, so
-    /// callers normally do not need to assign <see langword="null"/> explicitly.
-    /// </remarks>
-    public ChatPluginActivityPreview? ActivityPreview
-    {
-        get => _activityPresentationSlot.Preview;
-        set => _activityPresentationSlot.Preview = value;
-    }
-
-    /// <summary>
-    /// Gets whether the current function call may bypass approval.
-    /// </summary>
-    /// <remarks>
-    /// Path-scoped approvals are evaluated separately by file-system operations and do not alter this value.
-    /// </remarks>
-    public bool BypassesApproval => ToolBypassApprovalPolicy.BypassesApproval(ToolBypassApprovalRulesets, ChatPlugin, ChatFunction);
-
-    private readonly FunctionCallChatMessage.ActivityPresentationSlot _activityPresentationSlot;
-
-    public FunctionCallContext(
-        Kernel kernel,
-        ChatContext chatContext,
-        ChatPlugin chatPlugin,
-        ChatFunction chatFunction,
-        FunctionCallChatMessage functionCallChatMessage,
-        FunctionCallContent functionCallContent,
-        ObservableToolRulesets toolBypassApprovalRulesets)
-    {
-        if (functionCallContent.Id.IsNullOrEmpty())
-        {
-            throw new ArgumentException("A function call context requires a non-empty tool-call ID.", nameof(functionCallContent));
-        }
-
-        Kernel = kernel;
-        ChatContext = chatContext;
-        ChatPlugin = chatPlugin;
-        ChatFunction = chatFunction;
-        FunctionCallChatMessage = functionCallChatMessage;
-        FunctionCallContent = functionCallContent;
-        InvocationId = functionCallContent.Id;
-        ToolBypassApprovalRulesets = toolBypassApprovalRulesets;
-        DisplaySink = functionCallChatMessage.DisplaySink;
-        _activityPresentationSlot = functionCallChatMessage.RegisterActivityPresentation(InvocationId);
-    }
-
-    public string PermissionKey => ToolSettingsKey.ForFunction(ChatPlugin, ChatFunction);
+    public string PermissionKey => $"{ChatPlugin.Key}.{ChatFunction.KernelFunction.Name}";
 
     public bool IsPermissionGranted
     {
@@ -92,106 +24,75 @@ public sealed class FunctionCallContext : IChatPluginUserInterface, IDisposable
         {
             var permissionKey = PermissionKey;
 
-            if (BypassesApproval &&
-                (!ChatContext.ToolBypassApprovalRulesets.ContainsKey(permissionKey) || ChatContext.ToolBypassApprovalRulesets[permissionKey]))
+            // If the function requires permissions that are less than FileAccess, we consider it as low-risk and grant permission by default.
+            if (ChatFunction.Permissions <= ChatFunctionPermissions.AutoGranted &&
+                (!ChatContext.IsPermissionGrantedRecords.ContainsKey(permissionKey) || ChatContext.IsPermissionGrantedRecords[permissionKey]))
             {
                 return true;
             }
 
-            ChatContext.ToolBypassApprovalRulesets.TryGetValue(permissionKey, out var isSessionGranted);
+            ChatContext.IsPermissionGrantedRecords.TryGetValue(permissionKey, out var isSessionGranted);
             return isSessionGranted;
         }
     }
 
     #region IChatPluginUserInterface implementation
 
+    public IChatPluginDisplaySink DisplaySink => FunctionCallChatMessage.DisplaySink;
+
     public async Task<RequestConsentResult> RequestConsentAsync(
         string? id,
-        IDynamicLocaleKey headerKey,
+        IDynamicResourceKey headerKey,
         ChatPluginDisplayBlock? content = null,
         RequestConsentRememberMasks rememberMasks = RequestConsentRememberMasks.All,
-        IReadOnlyList<RequestConsentCustomOption>? customOptions = null,
         CancellationToken cancellationToken = default)
     {
-        if (id.IsNullOrEmpty() && BypassesApproval) return RequestConsentResult.Accept;
+        if (id.IsNullOrEmpty() && ChatFunction.AutoApprove) return RequestConsentResult.Accepted;
 
-        var permissionKey = ToolSettingsKey.ForPermission(ChatPlugin, ChatFunction, id);
-        ToolBypassApprovalRulesets.TryGetValue(permissionKey, out var isGloballyGranted);
-        ChatContext.ToolBypassApprovalRulesets.TryGetValue(permissionKey, out var isSessionGranted);
+        var permissionKey = id.IsNullOrEmpty() ? PermissionKey : $"{PermissionKey}.{id}";
+        IsPermissionGrantedRecords.TryGetValue(permissionKey, out var isGloballyGranted);
+        ChatContext.IsPermissionGrantedRecords.TryGetValue(permissionKey, out var isSessionGranted);
         if (isGloballyGranted || isSessionGranted)
         {
-            return RequestConsentResult.Accept;
+            return RequestConsentResult.Accepted;
         }
 
-        var consentDecision = await WaitForUserInputAsync(() => ChatContext.UserInterfaceBroker.HandleConsentRequestAsync(
+        var consentDecision = await ChatContext.UserInterfaceBroker.HandleConsentRequestAsync(
             headerKey,
             content,
             rememberMasks,
-            customOptions,
-            cancellationToken));
+            cancellationToken);
 
-        switch (consentDecision.Kind)
+        switch (consentDecision.Decision)
         {
-            case ConsentDecisionKind.AlwaysAllow:
+            case ConsentDecision.AlwaysAllow:
             {
-                ToolBypassApprovalRulesets[permissionKey] = true;
-                return RequestConsentResult.Accept;
+                IsPermissionGrantedRecords[permissionKey] = true;
+                return RequestConsentResult.Accepted;
             }
-            case ConsentDecisionKind.AllowSession:
+            case ConsentDecision.AllowSession:
             {
-                ChatContext.ToolBypassApprovalRulesets[permissionKey] = true;
-                return RequestConsentResult.Accept;
+                ChatContext.IsPermissionGrantedRecords[permissionKey] = true;
+                return RequestConsentResult.Accepted;
             }
-            case ConsentDecisionKind.AllowOnce:
+            case ConsentDecision.AllowOnce:
             {
-                return RequestConsentResult.Accept;
+                return RequestConsentResult.Accepted;
             }
-            case ConsentDecisionKind.Custom when consentDecision.CustomOption is { } customOption:
-            {
-                return RequestConsentResult.Custom(customOption);
-            }
-            case ConsentDecisionKind.Deny:
+            case ConsentDecision.Deny:
             default:
             {
-                return RequestConsentResult.Deny(consentDecision.Reason);
+                return RequestConsentResult.Denied(consentDecision.Reason);
             }
         }
     }
 
-    public async Task<IReadOnlyList<ChatPluginQuestionAnswer>> AskQuestionAsync(
+    public Task<IReadOnlyList<ChatPluginQuestionAnswer>> AskQuestionAsync(
         IReadOnlyList<ChatPluginQuestion> questions,
         CancellationToken cancellationToken = default)
     {
-        return await WaitForUserInputAsync(() => ChatContext.UserInterfaceBroker.HandleAskQuestionAsync(questions, cancellationToken));
+        return ChatContext.UserInterfaceBroker.HandleAskQuestionAsync(questions, cancellationToken);
     }
 
     #endregion
-
-    /// <summary>
-    /// Runs an interaction inside this invocation's transient user-input wait state.
-    /// </summary>
-    /// <remarks>
-    /// The slot uses an atomic counter rather than a Boolean so overlapping interactions cannot
-    /// clear each other's state. The <see langword="finally"/> block also guarantees that
-    /// cancellation and broker exceptions restore the aggregate activity state.
-    /// </remarks>
-    public async Task<T> WaitForUserInputAsync<T>(Func<Task<T>> interaction)
-    {
-        _activityPresentationSlot.EnterUserInputWait();
-        try
-        {
-            return await interaction();
-        }
-        finally
-        {
-            _activityPresentationSlot.ExitUserInputWait();
-        }
-    }
-
-    /// <summary>
-    /// Ends the invocation-scoped presentation lifetime. Removing the stable slot cannot clear or
-    /// overwrite state owned by another invocation in the same aggregate message.
-    /// </summary>
-    public void Dispose() =>
-        FunctionCallChatMessage.UnregisterActivityPresentation(InvocationId, _activityPresentationSlot);
 }

@@ -178,11 +178,6 @@ public sealed class X11WindowBackend : IWindowBackend, IEventHelper
             WindowManager.RequestUserAttention((X11Window)x11Handle);
     }
 
-    public void InitializeWindow(AvaloniaWindow window)
-    {
-
-    }
-
     public void SendKeyboardShortcut(KeyboardShortcut shortcut)
     {
         InputHandler.SendKeyboardShortcut(shortcut);

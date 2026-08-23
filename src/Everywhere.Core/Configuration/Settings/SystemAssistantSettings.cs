@@ -4,7 +4,7 @@ using Lucide.Avalonia;
 namespace Everywhere.Configuration;
 
 [GeneratedSettingsItems]
-public sealed partial class SystemAssistantSettings(IServiceProvider serviceProvider) : SettingsBase(serviceProvider), ISettingsCategory
+public sealed partial class SystemAssistantSettings : SettingsBase, ISettingsCategory
 {
     [SettingsItemIgnore]
     public int Index => 4;
@@ -13,26 +13,26 @@ public sealed partial class SystemAssistantSettings(IServiceProvider serviceProv
     public LucideIconKind Icon => LucideIconKind.Sparkles;
 
     [SettingsItemIgnore]
-    public IDynamicLocaleKey TitleKey { get; } = new DynamicLocaleKey(LocaleKey.SettingsCategory_Settings_SystemAssistant_Header);
+    public IDynamicResourceKey TitleKey { get; } = new DynamicResourceKey(LocaleKey.SettingsCategory_Settings_SystemAssistant_Header);
 
     [SettingsItemIgnore]
-    public IDynamicLocaleKey? DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.SettingsCategory_Settings_SystemAssistant_Description);
+    public IDynamicResourceKey? DescriptionKey { get; } = new DynamicResourceKey(LocaleKey.SettingsCategory_Settings_SystemAssistant_Description);
 
-    [DynamicLocaleKey(
+    [DynamicResourceKey(
         LocaleKey.SystemAssistantSettings_TitleGeneration_Header,
         LocaleKey.SystemAssistantSettings_TitleGeneration_Desription)]
     [SettingsItems(IsExpandableBindingPath = $"!{nameof(TitleGeneration)}.{nameof(SystemAssistant.AutoSelect)}")]
     [SettingsTemplatedItem]
     public SystemAssistant TitleGeneration { get; } = new(ModelSpecializations.TitleGeneration);
 
-    [DynamicLocaleKey(
+    [DynamicResourceKey(
         LocaleKey.SystemAssistantSettings_DefaultSubagent_Header,
         LocaleKey.SystemAssistantSettings_DefaultSubagent_Description)]
     [SettingsItems(IsExpandableBindingPath = $"!{nameof(DefaultSubagent)}.{nameof(SystemAssistant.AutoSelect)}")]
     [SettingsTemplatedItem]
     public SystemAssistant DefaultSubagent { get; } = new(ModelSpecializations.Default);
 
-    [DynamicLocaleKey(
+    [DynamicResourceKey(
         LocaleKey.SystemAssistantSettings_ImageUnderstanding_Header,
         LocaleKey.SystemAssistantSettings_ImageUnderstanding_Description)]
     [SettingsItems(IsExpandableBindingPath = $"!{nameof(ImageUnderstanding)}.{nameof(SystemAssistant.AutoSelect)}")]

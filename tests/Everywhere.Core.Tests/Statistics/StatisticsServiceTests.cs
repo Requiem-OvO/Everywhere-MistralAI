@@ -1,4 +1,4 @@
-using Everywhere.Common;
+using Everywhere.Configuration;
 using Everywhere.Statistics;
 using Everywhere.Statistics.Database;
 using Microsoft.EntityFrameworkCore;

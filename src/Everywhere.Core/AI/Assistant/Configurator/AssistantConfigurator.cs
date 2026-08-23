@@ -3,7 +3,7 @@ using Everywhere.Configuration;
 
 namespace Everywhere.AI.Configurator;
 
-public abstract class AssistantConfigurator : ObservableValidator, IHaveSettingsItems
+public abstract class AssistantConfigurator : ObservableValidator
 {
     [SettingsItemIgnore]
     public abstract SettingsItems SettingsItems { get; }

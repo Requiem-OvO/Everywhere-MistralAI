@@ -8,6 +8,7 @@ using Windows.Win32.UI.WindowsAndMessaging;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Rendering;
 using Avalonia.Threading;
 using DynamicData;
 using Everywhere.Interop;
@@ -109,7 +110,7 @@ public partial class VisualElementContext
         {
             base.OnPointerMoved(e);
             var pos = e.GetPosition(null);
-            var screenPos = this.PointToScreen(pos);
+            var screenPos = ((IRenderRoot)this).PointToScreen(pos);
             var cursorPos = new Point(screenPos.X, screenPos.Y);
             SetToolTipWindowPosition(cursorPos);
             PickElement(cursorPos);

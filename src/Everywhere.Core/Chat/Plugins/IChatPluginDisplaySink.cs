@@ -37,7 +37,7 @@ public interface IChatPluginDisplaySink
     /// </summary>
     /// <param name="resourceKey"></param>
     /// <param name="className"></param>
-    void AppendDynamicLocaleKey(IDynamicLocaleKey resourceKey, string? className = null);
+    void AppendDynamicResourceKey(IDynamicResourceKey resourceKey, string? className = null);
 
     /// <summary>
     /// Appends a Markdown builder to the display sink. The caller can use the returned builder to build markdown content.
@@ -49,13 +49,20 @@ public interface IChatPluginDisplaySink
     /// Appends a progress indicator to the display sink. The caller can use the returned progress reporter to report progress between 0.0 and 1.0.
     /// </summary>
     /// <returns>a progress reporter that accepts values between 0.0 and 1.0, NaN for indeterminate progress</returns>
-    IProgress<double> AppendProgress(IDynamicLocaleKey headerKey);
+    IProgress<double> AppendProgress(IDynamicResourceKey headerKey);
 
     /// <summary>
     /// Appends a file reference to the display sink.
     /// </summary>
     /// <param name="references"></param>
     void AppendFileReferences(params IReadOnlyList<ChatPluginFileReference> references);
+
+    /// <summary>
+    /// Appends a text file difference to the display sink and waits for the user to review it.
+    /// </summary>
+    /// <param name="difference"></param>
+    /// <param name="originalText"></param>
+    void AppendFileDifference(TextDifference difference, string originalText);
 
     /// <summary>
     /// Appends a list of URLs to the display sink.
@@ -79,5 +86,5 @@ public interface IChatPluginDisplaySink
     /// Appends chat context information to the display sink. Used for subagents that need to display a subconversation.
     /// </summary>
     /// <param name="chatContext"></param>
-    void AppendSubagent(ChatContext chatContext);
+    void AppendChatContext(ChatContext chatContext);
 }

@@ -18,12 +18,12 @@ namespace Everywhere.Chat;
 [Union(1, typeof(TextSelectionAttachment))]
 [Union(2, typeof(TextAttachment))]
 [Union(3, typeof(FileAttachment))]
-public abstract partial class ChatAttachment(IDynamicLocaleKey headerKey) : ObservableObject
+public abstract partial class ChatAttachment(IDynamicResourceKey headerKey) : ObservableObject
 {
     public abstract LucideIconKind Icon { get; }
 
     [Key(0)]
-    public virtual IDynamicLocaleKey HeaderKey => headerKey;
+    public virtual IDynamicResourceKey HeaderKey => headerKey;
 
     /// <summary>
     /// Indicates whether the attachment is presently focused in the UI.
@@ -64,12 +64,12 @@ public partial class VisualElementAttachment : ChatAttachment
     public bool IsElementValid => Element?.Target is not null;
 
     [SerializationConstructor]
-    protected VisualElementAttachment(IDynamicLocaleKey headerKey, LucideIconKind icon) : base(headerKey)
+    protected VisualElementAttachment(IDynamicResourceKey headerKey, LucideIconKind icon) : base(headerKey)
     {
         Icon = icon;
     }
 
-    protected VisualElementAttachment(IDynamicLocaleKey headerKey, LucideIconKind icon, IVisualElement? element) : base(headerKey)
+    protected VisualElementAttachment(IDynamicResourceKey headerKey, LucideIconKind icon, IVisualElement? element) : base(headerKey)
     {
         Icon = icon;
         Element = element is null ? null : new ResilientReference<IVisualElement>(element);
@@ -77,14 +77,14 @@ public partial class VisualElementAttachment : ChatAttachment
 
     public static VisualElementAttachment FromVisualElement(IVisualElement element)
     {
-        DynamicLocaleKey headerKey;
-        var elementTypeKey = new DynamicLocaleKey($"VisualElementType_{element.Type}");
+        DynamicResourceKey headerKey;
+        var elementTypeKey = new DynamicResourceKey($"VisualElementType_{element.Type}");
         if (element.ProcessId > 0)
         {
             try
             {
                 using var process = Process.GetProcessById(element.ProcessId);
-                headerKey = new FormattedDynamicLocaleKey("{0} - {1}", new DirectLocaleKey(process.ProcessName), elementTypeKey);
+                headerKey = new FormattedDynamicResourceKey("{0} - {1}", new DirectResourceKey(process.ProcessName), elementTypeKey);
             }
             catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or NotSupportedException)
             {
@@ -137,7 +137,7 @@ public sealed partial class TextSelectionAttachment : VisualElementAttachment
     /// Override to prevent serialization of HeaderKey.
     /// </summary>
     [IgnoreMember]
-    public override IDynamicLocaleKey HeaderKey => base.HeaderKey;
+    public override IDynamicResourceKey HeaderKey => base.HeaderKey;
 
     [IgnoreMember]
     public override LucideIconKind Icon => LucideIconKind.TextCursorInput;
@@ -166,11 +166,11 @@ public sealed partial class TextSelectionAttachment : VisualElementAttachment
     /// </summary>
     /// <param name="text"></param>
     /// <returns></returns>
-    private static DirectLocaleKey CreateHeaderKey(string? text)
+    private static DirectResourceKey CreateHeaderKey(string? text)
     {
         if (string.IsNullOrEmpty(text))
         {
-            return new DirectLocaleKey(string.Empty);
+            return new DirectResourceKey(string.Empty);
         }
 
         const int MaxLength = 30;
@@ -212,12 +212,12 @@ public sealed partial class TextSelectionAttachment : VisualElementAttachment
             }
         });
 
-        return new DirectLocaleKey(result);
+        return new DirectResourceKey(result);
     }
 }
 
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
-public sealed partial class TextAttachment(IDynamicLocaleKey headerKey, string text) : ChatAttachment(headerKey)
+public sealed partial class TextAttachment(IDynamicResourceKey headerKey, string text) : ChatAttachment(headerKey)
 {
     public override LucideIconKind Icon => LucideIconKind.TextInitial;
 
@@ -235,7 +235,7 @@ public sealed partial class TextAttachment(IDynamicLocaleKey headerKey, string t
 /// <param name="mimeType"></param>
 [MessagePackObject(AllowPrivate = true, OnlyIncludeKeyedMembers = true)]
 public sealed partial class FileAttachment(
-    IDynamicLocaleKey headerKey,
+    IDynamicResourceKey headerKey,
     string filePath,
     string sha256,
     string mimeType,
@@ -363,19 +363,18 @@ public sealed partial class FileAttachment(
             if (stream.Length > maxBytesSize)
             {
                 throw new HandledException(
-                    new NotSupportedException(
-                        $"The file '{filePath}' is too large to attach. Its size exceeds the maximum allowed size of {Humanizer.HumanizeBytes(maxBytesSize)}."),
-                    new FormattedDynamicLocaleKey(
+                    new NotSupportedException($"File size exceeds the maximum allowed size of {maxBytesSize} bytes."),
+                    new FormattedDynamicResourceKey(
                         LocaleKey.FileAttachment_Create_FileTooLarge,
-                        new DirectLocaleKey(Humanizer.HumanizeBytes(stream.Length)),
-                        new DirectLocaleKey(Humanizer.HumanizeBytes(maxBytesSize))),
+                        new DirectResourceKey(Humanizer.HumanizeBytes(stream.Length)),
+                        new DirectResourceKey(Humanizer.HumanizeBytes(maxBytesSize))),
                     showDetails: false);
             }
 
             mimeType = await FileUtilities.EnsureMimeTypeAsync(mimeType, filePath, cancellationToken);
             var sha256 = await SHA256.HashDataAsync(stream, cancellationToken);
             var sha256String = Convert.ToHexString(sha256).ToLowerInvariant();
-            return new FileAttachment(new DirectLocaleKey(Path.GetFileName(filePath)), filePath, sha256String, mimeType, description);
+            return new FileAttachment(new DirectResourceKey(Path.GetFileName(filePath)), filePath, sha256String, mimeType, description);
         },
         cancellationToken);
 

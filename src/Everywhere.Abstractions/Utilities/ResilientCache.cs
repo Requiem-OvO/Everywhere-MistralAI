@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using ZLinq;
 
 namespace Everywhere.Utilities;
 
@@ -10,7 +9,9 @@ namespace Everywhere.Utilities;
 /// </summary>
 /// <typeparam name="TKey">The type of the keys in the cache.</typeparam>
 /// <typeparam name="TValue">The type of the values in the cache. Must be a reference type.</typeparam>
-public class ResilientCache<TKey, TValue> : IDictionary<TKey, TValue> where TKey : notnull where TValue : class
+public class ResilientCache<TKey, TValue> : IDictionary<TKey, TValue>
+    where TKey : notnull
+    where TValue : class
 {
     private readonly Lock _lock = new();
     private Dictionary<TKey, TValue> _strongReferences = new();
@@ -77,7 +78,7 @@ public class ResilientCache<TKey, TValue> : IDictionary<TKey, TValue> where TKey
             if (_isActive) return;
 
             var keysToRemove = new List<TKey>();
-            foreach (var kvp in _weakReferences.AsValueEnumerable())
+            foreach (var kvp in _weakReferences)
             {
                 if (!kvp.Value.TryGetTarget(out _))
                 {
@@ -236,11 +237,11 @@ public class ResilientCache<TKey, TValue> : IDictionary<TKey, TValue> where TKey
             {
                 if (_isActive)
                 {
-                    return [.. _strongReferences.Keys]; // Return a snapshot
+                    return _strongReferences.Keys.ToList(); // Return a snapshot
                 }
 
                 var aliveKeys = new List<TKey>(_weakReferences.Count);
-                foreach (var kvp in _weakReferences.AsValueEnumerable())
+                foreach (var kvp in _weakReferences)
                 {
                     if (kvp.Value.TryGetTarget(out _))
                     {
@@ -260,7 +261,7 @@ public class ResilientCache<TKey, TValue> : IDictionary<TKey, TValue> where TKey
             {
                 if (_isActive)
                 {
-                    return [.. _strongReferences.Values]; // Return a snapshot
+                    return _strongReferences.Values.ToList(); // Return a snapshot
                 }
 
                 var aliveValues = new List<TValue>(_weakReferences.Count);
@@ -329,8 +330,9 @@ public class ResilientCache<TKey, TValue> : IDictionary<TKey, TValue> where TKey
         ArgumentOutOfRangeException.ThrowIfNegative(arrayIndex);
 
         // The GetEnumerator implementation already creates a safe, live-only snapshot.
-        var snapshot = this.ToArray();
-        if (array.Length - arrayIndex < snapshot.Length)
+        var snapshot = this.ToList();
+
+        if (array.Length - arrayIndex < snapshot.Count)
         {
             throw new ArgumentException("The destination array is not large enough to hold the collection's items.");
         }

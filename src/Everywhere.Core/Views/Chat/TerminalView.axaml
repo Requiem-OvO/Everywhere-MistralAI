@@ -82,7 +82,9 @@
 
                   <v:ConditionalContentControl.NullContent>
                     <DataTemplate>
-                      <shadui:Loading Size="{DynamicResource FontSizeM}"/>
+                      <shadui:Loading
+                        Width="{DynamicResource FontSizeM}"
+                        Height="{DynamicResource FontSizeM}"/>
                     </DataTemplate>
                   </v:ConditionalContentControl.NullContent>
                 </v:ConditionalContentControl>

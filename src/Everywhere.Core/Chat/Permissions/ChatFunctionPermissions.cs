@@ -6,8 +6,8 @@ public enum ChatFunctionPermissions : uint
     /// <summary>
     /// The minimal permissions that can be auto-granted to a function without prompting the user.
     /// </summary>
-    [DynamicLocaleKey(LocaleKey.ChatFunctionPermissions_FileRead)]
-    BypassApproval = FileRead,
+    [DynamicResourceKey(LocaleKey.ChatFunctionPermissions_FileRead)]
+    AutoGranted = FileRead,
 
     /// <summary>
     /// No permissions granted. This is the default state.
@@ -17,13 +17,13 @@ public enum ChatFunctionPermissions : uint
     /// <summary>
     /// Allows reading content from the screen (e.g., screenshots, UI element text).
     /// </summary>
-    [DynamicLocaleKey(LocaleKey.ChatFunctionPermissions_ScreenRead)]
+    [DynamicResourceKey(LocaleKey.ChatFunctionPermissions_ScreenRead)]
     ScreenRead = 1 << 0, // 1
 
     /// <summary>
     /// Allows displaying information on the screen (e.g., notifications, UI changes) or interacting with the screen.
     /// </summary>
-    [DynamicLocaleKey(LocaleKey.ChatFunctionPermissions_ScreenAccess)]
+    [DynamicResourceKey(LocaleKey.ChatFunctionPermissions_ScreenAccess)]
     ScreenAccess = ScreenRead | 1 << 1, // 1 | 2 = 3
 
     /// <summary>
@@ -33,41 +33,41 @@ public enum ChatFunctionPermissions : uint
     /// We cannot distinguish between read and write operations for network access,
     /// so this permission encompasses both.
     /// </remarks>
-    [DynamicLocaleKey(LocaleKey.ChatFunctionPermissions_NetworkAccess)]
+    [DynamicResourceKey(LocaleKey.ChatFunctionPermissions_NetworkAccess)]
     NetworkAccess = 1 << 2, // 4
 
     /// <summary>
     /// Allows reading from the system clipboard.
     /// </summary>
-    [DynamicLocaleKey(LocaleKey.ChatFunctionPermissions_ClipboardRead)]
+    [DynamicResourceKey(LocaleKey.ChatFunctionPermissions_ClipboardRead)]
     ClipboardRead = 1 << 3, // 8
 
     /// <summary>
     /// Allows reading and writing to the system clipboard.
     /// </summary>
-    [DynamicLocaleKey(LocaleKey.ChatFunctionPermissions_ClipboardAccess)]
+    [DynamicResourceKey(LocaleKey.ChatFunctionPermissions_ClipboardAccess)]
     ClipboardAccess = ClipboardRead | 1 << 4, // 8 | 16 = 24
 
     /// <summary>
     /// Allows reading from the local file system.
     /// </summary>
-    [DynamicLocaleKey(LocaleKey.ChatFunctionPermissions_FileRead)]
+    [DynamicResourceKey(LocaleKey.ChatFunctionPermissions_FileRead)]
     FileRead = 1 << 5, // 32
 
     /// <summary>
     /// Allows reading, writing or modifying files on the local file system.
     /// </summary>
-    [DynamicLocaleKey(LocaleKey.ChatFunctionPermissions_FileAccess)]
+    [DynamicResourceKey(LocaleKey.ChatFunctionPermissions_FileAccess)]
     FileAccess = FileRead | 1 << 6, // 32 | 64 = 96
 
-    [DynamicLocaleKey(LocaleKey.ChatFunctionPermissions_ProcessAccess)]
+    [DynamicResourceKey(LocaleKey.ChatFunctionPermissions_ProcessAccess)]
     ProcessAccess = 1 << 7, // 128
 
     /// <summary>
     /// Allows executing local shell commands. This is a high-risk permission
     /// that can potentially perform any system-level action.
     /// </summary>
-    [DynamicLocaleKey(LocaleKey.ChatFunctionPermissions_ShellExecute)]
+    [DynamicResourceKey(LocaleKey.ChatFunctionPermissions_ShellExecute)]
     ShellExecute = ScreenAccess | NetworkAccess | ClipboardAccess | FileAccess | ProcessAccess | 1 << 8,
 
     /// <summary>

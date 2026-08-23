@@ -1,3 +1,6 @@
+[submodule "3rd/WritableJsonConfiguration"]
+	path = 3rd/WritableJsonConfiguration
+	url = https://github.com/DearVa/WritableJsonConfiguration
 [submodule "3rd/shad-ui"]
 	path = 3rd/shad-ui
 	url = https://github.com/Sylinko/shad-ui
@@ -13,12 +16,3 @@
 [submodule "3rd/Porta.Pty"]
 	path = 3rd/Porta.Pty
 	url = https://github.com/Sylinko/Porta.Pty
-[submodule "3rd/ClassicDiagnostics.Avalonia"]
-	path = 3rd/ClassicDiagnostics.Avalonia
-	url = https://github.com/Sylinko/ClassicDiagnostics.Avalonia
-[submodule "3rd/OfficeCLI"]
-	path = 3rd/OfficeCLI
-	url = https://github.com/iOfficeAI/OfficeCLI
-[submodule "3rd/Motion.Avalonia"]
-	path = 3rd/Motion.Avalonia
-	url = https://github.com/Sylinko/Motion.Avalonia

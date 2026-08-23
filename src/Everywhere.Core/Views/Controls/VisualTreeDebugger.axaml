@@ -88,8 +88,8 @@
           DockPanel.Dock="Right" Click="HandleBuildButtonClicked"
           Content="Build"/>
         <TextBox
-          x:Name="TokenLimitTextBox" PlaceholderText="Limit"
-          Text="8000"/>
+          x:Name="TokenLimitTextBox" Text="8000"
+          Watermark="Limit"/>
       </DockPanel>
 
       <Button

@@ -11,25 +11,25 @@ public enum ScreenSelectionMode
     /// <summary>
     /// Pick a whole screen.
     /// </summary>
-    [DynamicLocaleKey(LocaleKey.ScreenSelectionMode_Screen)]
+    [DynamicResourceKey(LocaleKey.ScreenSelectionMode_Screen)]
     Screen,
 
     /// <summary>
     /// Pick a window.
     /// </summary>
-    [DynamicLocaleKey(LocaleKey.ScreenSelectionMode_Window)]
+    [DynamicResourceKey(LocaleKey.ScreenSelectionMode_Window)]
     Window,
 
     /// <summary>
     /// Pick a specific element.
     /// </summary>
-    [DynamicLocaleKey(LocaleKey.ScreenSelectionMode_Element)]
+    [DynamicResourceKey(LocaleKey.ScreenSelectionMode_Element)]
     Element,
 
     /// <summary>
     /// Free selection mode.
     /// </summary>
-    [DynamicLocaleKey(LocaleKey.ScreenSelectionMode_Free)]
+    [DynamicResourceKey(LocaleKey.ScreenSelectionMode_Free)]
     Free
 }
 

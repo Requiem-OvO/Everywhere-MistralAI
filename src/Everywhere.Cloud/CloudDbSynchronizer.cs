@@ -414,30 +414,24 @@ public sealed partial class CloudChatDbSynchronizer(
                 entityWrapper = new EntityWrapper(entity.Id, data);
             }
 
-            var entrySize = (entityWrapper.Data?.Length ?? 0) + 64; // Approximate overhead for Id and IsDeleted
+            entityWrappers.Add(entityWrapper);
+            totalPushBytes += (entityWrapper.Data?.Length ?? 0) + 64; // Approximate overhead for Id and IsDeleted
+            currentPushedVersion = Math.Max(entity.LocalSyncVersion, currentPushedVersion); // Update the current pushed version
 
-            // Flush the current chunk BEFORE it would exceed the limit, so no single POST goes over.
-            if (entityWrappers.Count > 0 && totalPushBytes + entrySize > PushBytesLimit)
+            if (totalPushBytes > PushBytesLimit)
             {
+                // Chunk reached the size limit, push what we have so far.
                 await PushPayloadAsync(entityWrappers, httpClient, cancellationToken);
                 entityWrappers.Clear();
                 totalPushBytes = 0;
                 metadata.LastPushedVersion = currentPushedVersion; // If successful, update the last pushed version
                 metadata.LastSyncAt = DateTimeOffset.UtcNow;
             }
-
-            entityWrappers.Add(entityWrapper);
-            totalPushBytes += entrySize;
-            currentPushedVersion = Math.Max(entity.LocalSyncVersion, currentPushedVersion); // Update the current pushed version
         }
 
-        // Push any remaining entities.
-        if (entityWrappers.Count > 0)
-        {
-            await PushPayloadAsync(entityWrappers, httpClient, cancellationToken);
-            metadata.LastPushedVersion = currentPushedVersion; // If successful, update the last pushed version
-            metadata.LastSyncAt = DateTimeOffset.UtcNow;
-        }
+        await PushPayloadAsync(entityWrappers, httpClient, cancellationToken);
+        metadata.LastPushedVersion = currentPushedVersion; // If successful, update the last pushed version
+        metadata.LastSyncAt = DateTimeOffset.UtcNow;
 
         return true;
     }

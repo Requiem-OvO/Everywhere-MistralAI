@@ -13,7 +13,7 @@ namespace Everywhere.Initialization;
 /// <summary>
 /// Applies the configured network proxy to global HTTP handlers and keeps it in sync with user settings.
 /// </summary>
-public sealed class NetworkInitializer : IAsyncInitializer, IDisposable
+public sealed class NetworkInitializer : IAsyncInitializer
 {
     public AsyncInitializerIndex Index => AsyncInitializerIndex.Network;
 
@@ -21,7 +21,6 @@ public sealed class NetworkInitializer : IAsyncInitializer, IDisposable
     private readonly DynamicWebProxy _dynamicWebProxy;
     private readonly ILogger<NetworkInitializer> _logger;
     private readonly DebounceExecutor<NetworkInitializer, ThreadingTimerImpl> _applyProxyDebounceExecutor;
-    private DeepObserver? _settingsObserver;
 
     public NetworkInitializer(Settings settings, DynamicWebProxy dynamicWebProxy, ILogger<NetworkInitializer> logger)
     {
@@ -37,21 +36,14 @@ public sealed class NetworkInitializer : IAsyncInitializer, IDisposable
     public Task InitializeAsync()
     {
         ApplyProxySettings(false);
-        _settingsObserver ??= new DeepObserver(HandleProxySettingsChanged).Observe(_proxySettings);
+
+        // Use ObjectObserver to observe property changes (including nested properties, e.g. Customizable).
+        new ObjectObserver(HandleProxySettingsChanged).Observe(_proxySettings);
 
         return Task.CompletedTask;
     }
 
-    /// <summary>
-    /// Stops proxy setting observation and cancels pending debounced updates.
-    /// </summary>
-    public void Dispose()
-    {
-        _settingsObserver?.Dispose();
-        _applyProxyDebounceExecutor.Dispose();
-    }
-
-    private void HandleProxySettingsChanged(in DeepObserverChangedEventArgs e)
+    private void HandleProxySettingsChanged(in ObjectObserverChangedEventArgs e)
     {
         _applyProxyDebounceExecutor.Trigger();
     }

@@ -1,4 +1,5 @@
 ﻿using System.Reactive.Disposables;
+using System.Reactive.Disposables.Fluent;
 using System.Reactive.Linq;
 using Avalonia.Controls;
 using Avalonia.Controls.Metadata;
@@ -52,16 +53,16 @@ public sealed class IconEditor : TemplatedControl
         set => SetValue(QueryTextProperty, value);
     }
 
-    private static readonly (LucideIconKind Kind, string Name)[] CachedLucideIcons =
+    private static readonly IReadOnlyList<(LucideIconKind Kind, string Name)> CachedLucideIcons =
         Enum.GetValues<LucideIconKind>()
             .AsValueEnumerable()
             .Select(x => (Kind: x, Name: x.ToString()))
-            .ToArray();
+            .ToList();
 
     private readonly BindableList<LucideIconKind> _lucideItemsSource = [];
     private readonly BindableList<string> _emojiItemsSource = [];
 
-    private SingleAssignmentDisposable? _queryTextChangedSubscription;
+    private CompositeDisposable? _subscriptions;
     private IDisposable? _iconTypeTabControlSelectionChangedSubscription;
     private TabControl? _iconTypeTabControl;
 
@@ -75,33 +76,16 @@ public sealed class IconEditor : TemplatedControl
     {
         base.OnAttachedToVisualTree(args);
 
-        if (_queryTextChangedSubscription is not null) return;
+        if (_subscriptions is not null) return;
 
-        SingleAssignmentDisposable subscription;
-        _queryTextChangedSubscription = subscription = new SingleAssignmentDisposable();
-        InitializeQueryTextSubscriptionAsync(subscription).Detach(IExceptionHandler.DangerouslyIgnoreAllException);
-    }
+        var subscriptions = new CompositeDisposable();
+        _subscriptions = subscriptions;
 
-    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
-    {
-        DisposeHelper.DisposeToDefault(ref _queryTextChangedSubscription);
-        DisposeHelper.DisposeToDefault(ref _iconTypeTabControlSelectionChangedSubscription);
-        _iconTypeTabControl = null;
-
-        base.OnDetachedFromVisualTree(e);
-    }
-
-    private async Task InitializeQueryTextSubscriptionAsync(SingleAssignmentDisposable subscription)
-    {
-        await EmojiSearchEngine.Shared.LoadDictionariesAsync(LocaleManager.CurrentLocale).ConfigureAwait(false);
-        await Dispatcher.InvokeAsync(() =>
+        EmojiSearchEngine.Shared.LoadDictionariesAsync(LocaleManager.CurrentLocale).ContinueWith(_ =>
         {
-            if (!ReferenceEquals(_queryTextChangedSubscription, subscription))
-            {
-                return;
-            }
+            if (_subscriptions != subscriptions) return;
 
-            subscription.Disposable = this.GetObservable(QueryTextProperty)
+            this.GetObservable(QueryTextProperty)
                 .Select(q => q ?? string.Empty)
                 .DistinctUntilChanged()
                 .Throttle(TimeSpan.FromMilliseconds(200))
@@ -143,11 +127,21 @@ public sealed class IconEditor : TemplatedControl
                             _emojiItemsSource.Add(emoji);
                         }
                     }
-                });
-        });
+                })
+                .DisposeWith(subscriptions);
+        }).Detach(IExceptionHandler.DangerouslyIgnoreAllException);
     }
 
-    private async static Task<(IEnumerable<LucideIconKind> Lucide, IEnumerable<string> Emoji)> PerformSearchAsync(
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        DisposeHelper.DisposeToDefault(ref _subscriptions);
+        DisposeHelper.DisposeToDefault(ref _iconTypeTabControlSelectionChangedSubscription);
+        _iconTypeTabControl = null;
+
+        base.OnDetachedFromVisualTree(e);
+    }
+
+    private async Task<(IEnumerable<LucideIconKind> Lucide, IEnumerable<string> Emoji)> PerformSearchAsync(
         string query,
         CancellationToken cancellationToken)
     {
@@ -337,7 +331,7 @@ public sealed class IconEditor : TemplatedControl
                 .OrderByDescending(x => x.Score)
                 .Take(limit)
                 .Select(x => x.Emoji)
-                .ToArray();
+                .ToList();
         }
 
         private static IReadOnlyList<EmojiEntry>? LoadEmojiEntries(Uri uri)

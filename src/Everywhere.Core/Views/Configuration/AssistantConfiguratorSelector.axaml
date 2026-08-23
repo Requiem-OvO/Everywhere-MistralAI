@@ -6,15 +6,16 @@
     TargetType="v:AssistantConfiguratorSelector">
     <Setter Property="Template">
       <ControlTemplate>
-        <DockPanel VerticalSpacing="8">
+        <StackPanel Spacing="8">
           <!--  ReSharper disable once Xaml.StaticResourceNotResolved  -->
           <ListBox
-            DockPanel.Dock="Top"
-            Background="{DynamicResource LightCardBackgroundColor}"
+            x:Name="PART_ListBox"
+            Background="{DynamicResource SettingsItemBackgroundColor}"
             CornerRadius="{DynamicResource XlCornerRadius}"
             ItemsSource="{Binding ConfiguratorModels, RelativeSource={RelativeSource TemplatedParent}}"
             ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled"
-            SelectedItem="{Binding SelectedConfiguratorModel, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+            SelectedValue="{Binding Assistant.ConfiguratorType, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={x:Null}}"
+            SelectedValueBinding="{Binding Type, DataType=v:AssistantConfiguratorSelector+ConfiguratorModel}">
             <ListBox.ItemsPanel>
               <ItemsPanelTemplate>
                 <UniformGrid
@@ -26,7 +27,6 @@
               <ControlTheme
                 BasedOn="{StaticResource TabListBoxItemTheme}"
                 TargetType="ListBoxItem">
-                <Setter Property="Padding" Value="13"/>
                 <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                 <Setter Property="VerticalContentAlignment" Value="Stretch"/>
                 <Setter Property="CornerRadius" Value="{DynamicResource LgCornerRadius}"/>
@@ -37,13 +37,13 @@
               <DataTemplate DataType="v:AssistantConfiguratorSelector+OfficialConfiguratorModel">
                 <Panel>
                   <Border
-                    Margin="-13"
+                    Margin="-12,-8"
                     CornerRadius="{DynamicResource LgCornerRadius}">
                     <Border.Background>
-                      <ConicGradientBrush Center="0%,-50%">
-                        <GradientStop Offset="0.25" Color="#FF4EADFC"/>
-                        <GradientStop Offset="0.35" Color="#FFEE4BB5"/>
-                        <GradientStop Offset="0.48" Color="#FFDFDF62"/>
+                      <ConicGradientBrush Center="100%,-50%">
+                        <GradientStop Offset="0.5" Color="#FF4EADFC"/>
+                        <GradientStop Offset="0.6" Color="#FFEE4BB5"/>
+                        <GradientStop Offset="0.73" Color="#FFDFDF62"/>
                       </ConicGradientBrush>
                     </Border.Background>
 
@@ -63,7 +63,7 @@
                       <!--     </DrawingGroup> -->
                       <!--   </DrawingBrush.Drawing> -->
                       <!-- </DrawingBrush> -->
-                      <RadialGradientBrush Center="20%,0%" GradientOrigin="20%,0%" RadiusX="70%" RadiusY="50%">
+                      <RadialGradientBrush Center="80%,0%" GradientOrigin="80%,0%" RadiusX="70%" RadiusY="50%">
                         <GradientStop Offset="0.0" Color="#FFFFFFFF"/>
                         <GradientStop Offset="1.0" Color="#00FFFFFF"/>
                       </RadialGradientBrush>
@@ -73,6 +73,7 @@
                   <StackPanel
                     Orientation="Vertical" Spacing="4">
                     <TextBlock
+                      Classes="Large"
                       Text="{Binding HeaderKey^}"
                       TextWrapping="Wrap"/>
                     <TextBlock
@@ -87,6 +88,7 @@
                 <StackPanel
                   Orientation="Vertical" Spacing="4">
                   <TextBlock
+                    Classes="Large"
                     Text="{Binding HeaderKey^}"
                     TextWrapping="Wrap"/>
                   <TextBlock
@@ -98,15 +100,11 @@
             </ListBox.DataTemplates>
           </ListBox>
 
-          <ScrollViewer
-            Margin="0,0,-12,0" HorizontalScrollBarVisibility="Disabled"
-            VerticalScrollBarVisibility="Auto">
-            <v:SettingsItemsControl
-              Margin="0,0,12,0"
-              IsVisible="{TemplateBinding IsSettingsVisible}"
-              ItemsSource="{Binding Assistant?.Configurator.SettingsItems, RelativeSource={RelativeSource TemplatedParent}}"/>
-          </ScrollViewer>
-        </DockPanel>
+          <v:SettingsItemsControl
+            Margin="0"
+            IsVisible="{TemplateBinding IsSettingsVisible}"
+            ItemsSource="{Binding Assistant.Configurator.SettingsItems, RelativeSource={RelativeSource TemplatedParent}, FallbackValue={x:Null}}"/>
+        </StackPanel>
       </ControlTemplate>
     </Setter>
   </ControlTheme>

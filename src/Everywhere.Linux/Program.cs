@@ -5,6 +5,7 @@ using Everywhere.AI;
 using Everywhere.Chat;
 using Everywhere.Chat.Plugins;
 using Everywhere.Common;
+using Everywhere.Configuration;
 using Everywhere.Extensions;
 using Everywhere.Initialization;
 using Everywhere.Interop;
@@ -61,6 +62,7 @@ public static class Program
                 .AddSettings()
                 .AddWatchdogManager()
                 .ConfigureNetwork()
+                .AddAvaloniaBasicServices()
                 .AddViewsAndViewModels()
                 .AddDatabaseAndStorage()
                 .AddChatEssentials()

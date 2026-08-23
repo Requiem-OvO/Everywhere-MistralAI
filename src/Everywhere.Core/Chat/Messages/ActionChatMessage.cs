@@ -21,7 +21,7 @@ public sealed partial class ActionChatMessage : ChatMessage
 
     [Key(2)]
     [ObservableProperty]
-    public partial DynamicLocaleKey? HeaderKey { get; set; }
+    public partial DynamicResourceKey? HeaderKey { get; set; }
 
     [Key(3)]
     [ObservableProperty]
@@ -29,7 +29,7 @@ public sealed partial class ActionChatMessage : ChatMessage
 
     [Key(4)]
     [ObservableProperty]
-    public partial IDynamicLocaleKey? ErrorMessageKey { get; set; }
+    public partial IDynamicResourceKey? ErrorMessageKey { get; set; }
 
     [Key(5)]
     [ObservableProperty]
@@ -48,7 +48,7 @@ public sealed partial class ActionChatMessage : ChatMessage
     [SerializationConstructor]
     private ActionChatMessage() { }
 
-    public ActionChatMessage(LucideIconKind icon, DynamicLocaleKey? headerKey)
+    public ActionChatMessage(LucideIconKind icon, DynamicResourceKey? headerKey)
     {
         Icon = icon;
         HeaderKey = headerKey;

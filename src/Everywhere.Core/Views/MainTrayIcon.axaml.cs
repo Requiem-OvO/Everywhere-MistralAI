@@ -45,46 +45,45 @@ public sealed partial class MainTrayIcon : TrayIcon
         [
             new NativeMenuItem
             {
-                [!NativeMenuItem.HeaderProperty] = new DynamicLocaleKey(LocaleKey.MainTrayIcon_Menu_OpenChatWindow).ToBinding(),
+                [!NativeMenuItem.HeaderProperty] = new DynamicResourceKey(LocaleKey.MainTrayIcon_Menu_OpenChatWindow).ToBinding(),
                 Command = ShowChatWindowCommand
             },
 
             new NativeMenuItem
             {
-                [!NativeMenuItem.HeaderProperty] = new DynamicLocaleKey(LocaleKey.MainTrayIcon_Menu_OpenMainWindow).ToBinding(),
+                [!NativeMenuItem.HeaderProperty] = new DynamicResourceKey(LocaleKey.MainTrayIcon_Menu_OpenMainWindow).ToBinding(),
                 Command = ShowMainWindowCommand
             },
         ];
 
 #if DEBUG
-        Menu.Items.Add(
-            new NativeMenuItem
-            {
-                [!NativeMenuItem.HeaderProperty] = new DynamicLocaleKey(LocaleKey.MainTrayIcon_Menu_OpenDebugWindow).ToBinding(),
-                Command = ShowDebugWindowCommand
-            });
+        Menu.Items.Add(new NativeMenuItem
+        {
+            [!NativeMenuItem.HeaderProperty] = new DynamicResourceKey(LocaleKey.MainTrayIcon_Menu_OpenDebugWindow).ToBinding(),
+            Command = ShowDebugWindowCommand
+        });
 #endif
 
         Menu.Items.Add(new NativeMenuItemSeparator());
-        Menu.Items.Add(
-            new NativeMenuItem
+        Menu.Items.Add(new NativeMenuItem
+        {
+            [!NativeMenuItem.HeaderProperty] = new DynamicResourceKey(LocaleKey.MainTrayIcon_Menu_EnableChatWindowShortcut).ToBinding(),
+            [!NativeMenuItem.IsCheckedProperty] = new Binding
             {
-                [!NativeMenuItem.HeaderProperty] = new DynamicLocaleKey(LocaleKey.MainTrayIcon_Menu_EnableChatWindowShortcut).ToBinding(),
-                [!NativeMenuItem.IsCheckedProperty] = CompiledBinding.Create(
-                    (CompositeKeyboardShortcut shortcut) => shortcut.IsEnabled,
-                    source: _shortcutSettings.ChatWindow,
-                    mode: BindingMode.OneWay),
-                Command = new RelayCommand(() => _shortcutSettings.ChatWindow.IsEnabled = !_shortcutSettings.ChatWindow.IsEnabled),
-                ToggleType = MenuItemToggleType.CheckBox,
-            });
+                // TODO: Use CompiledBinding.Create in Avalonia 12
+                Path = nameof(ShortcutSettings.ChatWindow.IsEnabled),
+                Source = _shortcutSettings.ChatWindow,
+                Mode = BindingMode.TwoWay
+            },
+            ToggleType = NativeMenuItemToggleType.CheckBox,
+        });
 
         Menu.Items.Add(new NativeMenuItemSeparator());
-        Menu.Items.Add(
-            new NativeMenuItem
-            {
-                [!NativeMenuItem.HeaderProperty] = new DynamicLocaleKey(LocaleKey.MainTrayIcon_Menu_Exit).ToBinding(),
-                Command = ExitCommand
-            });
+        Menu.Items.Add(new NativeMenuItem
+        {
+            [!NativeMenuItem.HeaderProperty] = new DynamicResourceKey(LocaleKey.MainTrayIcon_Menu_Exit).ToBinding(),
+            Command = ExitCommand
+        });
     }
 
     private void HandleTrayIconClicked(object? sender, EventArgs e)

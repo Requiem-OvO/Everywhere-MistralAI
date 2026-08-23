@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using DynamicData;
 using Everywhere.Collections;
 using Everywhere.Common;
 using Everywhere.Configuration;
@@ -11,6 +12,7 @@ using Everywhere.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using ShadUI;
+using ZLinq;
 
 namespace Everywhere.ViewModels;
 
@@ -31,7 +33,10 @@ public sealed partial class MainViewModel : ReactiveViewModelBase, IRecipient<Ma
 
     private bool _isFirstLoad = true;
 
-    public MainViewModel(IServiceProvider serviceProvider, Settings settings, PersistentState persistentState)
+    public MainViewModel(
+        IServiceProvider serviceProvider,
+        Settings settings,
+        PersistentState persistentState)
     {
         _serviceProvider = serviceProvider;
         _settings = settings;
@@ -157,9 +162,10 @@ public sealed partial class MainViewModel : ReactiveViewModelBase, IRecipient<Ma
     {
         if (_settings.Model.CustomAssistants.Count == 0)
         {
-            DialogHost
+            DialogManager
                 .CreateCustomDialog(_serviceProvider.GetRequiredService<WelcomeView>())
-                .Show();
+                .ShowAsync()
+                .Detach(IExceptionHandler.DangerouslyIgnoreAllException);
         }
         else
         {
@@ -175,7 +181,8 @@ public sealed partial class MainViewModel : ReactiveViewModelBase, IRecipient<Ma
                 ToastHost
                     .CreateToast(LocaleResolver.MainViewModel_UpgradeSuccessfulToast_Title)
                     .WithDurationSeconds(5)
-                    .Show();
+                    .ShowAsync()
+                    .Detach(IExceptionHandler.DangerouslyIgnoreAllException);
             }
         }
     }
@@ -183,11 +190,10 @@ public sealed partial class MainViewModel : ReactiveViewModelBase, IRecipient<Ma
     [RelayCommand]
     private void NavigateToType(Type routeType)
     {
-        var item = FindNavigationBarItem(_itemsSource.Items, i => i.Route?.GetType() == routeType);
-        if (item != null)
-        {
-            NavigateToItem(item, []);
-        }
+        var item = FindNavigationBarItem(
+            _itemsSource.Items,
+            i => i.Route?.GetType() == routeType || i.Children.Any(c => c.Route?.GetType() == routeType));
+        if (item != null) SelectedItem = item;
     }
 
     [RelayCommand]
@@ -195,92 +201,31 @@ public sealed partial class MainViewModel : ReactiveViewModelBase, IRecipient<Ma
     {
         if (route is string { Length: > 0 } routeString)
         {
-            var segments = SplitRoute(routeString);
-            if (segments.Length == 0 || FindNavigationRouteMatch(segments) is not { } match)
+            var parts = routeString.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            var items = _itemsSource.Items;
+            for (var index = 0; index < parts.Length; index++)
             {
-                Log.ForContext<MainViewModel>().Warning("Failed to navigate to route {Route} because no navigation item matched it", route);
-                return;
-            }
+                var part = parts[index];
+                var item = items.FirstOrDefault(i => string.Equals(part.Trim(), i.Tag as string, StringComparison.OrdinalIgnoreCase));
+                if (item == null)
+                {
+                    Log.ForContext<MainViewModel>().Warning("Failed to navigate to route {Route} because part {Part} was not found", route, part);
+                    break;
+                }
 
-            NavigateToItem(match.Item, match.RemainingSegments);
+                if (index == parts.Length - 1)
+                {
+                    SelectedItem = item;
+                    break;
+                }
+
+                items = item.Children;
+            }
         }
         else
         {
             var item = FindNavigationBarItem(_itemsSource.Items, i => i.Route == route);
-            if (item is not null)
-            {
-                NavigateToItem(item, []);
-            }
-            else
-            {
-                SelectedItem = new NavigationBarItem(route); // This allows navigating to a route that is not in the navigation bar
-            }
-        }
-    }
-
-    private void NavigateToItem(NavigationBarItem item, IReadOnlyList<string> remainingSegments)
-    {
-        SelectedItem = item;
-        if (item.Route is IReactiveView reactiveView)
-        {
-            reactiveView.ViewModel.OnNavigatedTo(remainingSegments);
-        }
-    }
-
-    private NavigationRouteMatch? FindNavigationRouteMatch(IReadOnlyList<string> segments)
-    {
-        foreach (var item in _itemsSource.Items.AsValueEnumerable())
-        {
-            if (FindNavigationRouteMatch(item, segments, 0) is { } match)
-            {
-                return match;
-            }
-        }
-
-        return null;
-    }
-
-    private static NavigationRouteMatch? FindNavigationRouteMatch(NavigationBarItem item, IReadOnlyList<string> segments, int segmentIndex)
-    {
-        if (segmentIndex >= segments.Count) return null;
-
-        var routeKey = item.Tag as string;
-        if (string.IsNullOrWhiteSpace(routeKey) || !string.Equals(routeKey, segments[segmentIndex], StringComparison.OrdinalIgnoreCase))
-        {
-            return null;
-        }
-
-        var nextSegmentIndex = segmentIndex + 1;
-        NavigationRouteMatch? bestMatch = item.Route is null ?
-            null :
-            new NavigationRouteMatch(item, segments.AsValueEnumerable().Skip(nextSegmentIndex).ToArray());
-        foreach (var child in item.Children.AsValueEnumerable())
-        {
-            if (FindNavigationRouteMatch(child, segments, nextSegmentIndex) is { } childMatch)
-            {
-                bestMatch = childMatch;
-            }
-        }
-
-        return bestMatch;
-    }
-
-    private static string[] SplitRoute(string route) =>
-        route
-            .Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .AsValueEnumerable()
-            .Select(DecodeRouteSegment)
-            .ToArray();
-
-    private static string DecodeRouteSegment(string segment)
-    {
-        try
-        {
-            return Uri.UnescapeDataString(segment);
-        }
-        catch
-        {
-            return segment;
+            SelectedItem = item ?? new NavigationBarItem(route); // This allows navigating to a route that is not in the navigation bar
         }
     }
 
@@ -295,7 +240,7 @@ public sealed partial class MainViewModel : ReactiveViewModelBase, IRecipient<Ma
     {
         if (PersistentState.IsHideToTrayIconNotificationShown) return;
 
-        _serviceProvider.GetRequiredService<INativeHelper>().ShowDesktopNotificationAsync(LocaleResolver.MainView_EverywhereHasMinimizedToTray);
+        ServiceLocator.Resolve<INativeHelper>().ShowDesktopNotificationAsync(LocaleResolver.MainView_EverywhereHasMinimizedToTray);
         PersistentState.IsHideToTrayIconNotificationShown = true;
     }
 
@@ -305,5 +250,4 @@ public sealed partial class MainViewModel : ReactiveViewModelBase, IRecipient<Ma
         else NavigateTo(message.Route);
     }
 
-    private readonly record struct NavigationRouteMatch(NavigationBarItem Item, IReadOnlyList<string> RemainingSegments);
 }

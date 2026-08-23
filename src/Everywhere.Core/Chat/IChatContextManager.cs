@@ -1,12 +1,12 @@
+﻿using System.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Everywhere.Collections;
 
 namespace Everywhere.Chat;
 
 /// <summary>
-/// Owns the current chat context and the incrementally materialized chat-history presentation.
+/// Manages chat contexts and their history. This is used behind <see cref="ChatWindowViewModel"/>.
 /// </summary>
-public interface IChatContextManager : IIncrementalLoader
+public interface IChatContextManager : INotifyPropertyChanged
 {
     /// <summary>
     /// Gets the current chat context.
@@ -14,54 +14,51 @@ public interface IChatContextManager : IIncrementalLoader
     ChatContext Current { get; }
 
     /// <summary>
-    /// Gets or sets the current chat context metadata. Setting this loads the corresponding chat
-    /// context. A binding may temporarily assign null to indicate no selection.
+    /// Gets or sets the current chat context metadata. Setting this will load the corresponding chat context and change Current.
+    /// Although this property cannot be null, the Binding may set it to null to indicate no selection.
     /// </summary>
     ChatContextMetadata? CurrentMetadata { get; set; }
 
     /// <summary>
-    /// Gets the command that invalidates cached paging state and reloads history from the newest row.
+    /// Command to update recent chat context history.
     /// </summary>
     IRelayCommand UpdateRecentHistoryCommand { get; }
 
     /// <summary>
-    /// Gets the stable, dynamically grouped portion of history materialized so far.
+    /// Gets all chat context history. 20 for initial load, all loaded on demand.
     /// </summary>
-    IReadOnlyBindableList<ChatContextHistory> AllHistory { get; }
+    IReadOnlyList<ChatContextHistory> AllHistory { get; }
 
     /// <summary>
-    /// Gets or sets the text used to filter incrementally materialized history.
-    /// </summary>
-    string? HistorySearchQuery { get; set; }
-
-    /// <summary>
-    /// Gets or sets whether title misses may inspect user and assistant text content. Tool calls and
-    /// tool results never participate in this search.
-    /// </summary>
-    bool HistorySearchIncludesContent { get; set; }
-
-    /// <summary>
-    /// Gets the number of running chat contexts in the background.
+    /// Gets the number of running ChatContexts in the background. This is used to show a badge on the history menu.
     /// </summary>
     int BackgroundBusyCount { get; }
 
     /// <summary>
-    /// Gets the number of unacknowledged notifications from background chat contexts.
+    /// Gets the number of notified background tasks that are not yet acknowledged by the user. This is used to show a badge on the history menu.
     /// </summary>
     int BackgroundNotificationCount { get; }
 
     /// <summary>
-    /// Gets the command that creates and activates a new chat context.
+    /// Command to load more chat context history.
+    /// </summary>
+    IRelayCommand<int> LoadMoreHistoryCommand { get; }
+
+    /// <summary>
+    /// Creates a new chat context and sets it as current.
     /// </summary>
     IRelayCommand CreateNewCommand { get; }
 
     /// <summary>
-    /// Gets the command that removes a chat context.
+    /// Removes the given chat context.
     /// </summary>
     IRelayCommand<ChatContextMetadata> RemoveCommand { get; }
-
+    
     /// <summary>
     /// Loads the full chat context for the given metadata.
     /// </summary>
+    /// <param name="metadata"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     Task<ChatContext?> LoadChatContextAsync(ChatContextMetadata metadata, CancellationToken cancellationToken = default);
 }

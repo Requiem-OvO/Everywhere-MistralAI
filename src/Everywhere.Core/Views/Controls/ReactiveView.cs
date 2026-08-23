@@ -4,16 +4,9 @@ using ShadUI;
 
 namespace Everywhere.Views;
 
-public interface IReactiveView
-{
-    ReactiveViewModelBase ViewModel { get; }
-}
-
-public abstract class ReactiveUserControl<TViewModel> : UserControl, IReactiveView where TViewModel : ReactiveViewModelBase
+public abstract class ReactiveUserControl<TViewModel> : UserControl where TViewModel : ReactiveViewModelBase
 {
     public TViewModel ViewModel { get; }
-
-    ReactiveViewModelBase IReactiveView.ViewModel => ViewModel;
 
     protected ReactiveUserControl(IServiceProvider serviceProvider, bool disposeOnUnloaded = true)
     {
@@ -22,11 +15,9 @@ public abstract class ReactiveUserControl<TViewModel> : UserControl, IReactiveVi
     }
 }
 
-public abstract class ReactiveShadWindow<TViewModel> : ShadWindow, IReactiveView where TViewModel : ReactiveViewModelBase
+public abstract class ReactiveShadWindow<TViewModel> : ShadWindow where TViewModel : ReactiveViewModelBase
 {
     public TViewModel ViewModel { get; }
-
-    ReactiveViewModelBase IReactiveView.ViewModel => ViewModel;
 
     protected ReactiveShadWindow(IServiceProvider serviceProvider, bool disposeOnUnloaded = true)
     {

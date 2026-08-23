@@ -8,13 +8,13 @@ namespace Everywhere.Configuration;
 public sealed partial class WebBrowserSettings : ObservableObject
 {
     [ObservableProperty]
-    [DynamicLocaleKey(
+    [DynamicResourceKey(
         LocaleKey.WebBrowserSettings_ShowBrowser_Header,
         LocaleKey.WebBrowserSettings_ShowBrowser_Description)]
     public partial bool ShowBrowser { get; set; }
 
     [JsonIgnore]
-    [DynamicLocaleKey(
+    [DynamicResourceKey(
         LocaleKey.WebBrowserSettings_OpenBrowser_Header,
         LocaleKey.WebBrowserSettings_OpenBrowser_Description)]
     public SettingsControl<OpenWebBrowserControl> OpenBrowser { get; } = new();

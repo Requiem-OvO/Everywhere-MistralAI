@@ -3,15 +3,14 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Everywhere.Chat.Plugins;
 using ShadUI;
+using ZLinq;
 
 namespace Everywhere.Views;
 
 public partial class AskQuestionCard : Card
 {
-    public sealed partial class OptionWrapper(ChatPluginQuestionOption option) : ObservableObject
+    public abstract partial class OptionWrapper : ObservableObject
     {
-        public ChatPluginQuestionOption Option { get; } = option;
-
         [ObservableProperty]
         public partial bool IsSelected { get; set; }
 
@@ -19,13 +18,23 @@ public partial class AskQuestionCard : Card
         private void Select() => IsSelected = true;
     }
 
-    public sealed partial class QuestionWrapper : ObservableObject
+    public sealed class NormalOptionWrapper(ChatPluginQuestionOption option) : OptionWrapper
+    {
+        public ChatPluginQuestionOption Option { get; } = option;
+    }
+
+    public sealed partial class FreeformOptionWrapper : OptionWrapper
+    {
+        [ObservableProperty]
+        public partial string? FreeformText { get; set; }
+    }
+
+    public sealed class QuestionWrapper
     {
         public ChatPluginQuestion Question { get; }
         public SelectionMode SelectionMode { get; }
-        public IDynamicLocaleKey? MultiSelectHintKey => Question.MultiSelect ? new DynamicLocaleKey(LocaleKey.ChatPlugin_MultiSelectHint) : null;
+        public IDynamicResourceKey? MultiSelectHintKey => Question.MultiSelect ? new DynamicResourceKey(LocaleKey.ChatPlugin_MultiSelectHint) : null;
         public List<OptionWrapper> OptionWrappers { get; } = [];
-        [ObservableProperty] public partial string? FreeformText { get; set; }
 
         public QuestionWrapper(ChatPluginQuestion question)
         {
@@ -40,9 +49,16 @@ public partial class AskQuestionCard : Card
                     var isSelected = option.Recommended && (question.MultiSelect || !hasPreSelected);
                     if (isSelected) hasPreSelected = true;
 
-                    OptionWrappers.Add(new OptionWrapper(option) { IsSelected = isSelected });
+                    OptionWrappers.Add(
+                        new NormalOptionWrapper(option)
+                        {
+                            IsSelected = isSelected
+                        });
                 }
             }
+
+            // Always allow freeform
+            OptionWrappers.Add(new FreeformOptionWrapper());
         }
     }
 
@@ -88,15 +104,15 @@ public partial class AskQuestionCard : Card
         private set => SetAndRaise(CurrentQuestionProperty, ref field, value);
     }
 
-    public static readonly DirectProperty<AskQuestionCard, int> CurrentIndexProperty =
-        AvaloniaProperty.RegisterDirect<AskQuestionCard, int>(
-            nameof(CurrentIndex),
-            o => o.CurrentIndex);
+    public static readonly DirectProperty<AskQuestionCard, string?> PageDisplayProperty =
+        AvaloniaProperty.RegisterDirect<AskQuestionCard, string?>(
+            nameof(PageDisplay),
+            o => o.PageDisplay);
 
-    public int CurrentIndex
+    public string? PageDisplay
     {
         get;
-        private set => SetAndRaise(CurrentIndexProperty, ref field, value);
+        private set => SetAndRaise(PageDisplayProperty, ref field, value);
     }
 
     public static readonly DirectProperty<AskQuestionCard, bool> HasPreviousPageProperty =
@@ -118,10 +134,12 @@ public partial class AskQuestionCard : Card
     public bool HasNextPage
     {
         get;
-        private set => SetAndRaise(HasNextPageProperty, ref field, value);
+        set => SetAndRaise(HasNextPageProperty, ref field, value);
     }
 
     #endregion
+
+    private int _currentIndex;
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
@@ -133,10 +151,11 @@ public partial class AskQuestionCard : Card
         {
             WrappedQuestions = null;
             CurrentQuestion = null;
+            PageDisplay = null;
             return;
         }
 
-        WrappedQuestions = questions.AsValueEnumerable().Select(q => new QuestionWrapper(q)).ToArray();
+        WrappedQuestions = questions.AsValueEnumerable().Select(q => new QuestionWrapper(q)).ToList();
         NavigateTo(0);
     }
 
@@ -144,17 +163,19 @@ public partial class AskQuestionCard : Card
     {
         if (WrappedQuestions is null) return;
 
-        CurrentIndex = index;
+        _currentIndex = index;
         CurrentQuestion = WrappedQuestions[index];
-        HasPreviousPage = CurrentIndex > 0;
-        HasNextPage = CurrentIndex < WrappedQuestions.Count - 1;
+        HasPreviousPage = _currentIndex > 0;
+        HasNextPage = _currentIndex < WrappedQuestions.Count - 1;
         PreviousPageCommand.NotifyCanExecuteChanged();
+
+        PageDisplay = WrappedQuestions.Count <= 1 ? null : $"{index + 1} / {WrappedQuestions.Count}";
     }
 
     [RelayCommand(CanExecute = nameof(HasPreviousPage))]
     private void PreviousPage()
     {
-        if (CurrentIndex > 0) NavigateTo(CurrentIndex - 1);
+        if (_currentIndex > 0) NavigateTo(_currentIndex - 1);
     }
 
     [RelayCommand]
@@ -162,9 +183,9 @@ public partial class AskQuestionCard : Card
     {
         if (WrappedQuestions is null) return;
 
-        if (CurrentIndex < WrappedQuestions.Count - 1)
+        if (_currentIndex < WrappedQuestions.Count - 1)
         {
-            NavigateTo(CurrentIndex + 1);
+            NavigateTo(_currentIndex + 1);
         }
         else if (Command is { } command)
         {
@@ -172,8 +193,23 @@ public partial class AskQuestionCard : Card
             for (var i = 0; i < WrappedQuestions.Count; i++)
             {
                 var question = WrappedQuestions[i];
-                var selected = question.OptionWrappers.AsValueEnumerable().Where(x => x.IsSelected).Select(x => x.Option.Content).ToArray();
-                answers[i] = new ChatPluginQuestionAnswer(selected, question.FreeformText);
+
+                var selected = new List<string>();
+                string? freeformText = null;
+                foreach (var optionWrapper in question.OptionWrappers)
+                {
+                    if (optionWrapper is NormalOptionWrapper { IsSelected: true, Option: { } option })
+                    {
+                        selected.Add(option.Content);
+                    }
+                    else if (optionWrapper is FreeformOptionWrapper { FreeformText: { Length: > 0 } freeform })
+                    {
+                        freeformText = freeform;
+                        break;
+                    }
+                }
+
+                answers[i] = new ChatPluginQuestionAnswer(selected, freeformText);
             }
 
             if (command.CanExecute(answers))

@@ -5,10 +5,10 @@
 /// </summary>
 public enum TemporaryChatMode
 {
-    [DynamicLocaleKey(LocaleKey.TemporaryChatMode_Never)]
+    [DynamicResourceKey(LocaleKey.TemporaryChatMode_Never)]
     Never,
-    [DynamicLocaleKey(LocaleKey.TemporaryChatMode_RememberLast)]
+    [DynamicResourceKey(LocaleKey.TemporaryChatMode_RememberLast)]
     RememberLast,
-    [DynamicLocaleKey(LocaleKey.TemporaryChatMode_Always)]
+    [DynamicResourceKey(LocaleKey.TemporaryChatMode_Always)]
     Always
 }

@@ -28,8 +28,8 @@ public sealed partial class ChatInputArea : TemplatedControl
     public static readonly StyledProperty<int> MaxLengthProperty =
         ChatTextEditor.MaxLengthProperty.AddOwner<ChatInputArea>();
 
-    public static readonly StyledProperty<string?> PlaceholderTextProperty =
-        ChatTextEditor.PlaceholderTextProperty.AddOwner<ChatInputArea>();
+    public static readonly StyledProperty<string?> WatermarkProperty =
+        ChatTextEditor.WatermarkProperty.AddOwner<ChatInputArea>();
 
     public static readonly StyledProperty<bool> PressCtrlEnterToSendProperty =
         AvaloniaProperty.Register<ChatInputArea, bool>(nameof(PressCtrlEnterToSend));
@@ -39,18 +39,6 @@ public sealed partial class ChatInputArea : TemplatedControl
 
     public static readonly StyledProperty<IRelayCommand?> CancelCommandProperty =
         AvaloniaProperty.Register<ChatInputArea, IRelayCommand?>(nameof(CancelCommand));
-
-    public static readonly StyledProperty<bool> IsContextUsageRingVisibleProperty =
-        AvaloniaProperty.Register<ChatInputArea, bool>(nameof(IsContextUsageRingVisible));
-
-    public static readonly StyledProperty<IRelayCommand?> CompactContextCommandProperty =
-        AvaloniaProperty.Register<ChatInputArea, IRelayCommand?>(nameof(CompactContextCommand));
-
-    public static readonly StyledProperty<ContextUsageState?> ContextUsageProperty =
-        AvaloniaProperty.Register<ChatInputArea, ContextUsageState?>(nameof(ContextUsage));
-
-    public static readonly StyledProperty<ContextCompactionState?> ContextCompactionProperty =
-        AvaloniaProperty.Register<ChatInputArea, ContextCompactionState?>(nameof(ContextCompaction));
 
     public static readonly StyledProperty<ICollection<ChatAttachment>?> ChatAttachmentItemsSourceProperty =
         AvaloniaProperty.Register<ChatInputArea, ICollection<ChatAttachment>?>(nameof(ChatAttachmentItemsSource));
@@ -118,10 +106,10 @@ public sealed partial class ChatInputArea : TemplatedControl
         set => SetValue(MaxLengthProperty, value);
     }
 
-    public string? PlaceholderText
+    public string? Watermark
     {
-        get => GetValue(PlaceholderTextProperty);
-        set => SetValue(PlaceholderTextProperty, value);
+        get => GetValue(WatermarkProperty);
+        set => SetValue(WatermarkProperty, value);
     }
 
     /// <summary>
@@ -146,30 +134,6 @@ public sealed partial class ChatInputArea : TemplatedControl
     {
         get => GetValue(CancelCommandProperty);
         set => SetValue(CancelCommandProperty, value);
-    }
-
-    public bool IsContextUsageRingVisible
-    {
-        get => GetValue(IsContextUsageRingVisibleProperty);
-        set => SetValue(IsContextUsageRingVisibleProperty, value);
-    }
-
-    public IRelayCommand? CompactContextCommand
-    {
-        get => GetValue(CompactContextCommandProperty);
-        set => SetValue(CompactContextCommandProperty, value);
-    }
-
-    public ContextUsageState? ContextUsage
-    {
-        get => GetValue(ContextUsageProperty);
-        set => SetValue(ContextUsageProperty, value);
-    }
-
-    public ContextCompactionState? ContextCompaction
-    {
-        get => GetValue(ContextCompactionProperty);
-        set => SetValue(ContextCompactionProperty, value);
     }
 
     public ICollection<ChatAttachment>? ChatAttachmentItemsSource
@@ -409,8 +373,8 @@ public sealed partial class ChatInputArea : TemplatedControl
 
     private void HandleAssistantSelectionPointerWheelChanged(object? sender, PointerWheelEventArgs e)
     {
-        var assistants = CustomAssistantItemsSource?.ToArray();
-        if (assistants is null || assistants.Length <= 1) return;
+        var assistants = CustomAssistantItemsSource?.ToList();
+        if (assistants is null || assistants.Count <= 1) return;
 
         var currentIndex = SelectedCustomAssistant is not null ? assistants.IndexOf(SelectedCustomAssistant) : -1;
         if (currentIndex == -1)
@@ -423,7 +387,7 @@ public sealed partial class ChatInputArea : TemplatedControl
         currentIndex = e.Delta.Y switch
         {
             > 0 => Math.Max(currentIndex - 1, 0),
-            < 0 => Math.Min(currentIndex + 1, assistants.Length - 1),
+            < 0 => Math.Min(currentIndex + 1, assistants.Count - 1),
             _ => currentIndex
         };
 

@@ -20,7 +20,7 @@ public sealed partial class UserActionChatMessage : ChatMessage
 
     [Key(1)]
     [ObservableProperty]
-    public partial DynamicLocaleKey? HeaderKey { get; set; }
+    public partial DynamicResourceKey? HeaderKey { get; set; }
 
     /// <summary>
     /// The actual prompt that sends to the LLM.
@@ -32,7 +32,7 @@ public sealed partial class UserActionChatMessage : ChatMessage
     [SerializationConstructor]
     private UserActionChatMessage() { }
 
-    public UserActionChatMessage(LucideIconKind icon, DynamicLocaleKey? headerKey, string? content)
+    public UserActionChatMessage(LucideIconKind icon, DynamicResourceKey? headerKey, string? content)
     {
         Icon = icon;
         HeaderKey = headerKey;

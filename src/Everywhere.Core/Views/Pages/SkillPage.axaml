@@ -2,8 +2,9 @@
   x:Class="Everywhere.Views.Pages.SkillPage" xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
   xmlns:shadui="clr-namespace:ShadUI.Controls;assembly=ShadUI" xmlns:skills="clr-namespace:Everywhere.Skills;assembly=Everywhere.Abstractions"
-  xmlns:v="clr-namespace:Everywhere.Views" xmlns:vm="clr-namespace:Everywhere.ViewModels"
-  x:Name="Self" x:DataType="vm:SkillPageViewModel">
+  xmlns:v="clr-namespace:Everywhere.Views" xmlns:vc="clr-namespace:Everywhere.ValueConverters"
+  xmlns:vm="clr-namespace:Everywhere.ViewModels" x:Name="Self"
+  x:DataType="vm:SkillPageViewModel">
   <UserControl.Styles>
     <Style Selector="ListBox#SkillListBox">
       <Setter Property="Padding" Value="0"/>
@@ -58,7 +59,6 @@
 
   <shadui:NavigationView
     Padding="24,0,24,20" HeaderMaxWidth="1000"
-    IsEnabled="{Binding !SkillManager.IsRefreshing}"
     PageTransition="{x:Null}"
     PaneWidth="400"
     SelectedItem="{Binding SelectedSkillWrapper, Mode=TwoWay}">
@@ -110,8 +110,8 @@
           <TextBox
             Classes="Clearable" Margin="-1,0,0,0"
             CornerRadius="0,6,6,0" FontWeight="Normal"
-            PlaceholderText="{I18N {x:Static LocaleKey.SkillPage_SearchBox_PlaceholderText}}"
-            Text="{Binding SearchText, Mode=TwoWay, Delay=500}"/>
+            Text="{Binding SearchText, Mode=TwoWay, Delay=500}"
+            Watermark="{I18N {x:Static LocaleKey.SkillPage_SearchBox_Watermark}}"/>
         </DockPanel>
       </StackPanel>
     </shadui:NavigationView.PaneHeader>
@@ -120,13 +120,8 @@
       <Grid
         RowDefinitions="Auto,*" RowSpacing="10">
         <TextBlock
-          Classes="Muted Caption" Grid.Row="0">
-          <TextBlock.Text>
-            <I18N Key="{x:Static LocaleKey.SkillPage_CountText}">
-              <Binding Path="FilteredSkillCount"/>
-            </I18N>
-          </TextBlock.Text>
-        </TextBlock>
+          Classes="Muted Caption" Grid.Row="0"
+          Text="{Binding FilteredSkillCountKey^}"/>
 
         <ScrollViewer
           Grid.Row="1" Margin="0,0,-12,8"
@@ -296,7 +291,7 @@
               <StackPanel Spacing="12">
                 <Border
                   Padding="14"
-                  Background="{DynamicResource LightCardBackgroundColor}"
+                  Background="{DynamicResource SettingsItemBackgroundColor}"
                   BorderBrush="{DynamicResource BorderColor}"
                   BorderThickness="1"
                   CornerRadius="{DynamicResource MdCornerRadius}">
@@ -342,7 +337,7 @@
 
                 <Border
                   Padding="14"
-                  Background="{DynamicResource LightCardBackgroundColor}"
+                  Background="{DynamicResource SettingsItemBackgroundColor}"
                   BorderBrush="{DynamicResource BorderColor}"
                   BorderThickness="1"
                   CornerRadius="{DynamicResource MdCornerRadius}">
@@ -405,7 +400,7 @@
                           <ScrollViewer HorizontalScrollBarVisibility="Disabled">
                             <md:MarkdownRenderer
                               Margin="6,6,12,6"
-                              MarkdownBuilder="{Binding MarkdownBody, Converter={x:Static md:ValueConverters.ToObservableStringBuilder}}"/>
+                              MarkdownBuilder="{Binding MarkdownBody, Converter={x:Static vc:CommonConverters.ToObservableStringBuilder}}"/>
                           </ScrollViewer>
                         </DataTemplate>
                       </v:ConditionalContentControl.TrueContent>

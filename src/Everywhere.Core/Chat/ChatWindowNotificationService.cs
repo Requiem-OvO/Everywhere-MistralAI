@@ -92,31 +92,32 @@ public sealed class ChatWindowNotificationService : IChatWindowNotificationServi
                 availability.Kind is ModelAvailabilityKind.Deprecated or ModelAvailabilityKind.Unavailable ?
                     NotificationType.Error :
                     NotificationType.Warning,
-                ActionButtonContentKey: new DynamicLocaleKey(LocaleKey.ChatWindow_ModelWarning_OpenAssistantSettings),
+                ActionButtonContentKey: new DynamicResourceKey(LocaleKey.ChatWindow_ModelWarning_OpenAssistantSettings),
                 ActionCommand: new RelayCommand(() => OpenAssistantSettings(assistant.Id))));
     }
 
-    private static IDynamicLocaleKey CreateOfficialModelWarningMessageKey(ModelAvailability availability)
+    private static IDynamicResourceKey CreateOfficialModelWarningMessageKey(ModelAvailability availability)
     {
-        var deprecationDate = new DirectLocaleKey(availability.DeprecationDate?.ToString("D") ?? string.Empty);
+        var deprecationDate = new DirectResourceKey(availability.DeprecationDate?.ToString("D") ?? string.Empty);
         return availability.Kind switch
         {
-            ModelAvailabilityKind.Unavailable => new DynamicLocaleKey(
+            ModelAvailabilityKind.Unavailable => new FormattedDynamicResourceKey(
                 LocaleKey.ChatWindow_ModelWarning_Unavailable),
-            ModelAvailabilityKind.Deprecated => new FormattedDynamicLocaleKey(
+            ModelAvailabilityKind.Deprecated => new FormattedDynamicResourceKey(
                 LocaleKey.ChatWindow_ModelWarning_Deprecated,
                 deprecationDate),
-            ModelAvailabilityKind.DeprecatingSoon => new FormattedDynamicLocaleKey(
+            ModelAvailabilityKind.DeprecatingSoon => new FormattedDynamicResourceKey(
                 LocaleKey.ChatWindow_ModelWarning_DeprecatingSoon,
                 deprecationDate),
-            _ => DirectLocaleKey.Empty
+            _ => DirectResourceKey.Empty
         };
     }
 
     private static void OpenAssistantSettings(Guid assistantId)
     {
         WeakReferenceMessenger.Default.Send<ApplicationMessage>(
-            new ShowWindowMessage(ShowWindowMessage.MainWindow, MainViewNavigateMessage.ToCustomAssistant(assistantId)));
+            new ShowWindowMessage(ShowWindowMessage.MainWindow, "CustomAssistantPage"));
+        WeakReferenceMessenger.Default.Send(new SelectCustomAssistantMessage(assistantId)); // TODO
     }
 
     public void Dispose()

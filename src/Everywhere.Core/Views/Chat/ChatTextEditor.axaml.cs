@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Reactive.Disposables;
 using Avalonia.Controls;
 using Avalonia.Controls.Metadata;
 using Avalonia.Controls.Primitives;
@@ -12,7 +13,6 @@ using Avalonia.Media.TextFormatting;
 using AvaloniaEdit;
 using AvaloniaEdit.Rendering;
 using Everywhere.Utilities;
-using LiveMarkdown.Avalonia;
 using Serilog;
 
 namespace Everywhere.Views;
@@ -20,11 +20,6 @@ namespace Everywhere.Views;
 [TemplatePart("PART_TextEditor", typeof(TextEditor), IsRequired = true)]
 public class ChatTextEditor : TemplatedControl
 {
-    /// <summary>
-    /// The document position reserved for the leading inline object.
-    /// </summary>
-    public const char ObjectReplacementCharacter = MarkdownTextProjection.ObjectReplacementCharacter;
-
     public static readonly DirectProperty<ChatTextEditor, string?> TextProperty =
         AvaloniaProperty.RegisterDirect<ChatTextEditor, string?>(
             nameof(Text),
@@ -42,7 +37,8 @@ public class ChatTextEditor : TemplatedControl
             _isTextChanging = true;
             try
             {
-                _textEditor?.Text = CreateDocumentText(value);
+                var hasLeading = LeadingContent != null;
+                _textEditor?.Text = hasLeading ? "\uFFFC" + value : value;
                 SetAndRaise(TextProperty, ref _text, value);
             }
             finally
@@ -61,13 +57,13 @@ public class ChatTextEditor : TemplatedControl
         set => SetValue(MaxLengthProperty, value);
     }
 
-    public static readonly StyledProperty<string?> PlaceholderTextProperty =
-        AvaloniaProperty.Register<ChatTextEditor, string?>(nameof(PlaceholderText));
+    public static readonly StyledProperty<string?> WatermarkProperty =
+        AvaloniaProperty.Register<ChatTextEditor, string?>(nameof(Watermark));
 
-    public string? PlaceholderText
+    public string? Watermark
     {
-        get => GetValue(PlaceholderTextProperty);
-        set => SetValue(PlaceholderTextProperty, value);
+        get => GetValue(WatermarkProperty);
+        set => SetValue(WatermarkProperty, value);
     }
 
     public string SelectedText
@@ -116,9 +112,9 @@ public class ChatTextEditor : TemplatedControl
         }
 
         _textEditor = e.NameScope.Find<TextEditor>("PART_TextEditor").NotNull();
-        _textEditor.Text = CreateDocumentText(_text);
+        _textEditor.Text = _text;
         _textEditor.TextArea.TextView.ElementGenerators.Add(new LeadingContentElementGenerator(this, _textEditor));
-        _textEditor.TextArea.TextView.BackgroundRenderers.Add(new PlaceholderTextRenderer(this, _textEditor));
+        _textEditor.TextArea.TextView.BackgroundRenderers.Add(new WatermarkRenderer(this, _textEditor));
 
         _textEditor.TextChanged += HandleTextEditorTextChanged;
         _textChangedSubscription = Disposable.Create(() => _textEditor.TextChanged -= HandleTextEditorTextChanged);
@@ -136,7 +132,7 @@ public class ChatTextEditor : TemplatedControl
         if (LeadingContent != null)
         {
             var document = textEditor.Document;
-            if (document == null || document.TextLength == 0 || document.GetCharAt(0) != ObjectReplacementCharacter)
+            if (document == null || document.TextLength == 0 || document.GetCharAt(0) != '\uFFFC')
             {
                 LeadingContent = null;
                 ClearValue(LeadingContentProperty);
@@ -146,7 +142,7 @@ public class ChatTextEditor : TemplatedControl
         _isTextChanging = true;
         try
         {
-            SetAndRaise(TextProperty, ref _text, RemoveLeadingObjectCharacter(textEditor.Text));
+            SetAndRaise(TextProperty, ref _text, textEditor.Text?.TrimStart('\uFFFC'));
             RaiseEvent(new TextChangedEventArgs(TextBox.TextChangedEvent, this)); // For ChatWindow Handling
         }
         finally
@@ -167,9 +163,9 @@ public class ChatTextEditor : TemplatedControl
 
             if (hasLeading)
             {
-                if (document.TextLength == 0 || document.GetCharAt(0) != ObjectReplacementCharacter)
+                if (document.TextLength == 0 || document.GetCharAt(0) != '\uFFFC')
                 {
-                    document.Insert(0, ObjectReplacementCharacter.ToString());
+                    document.Insert(0, "\uFFFC");
                 }
                 else
                 {
@@ -179,13 +175,13 @@ public class ChatTextEditor : TemplatedControl
             }
             else
             {
-                if (document.TextLength > 0 && document.GetCharAt(0) == ObjectReplacementCharacter)
+                if (document.TextLength > 0 && document.GetCharAt(0) == '\uFFFC')
                 {
                     document.Remove(0, 1);
                 }
             }
         }
-        else if (change.Property == PlaceholderTextProperty && _textEditor != null)
+        else if (change.Property == WatermarkProperty && _textEditor != null)
         {
             _textEditor.TextArea.TextView.InvalidateLayer(KnownLayer.Background);
         }
@@ -202,7 +198,7 @@ public class ChatTextEditor : TemplatedControl
 
         _textEditor?.SelectionStart = _textEditor.Document.TextLength;
     }
-
+    
     public async void Copy()
     {
         try
@@ -212,7 +208,7 @@ public class ChatTextEditor : TemplatedControl
             var clipboard = TopLevel.GetTopLevel(textEditor)?.Clipboard;
             if (clipboard is null) return;
 
-            var selectionText = RemoveLeadingObjectCharacter(textEditor.SelectedText);
+            var selectionText = textEditor.SelectedText.TrimStart('\uFFFC');
             if (!string.IsNullOrEmpty(selectionText))
             {
                 await clipboard.SetTextAsync(selectionText);
@@ -233,7 +229,7 @@ public class ChatTextEditor : TemplatedControl
             var clipboard = TopLevel.GetTopLevel(textEditor)?.Clipboard;
             if (clipboard is null) return;
 
-            var selectionText = RemoveLeadingObjectCharacter(textEditor.SelectedText);
+            var selectionText = textEditor.SelectedText.TrimStart('\uFFFC');
             var start = textEditor.SelectionStart;
             var length = textEditor.SelectionLength;
             textEditor.Document.Remove(start, length);
@@ -268,7 +264,7 @@ public class ChatTextEditor : TemplatedControl
                 var text = await clipboard.TryGetTextAsync();
                 if (text.IsNullOrEmpty()) return;
 
-                text = text.Replace(ObjectReplacementCharacter.ToString(), string.Empty, StringComparison.Ordinal);
+                text = text.Replace("\uFFFC", string.Empty);
                 if (!string.IsNullOrEmpty(text))
                 {
                     textArea.Selection.ReplaceSelectionWithText(text);
@@ -315,11 +311,6 @@ public class ChatTextEditor : TemplatedControl
         }
     }
 
-    private string? CreateDocumentText(string? text) => LeadingContent is null ? text : string.Concat(ObjectReplacementCharacter.ToString(), text);
-
-    private static string? RemoveLeadingObjectCharacter(string? text) =>
-        text is { Length: > 0 } && text[0] == ObjectReplacementCharacter ? text[1..] : text;
-
     // AvaloniaEdit does not support preedit, so this is a workaround for it.
     // I use harmony to patch TextAreaTextInputMethodClient, and raise PreeditChangedEvent when the preedit text changes.
     // Then I handle this event in ChatTextEditor and update the PreeditText and PreeditRect properties accordingly.
@@ -363,7 +354,7 @@ file class LeadingContentElementGenerator(ChatTextEditor chatTextEditor, TextEdi
         if (startOffset > 0) return -1;
         if (chatTextEditor.LeadingContent == null) return -1;
         var document = textEditor.Document;
-        if (document is { TextLength: > 0 } && document.GetCharAt(0) == ChatTextEditor.ObjectReplacementCharacter) return 0;
+        if (document is { TextLength: > 0 } && document.GetCharAt(0) == '\uFFFC') return 0;
         return -1;
     }
 
@@ -371,7 +362,7 @@ file class LeadingContentElementGenerator(ChatTextEditor chatTextEditor, TextEdi
     {
         if (offset != 0 || chatTextEditor.LeadingContent == null) return null;
         var document = textEditor.Document;
-        if (document == null || document.TextLength == 0 || document.GetCharAt(0) != ChatTextEditor.ObjectReplacementCharacter) return null;
+        if (document == null || document.TextLength == 0 || document.GetCharAt(0) != '\uFFFC') return null;
 
         var contentControl = new ContentControl
         {
@@ -393,7 +384,8 @@ file class CenteredInlineObjectElement(int documentLength, Control element) : In
     }
 }
 
-file class CenteredInlineObjectRun(int length, TextRunProperties? properties, Control element) : InlineObjectRun(length, properties, element)
+file class CenteredInlineObjectRun(int length, TextRunProperties? properties, Control element)
+    : InlineObjectRun(length, properties, element)
 {
     public override double Baseline
     {
@@ -413,22 +405,22 @@ file class CenteredInlineObjectRun(int length, TextRunProperties? properties, Co
     }
 }
 
-file class PlaceholderTextRenderer(ChatTextEditor chatTextEditor, TextEditor textEditor) : IBackgroundRenderer
+file class WatermarkRenderer(ChatTextEditor chatTextEditor, TextEditor textEditor) : IBackgroundRenderer
 {
     public KnownLayer Layer => KnownLayer.Background;
 
     public void Draw(TextView textView, DrawingContext drawingContext)
     {
-        var placeholderText = chatTextEditor.PlaceholderText;
-        if (string.IsNullOrEmpty(placeholderText)) return;
+        var watermark = chatTextEditor.Watermark;
+        if (string.IsNullOrEmpty(watermark)) return;
 
         var document = textEditor.Document;
         if (document == null) return;
-        if (document.TextLength == 1 && document.GetCharAt(0) == ChatTextEditor.ObjectReplacementCharacter || document.TextLength == 0)
+        if ((document.TextLength == 1 && document.GetCharAt(0) == '\uFFFC') || document.TextLength == 0)
         {
             var typeface = new Typeface(textEditor.FontFamily, textEditor.FontStyle, textEditor.FontWeight, textEditor.FontStretch);
             var formattedText = new FormattedText(
-                placeholderText,
+                watermark,
                 CultureInfo.CurrentCulture,
                 FlowDirection.LeftToRight,
                 typeface,

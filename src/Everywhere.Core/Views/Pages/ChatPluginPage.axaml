@@ -25,41 +25,41 @@
       </Style>
       <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
       <Setter Property="ItemTemplate">
-        <DataTemplate x:DataType="v:ToolPluginPresentation">
+        <DataTemplate DataType="p:ChatPlugin">
           <Grid
             ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="8">
             <LucideIcon
               Grid.Column="0" Margin="0,0,10,0"
-              Kind="{Binding Plugin.Icon}"/>
+              Kind="{Binding Icon}"/>
             <StackPanel
               Grid.Column="1" VerticalAlignment="Center"
               Spacing="4">
               <TextBlock
                 Classes="p" IsHitTestVisible="False"
-                Text="{Binding Plugin.HeaderKey^}"
+                Text="{Binding HeaderKey^}"
                 TextTrimming="CharacterEllipsis"/>
               <TextBlock
                 Classes="Muted" IsHitTestVisible="False"
                 IsVisible="{Binding $self.Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                 MaxLines="2"
-                Text="{Binding Plugin.DescriptionKey^}"
+                Text="{Binding DescriptionKey^}"
                 TextTrimming="CharacterEllipsis"/>
             </StackPanel>
 
             <LucideIcon
               Grid.Column="2"
               Foreground="{DynamicResource WarningColor}"
-              IsVisible="{Binding !!Plugin.Warnings.Count}"
+              IsVisible="{Binding !!Warnings.Count}"
               Kind="TriangleAlert"
               Size="{DynamicResource FontSizeL}"
               ToolTip.Placement="Top"
-              ToolTip.Tip="{Binding Plugin.Warnings[0].MessageKey^}"/>
+              ToolTip.Tip="{Binding Warnings[0].MessageKey^}"/>
 
             <v:ConditionalContentControl
               Grid.Column="3"
-              Condition="{Binding Plugin, Converter={x:Static vc:CommonConverters.TypeEquals}, ConverterParameter={x:Type p:McpChatPlugin}}">
+              Condition="{Binding Converter={x:Static vc:CommonConverters.TypeEquals}, ConverterParameter={x:Type p:McpChatPlugin}}">
               <v:ConditionalContentControl.TrueContent>
-                <DataTemplate x:DataType="v:ToolPluginPresentation">
+                <DataTemplate x:DataType="p:McpChatPlugin">
                   <Panel>
                     <Border
                       Width="8" Height="8"
@@ -115,7 +115,7 @@
             </shadui:Badge.Background>
             <TextBlock Foreground="{DynamicResource BadgeForegroundColor}">
               <TextBlock.Text>
-                <I18N Key="{Binding Converter={x:Static vc:DynamicLocaleKeyConverter.Shared}}"/>
+                <I18N Key="{Binding Converter={x:Static vc:DynamicResourceKeyConverter.Shared}}"/>
               </TextBlock.Text>
             </TextBlock>
           </shadui:Badge>
@@ -137,9 +137,8 @@
           VerticalAlignment="Center"
           Text="{I18N {x:Static LocaleKey.ChatPluginPage_Title}}"/>
 
-        <shadui:ControlGroup
+        <shadui:ButtonGroup
           HorizontalAlignment="Right" VerticalAlignment="Center"
-          CornerRadius="{DynamicResource FullCornerRadius}"
           IsVisible="{Binding #McpTabItem.IsSelected}"
           Orientation="Horizontal">
           <Button
@@ -156,7 +155,7 @@
               Kind="Import"
               Size="{DynamicResource FontSizeL}"/>
           </Button>
-        </shadui:ControlGroup>
+        </shadui:ButtonGroup>
       </DockPanel>
     </shadui:NavigationView.PaneHeader>
 
@@ -206,7 +205,7 @@
 
           <ListBox
             Classes="PluginListBox"
-            ItemsSource="{Binding ToolSettings.BuiltInPlugins}"
+            ItemsSource="{Binding Manager.BuiltInPlugins}"
             SelectedItem="{Binding SelectedBuiltInPlugin}"/>
         </TabItem>
 
@@ -225,8 +224,8 @@
 
           <ListBox
             Classes="PluginListBox"
-            ItemsSource="{Binding ToolSettings.McpPlugins}"
-            SelectedItem="{Binding SelectedMcpPluginPresentation}"/>
+            ItemsSource="{Binding Manager.McpPlugins}"
+            SelectedItem="{Binding SelectedMcpPlugin}"/>
         </TabItem>
       </TabControl>
     </shadui:NavigationView.PaneContent>
@@ -281,7 +280,7 @@
     </shadui:NavigationView.Header>
 
     <shadui:NavigationView.ContentTemplate>
-      <DataTemplate x:DataType="v:ToolPluginPresentation">
+      <DataTemplate DataType="p:ChatPlugin">
         <Grid
           MaxWidth="1000" Margin="0,12,0,0"
           ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,*"
@@ -290,14 +289,14 @@
             Grid.Row="0" Grid.Column="0"
             Width="64" Height="64"
             md:AsyncImageLoader.SizeToContent="Manual"
-            md:AsyncImageLoader.Source="{Binding Plugin.BeautifulIcon}"
-            IsVisible="{Binding Plugin.BeautifulIcon, Converter={x:Static ObjectConverters.IsNotNull}}"
+            md:AsyncImageLoader.Source="{Binding BeautifulIcon}"
+            IsVisible="{Binding BeautifulIcon, Converter={x:Static ObjectConverters.IsNotNull}}"
             Stretch="Uniform"/>
           <LucideIcon
             Grid.Row="0" Grid.Column="0"
             VerticalAlignment="Top"
-            IsVisible="{Binding Plugin.BeautifulIcon, Converter={x:Static ObjectConverters.IsNull}}"
-            Kind="{Binding Plugin.Icon, FallbackValue=Hammer}"
+            IsVisible="{Binding BeautifulIcon, Converter={x:Static ObjectConverters.IsNull}}"
+            Kind="{Binding Icon, FallbackValue=Hammer}"
             Size="64"/>
 
           <StackPanel
@@ -306,14 +305,14 @@
             Spacing="2">
             <TextBlock
               Classes="h3"
-              Text="{Binding Plugin.HeaderKey^, FallbackValue={x:Null}}"
+              Text="{Binding HeaderKey^, FallbackValue={x:Null}}"
               TextTrimming="CharacterEllipsis"/>
 
             <ScrollViewer
               MaxHeight="80" HorizontalScrollBarVisibility="Disabled">
               <TextBlock
                 Classes="Muted"
-                Text="{Binding Plugin.DescriptionKey^, FallbackValue={x:Null}}"
+                Text="{Binding DescriptionKey^, FallbackValue={x:Null}}"
                 TextTrimming="CharacterEllipsis" TextWrapping="Wrap"/>
             </ScrollViewer>
           </StackPanel>
@@ -322,8 +321,8 @@
             Grid.Row="1" Grid.Column="0"
             Grid.ColumnSpan="2" Margin="0"
             HorizontalAlignment="Stretch"
-            IsVisible="{Binding !!Plugin.Warnings.Count}"
-            ItemsSource="{Binding Plugin.Warnings}">
+            IsVisible="{Binding !!Warnings.Count}"
+            ItemsSource="{Binding Warnings}">
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate>
                 <StackPanel Spacing="8"/>
@@ -361,35 +360,9 @@
               </DataTemplate>
 
               <DataTemplate x:DataType="vm:ChatPluginPageViewModel+FunctionsTabItem">
-                <Grid RowDefinitions="Auto,*">
-                  <Border
-                    Grid.Row="0" Margin="0,0,0,8"
-                    Padding="16,12"
-                    Background="{DynamicResource LightCardBackgroundColor}"
-                    BorderBrush="{DynamicResource BorderColor}"
-                    BorderThickness="1" CornerRadius="8"
-                    IsVisible="{Binding Plugin.Plugin, Converter={x:Static vc:CommonConverters.TypeEquals}, ConverterParameter={x:Type p:McpChatPlugin}}">
-                    <Grid
-                      ColumnDefinitions="*,Auto" ColumnSpacing="16">
-                      <StackPanel>
-                        <TextBlock
-                          Classes="p"
-                          Text="{I18N {x:Static LocaleKey.ChatPluginPage_McpBypassApproval_Header}}"/>
-                        <TextBlock
-                          Classes="Muted Caption"
-                          Text="{I18N {x:Static LocaleKey.ChatPluginPage_McpBypassApproval_Description}}"
-                          TextWrapping="Wrap"/>
-                      </StackPanel>
-                      <ToggleSwitch
-                        Grid.Column="1" VerticalAlignment="Center"
-                        IsChecked="{Binding Plugin.BypassesApproval, Mode=TwoWay}"
-                        IsEnabled="{Binding Plugin.CanEditBypassesApproval}"/>
-                    </Grid>
-                  </Border>
-
+                <Panel>
                   <DataGrid
-                    Grid.Row="1"
-                    Background="{DynamicResource LightCardBackgroundColor}"
+                    Background="{DynamicResource SettingsItemBackgroundColor}"
                     BorderBrush="{DynamicResource BorderColor}"
                     BorderThickness="1" CanUserReorderColumns="False"
                     CanUserResizeColumns="True" CanUserSortColumns="True"
@@ -397,12 +370,12 @@
                     ItemsSource="{Binding Plugin.Functions}">
                     <DataGrid.Columns>
                       <DataGridTemplateColumn Width="*">
-                        <DataTemplate x:DataType="v:ToolFunctionPresentation">
+                        <DataTemplate DataType="p:ChatFunction">
                           <DockPanel HorizontalSpacing="12">
                             <LucideIcon
                               DockPanel.Dock="Left" VerticalAlignment="Center"
-                              IsVisible="{Binding Function.Icon, Converter={x:Static ObjectConverters.IsNotNull}}"
-                              Kind="{Binding Function.Icon}"
+                              IsVisible="{Binding Icon, Converter={x:Static ObjectConverters.IsNotNull}}"
+                              Kind="{Binding Icon}"
                               Size="22"/>
 
                             <StackPanel>
@@ -410,14 +383,14 @@
                                 Orientation="Horizontal" Spacing="6">
                                 <TextBlock
                                   Classes="p" VerticalAlignment="Center"
-                                  Text="{Binding Function.HeaderKey^}"
+                                  Text="{Binding HeaderKey^}"
                                   TextWrapping="Wrap"/>
                                 <shadui:Badge
                                   HorizontalAlignment="Left" VerticalAlignment="Center"
                                   Background="{DynamicResource WarningColor60}"
                                   Content="{I18N {x:Static LocaleKey.ExperimentalBadge_Content}}"
                                   Foreground="{DynamicResource BadgeForegroundColor}"
-                                  IsVisible="{Binding Function.IsExperimental}"
+                                  IsVisible="{Binding IsExperimental}"
                                   ToolTip.Tip="{I18N {x:Static LocaleKey.ExperimentalBadge_ToolTip}}"/>
                               </StackPanel>
 
@@ -425,13 +398,13 @@
                                 MaxHeight="100" VerticalScrollBarVisibility="Hidden">
                                 <TextBlock
                                   Classes="Muted Caption"
-                                  Text="{Binding Function.DescriptionKey^}"
+                                  Text="{Binding DescriptionKey^}"
                                   TextWrapping="Wrap"/>
                               </ScrollViewer>
 
                               <ItemsControl
                                 Classes="ChatFunctionPermissions" Margin="0,2,0,0"
-                                ItemsSource="{Binding Function.Permissions, Converter={x:Static vc:ChatFunctionPermissionsConverters.ToList}}"/>
+                                ItemsSource="{Binding Permissions, Converter={x:Static vc:ChatFunctionPermissionsConverters.ToList}}"/>
                             </StackPanel>
                           </DockPanel>
                         </DataTemplate>
@@ -441,37 +414,36 @@
                         CanUserResize="False" CanUserSort="False"
                         Header="{I18N {x:Static LocaleKey.ChatPluginPage_FunctionsTabItem_EnabledDataGridTemplateColumn_Header}}"
                         IsReadOnly="False">
-                        <DataTemplate x:DataType="v:ToolFunctionPresentation">
+                        <DataTemplate DataType="p:ChatFunction">
                           <ToggleSwitch
                             HorizontalAlignment="Center"
-                            IsChecked="{Binding IsEnabled, Mode=TwoWay}"
-                            IsEnabled="{Binding CanEdit}"/>
+                            IsChecked="{Binding IsEnabled, Mode=TwoWay}"/>
                         </DataTemplate>
                       </DataGridTemplateColumn>
 
                       <DataGridTemplateColumn
                         CanUserResize="False" CanUserSort="False"
-                        Header="{I18N {x:Static LocaleKey.ChatPluginPage_FunctionsTabItem_BypassApprovalDataGridTemplateColumn_Header}}"
+                        Header="{I18N {x:Static LocaleKey.ChatPluginPage_FunctionsTabItem_AutoApproveDataGridTemplateColumn_Header}}"
                         IsReadOnly="False">
-                        <DataTemplate x:DataType="v:ToolFunctionPresentation">
+                        <DataTemplate DataType="p:ChatFunction">
                           <ToggleSwitch
                             HorizontalAlignment="Center"
-                            IsChecked="{Binding BypassesApproval, Mode=TwoWay}"
-                            IsEnabled="{Binding CanEditBypassesApproval}"/>
+                            IsChecked="{Binding AutoApprove, Mode=TwoWay}"
+                            IsEnabled="{Binding IsAutoApproveAllowed}"/>
                         </DataTemplate>
                       </DataGridTemplateColumn>
                     </DataGrid.Columns>
                   </DataGrid>
 
                   <StackPanel
-                    Grid.Row="1" HorizontalAlignment="Center"
-                    VerticalAlignment="Center" Spacing="16">
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Spacing="16">
                     <StackPanel.IsVisible>
                       <MultiBinding Converter="{x:Static BoolConverters.And}">
                         <Binding
                           Converter="{x:Static vc:CommonConverters.TypeEquals}"
                           ConverterParameter="{x:Type p:McpChatPlugin}"
-                          Path="Plugin.Plugin"/>
+                          Path="Plugin"/>
                         <Binding Path="!Plugin.Functions.Count"/>
                       </MultiBinding>
                     </StackPanel.IsVisible>
@@ -484,7 +456,7 @@
                       Text="{I18N {x:Static LocaleKey.ChatPluginPage_McpFunctionsEmptyContent_EmptyListInstruction}}"
                       TextAlignment="Center" TextWrapping="Wrap"/>
                   </StackPanel>
-                </Grid>
+                </Panel>
               </DataTemplate>
 
               <DataTemplate x:DataType="vm:ChatPluginPageViewModel+LogsTabItem">
@@ -496,7 +468,7 @@
                   <DockPanel LastChildFill="True">
                     <Border
                       DockPanel.Dock="Top" Padding="6,4"
-                      Background="{DynamicResource LightCardBackgroundColor}">
+                      Background="{DynamicResource SettingsItemBackgroundColor}">
                       <Grid ColumnDefinitions="Auto,Auto,*">
                         <ToggleSwitch
                           Grid.Column="0" Margin="8,0"

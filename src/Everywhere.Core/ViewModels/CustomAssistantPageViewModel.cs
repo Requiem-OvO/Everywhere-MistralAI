@@ -4,17 +4,19 @@ using System.Text.Json.Serialization;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using Everywhere.AI;
 using Everywhere.AI.Configurator;
 using Everywhere.Common;
 using Everywhere.Configuration;
+using Everywhere.Messages;
 using Lucide.Avalonia;
 using Serilog;
 using ShadUI;
 
 namespace Everywhere.ViewModels;
 
-public partial class CustomAssistantPageViewModel : ReactiveViewModelBase
+public partial class CustomAssistantPageViewModel : ReactiveViewModelBase, IRecipient<SelectCustomAssistantMessage>
 {
     private readonly IKernelMixinFactory _kernelMixinFactory;
     private readonly Settings _settings;
@@ -29,41 +31,8 @@ public partial class CustomAssistantPageViewModel : ReactiveViewModelBase
         _kernelMixinFactory = kernelMixinFactory;
         _settings = settings;
         SelectedCustomAssistant = settings.Model.SelectedCustomAssistant ?? settings.Model.CustomAssistants.FirstOrDefault();
-    }
 
-    protected internal override void OnNavigatedTo(IReadOnlyList<string> remainingSegments)
-    {
-        if (remainingSegments.Count == 0)
-        {
-            return;
-        }
-
-        var assistantIdText = remainingSegments[0];
-        if (!Guid.TryParse(assistantIdText, out var assistantId))
-        {
-            ClearSelectedAssistant();
-            ToastHost
-                .CreateToast(
-                    LocaleResolver.Common_Warning,
-                    new FormattedDynamicLocaleKey(
-                        LocaleKey.CustomAssistantPage_InvalidRouteAssistant_Content,
-                        new DirectLocaleKey(assistantIdText)))
-                .DismissOnClick()
-                .ShowWarning();
-            return;
-        }
-
-        if (!SelectAssistant(assistantId))
-        {
-            ToastHost
-                .CreateToast(
-                    LocaleResolver.Common_Warning,
-                    new FormattedDynamicLocaleKey(
-                        LocaleKey.CustomAssistantPage_MissingRouteAssistant_Content,
-                        new DirectLocaleKey(assistantId)))
-                .DismissOnClick()
-                .ShowWarning();
-        }
+        WeakReferenceMessenger.Default.Register(this);
     }
 
     private static Color[] RandomAssistantIconBackgrounds { get; } =
@@ -174,7 +143,7 @@ public partial class CustomAssistantPageViewModel : ReactiveViewModelBase
     private async Task DeleteCustomAssistantAsync()
     {
         if (SelectedCustomAssistant is not { } customAssistant) return;
-        var result = await DialogHost.CreateDialog(
+        var result = await DialogManager.CreateDialog(
                 LocaleResolver.CustomAssistantPageViewModel_DeleteCustomAssistant_Dialog_Message.Format(customAssistant.Name),
                 LocaleResolver.Common_Warning)
             .WithPrimaryButton(LocaleResolver.Common_Yes)
@@ -186,22 +155,12 @@ public partial class CustomAssistantPageViewModel : ReactiveViewModelBase
         _settings.Model.SelectedCustomAssistant = _settings.Model.CustomAssistants.FirstOrDefault();
     }
 
-    private bool SelectAssistant(Guid assistantId)
+    public void Receive(SelectCustomAssistantMessage message)
     {
-        if (CustomAssistants.FirstOrDefault(a => a.Id == assistantId) is { } assistant)
+        if (CustomAssistants.FirstOrDefault(a => a.Id == message.AssistantId) is { } assistant)
         {
             SelectedCustomAssistant = assistant;
             _settings.Model.SelectedCustomAssistant = assistant;
-            return true;
         }
-
-        ClearSelectedAssistant();
-        return false;
-    }
-
-    private void ClearSelectedAssistant()
-    {
-        SelectedCustomAssistant = null;
-        _settings.Model.SelectedCustomAssistant = null;
     }
 }

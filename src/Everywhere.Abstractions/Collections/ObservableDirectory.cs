@@ -28,7 +28,7 @@ file static class PropertyChangedEventCache
     public static readonly PropertyChangedEventArgs IndexerPropertyChanged = new("Item[]");
 }
 
-public class ObservableDictionary<TKey, TValue> :
+public sealed class ObservableDictionary<TKey, TValue> :
     IObservableDictionary,
     IDictionary<TKey, TValue>,
     IReadOnlyDictionary<TKey, TValue>,
@@ -355,7 +355,7 @@ public class ObservableDictionary<TKey, TValue> :
 
         lock (SyncRoot)
         {
-            snapshot = [.. _dictionary];
+            snapshot = _dictionary.ToList();
         }
 
         foreach (var kvp in snapshot)

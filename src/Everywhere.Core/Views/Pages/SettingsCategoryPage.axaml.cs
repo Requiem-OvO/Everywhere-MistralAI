@@ -16,13 +16,13 @@ public sealed partial class SettingsCategoryPage : UserControl, IMainViewNavigat
 
     public LucideIconKind Icon => _settingsCategory.Icon;
 
-    public IDynamicLocaleKey TitleKey => _settingsCategory.TitleKey;
+    public IDynamicResourceKey TitleKey => _settingsCategory.TitleKey;
 
     public SettingsItems SettingItems => _settingsCategory.SettingsItems;
 
     public Type GroupType => _settingsCategory.GroupType;
 
-    public IDynamicLocaleKey? DescriptionKey => _settingsCategory.DescriptionKey;
+    public IDynamicResourceKey? DescriptionKey => _settingsCategory.DescriptionKey;
 
     private readonly ISettingsCategory _settingsCategory;
 

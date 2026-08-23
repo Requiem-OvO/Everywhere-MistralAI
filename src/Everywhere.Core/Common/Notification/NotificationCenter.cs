@@ -87,7 +87,7 @@ public sealed class NotificationCenter : INotificationCenter, IDisposable
         ValidateCategoryName(categoryName);
         ArgumentNullException.ThrowIfNull(notifications);
 
-        var descriptors = notifications.ToArray();
+        var descriptors = notifications.ToList();
         foreach (var notification in descriptors)
         {
             ValidateDescriptor(notification);
@@ -100,14 +100,14 @@ public sealed class NotificationCenter : INotificationCenter, IDisposable
             var visibleDescriptors = descriptors
                 .Where(notification => notification is not { CanDismiss: true, ForceShow: false } ||
                     !_keyValueStorage.Contains(CreateStorageKey(notification.Id, categoryName)))
-                .ToArray();
+                .ToList();
 
             var batchStart = _nextSortSequence;
-            _nextSortSequence += visibleDescriptors.Length;
+            _nextSortSequence += visibleDescriptors.Count;
 
-            for (var index = 0; index < visibleDescriptors.Length; index++)
+            for (var index = 0; index < visibleDescriptors.Count; index++)
             {
-                var sequence = batchStart + visibleDescriptors.Length - index - 1;
+                var sequence = batchStart + visibleDescriptors.Count - index - 1;
                 _notificationsSource.AddOrUpdate(CreateEntry(categoryName, visibleDescriptors[index], sequence));
             }
         }
@@ -266,11 +266,11 @@ public sealed class NotificationCenter : INotificationCenter, IDisposable
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Push(
             string id,
-            IDynamicLocaleKey contentKey,
+            IDynamicResourceKey contentKey,
             NotificationType type = NotificationType.Information,
             bool canDismiss = true,
             bool forceShow = false,
-            IDynamicLocaleKey? actionButtonContentKey = null,
+            IDynamicResourceKey? actionButtonContentKey = null,
             ICommand? actionCommand = null)
         {
             notificationCenter.Push(

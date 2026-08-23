@@ -9,7 +9,7 @@ namespace Everywhere.Chat.Plugins.Mcp;
 /// An <see cref="AIFunction"/> wrapper around <see cref="McpClientTool"/> that intercepts invocations,
 /// detects session expiry errors, and silently reconnects and retries.
 /// </summary>
-public sealed class ManagedMcpClientTool : AIFunction
+internal sealed class ManagedMcpClientTool : AIFunction
 {
     public override string Name { get; }
 

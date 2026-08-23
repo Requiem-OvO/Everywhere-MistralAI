@@ -7,6 +7,4 @@ namespace Everywhere.Chat;
 public sealed partial class RootChatMessage : ChatMessage
 {
     public override AuthorRole Role => AuthorRole.System;
-
-    public override bool IsHidden => true;
 }

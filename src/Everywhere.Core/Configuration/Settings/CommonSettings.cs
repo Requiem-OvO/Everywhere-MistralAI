@@ -11,10 +11,9 @@ using ShadUI;
 namespace Everywhere.Configuration;
 
 [GeneratedSettingsItems]
-public sealed partial class CommonSettings(IServiceProvider serviceProvider) : SettingsBase(serviceProvider), ISettingsCategory
+public sealed partial class CommonSettings : SettingsBase, ISettingsCategory
 {
-    [SettingsItemIgnore]
-    private INativeHelper NativeHelper => GetRequiredService<INativeHelper>();
+    private static INativeHelper NativeHelper => ServiceLocator.Resolve<INativeHelper>();
 
     [SettingsItemIgnore]
     public int Index => 0;
@@ -23,31 +22,31 @@ public sealed partial class CommonSettings(IServiceProvider serviceProvider) : S
     public LucideIconKind Icon => LucideIconKind.Blocks;
 
     [SettingsItemIgnore]
-    public IDynamicLocaleKey TitleKey { get; } = new DynamicLocaleKey(LocaleKey.SettingsCategory_Settings_Common_Header);
+    public IDynamicResourceKey TitleKey { get; } = new DynamicResourceKey(LocaleKey.SettingsCategory_Settings_Common_Header);
 
     [SettingsItemIgnore]
-    public IDynamicLocaleKey? DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.SettingsCategory_Settings_Common_Description);
+    public IDynamicResourceKey? DescriptionKey { get; } = new DynamicResourceKey(LocaleKey.SettingsCategory_Settings_Common_Description);
 
     [ObservableProperty]
     [SettingsItemIgnore]
     public partial DateTimeOffset? LastUpdateCheckTime { get; set; }
 
     [JsonIgnore]
-    [DynamicLocaleKey(
+    [DynamicResourceKey(
         LocaleKey.SoftwareSettings_SoftwareUpdate_Header,
         LocaleKey.SoftwareSettings_SoftwareUpdate_Description)]
     [SettingsItem(Group = "_")]
     public SettingsControl<SoftwareUpdateControl> SoftwareUpdate { get; } = new();
 
     [ObservableProperty]
-    [DynamicLocaleKey(
+    [DynamicResourceKey(
         LocaleKey.SoftwareSettings_IsAutomaticUpdateCheckEnabled_Header,
         LocaleKey.SoftwareSettings_IsAutomaticUpdateCheckEnabled_Description)]
     [SettingsItem(Group = "_")]
     public partial bool IsAutomaticUpdateCheckEnabled { get; set; } = true;
 
     [ObservableProperty]
-    [DynamicLocaleKey(
+    [DynamicResourceKey(
         LocaleKey.SoftwareSettings_UpdateChannel_Header,
         LocaleKey.SoftwareSettings_UpdateChannel_Description)]
     [SettingsItem(Group = LocaleKey.Common_Advanced)]
@@ -57,10 +56,10 @@ public sealed partial class CommonSettings(IServiceProvider serviceProvider) : S
     [JsonIgnore]
     [SettingsItemIgnore]
     [SupportedOSPlatform("windows")]
-    public bool IsAdministrator => NativeHelper.IsAdministrator;
+    public static bool IsAdministrator => NativeHelper.IsAdministrator;
 
     [JsonIgnore]
-    [DynamicLocaleKey(
+    [DynamicResourceKey(
         LocaleKey.SoftwareSettings_RestartAsAdministrator_Header,
         LocaleKey.SoftwareSettings_RestartAsAdministrator_Description)]
     [SettingsItem(IsVisibleBindingPath = $"!{nameof(IsAdministrator)}", Group = "_")]
@@ -68,7 +67,7 @@ public sealed partial class CommonSettings(IServiceProvider serviceProvider) : S
     public SettingsControl<RestartAsAdministratorControl> RestartAsAdministrator { get; } = new();
 
     [JsonIgnore]
-    [DynamicLocaleKey(
+    [DynamicResourceKey(
         LocaleKey.SoftwareSettings_IsStartupEnabled_Header,
         LocaleKey.SoftwareSettings_IsStartupEnabled_Description)]
     [SettingsItem(IsEnabledBindingPath = $"{nameof(IsAdministrator)} || !{nameof(IsAdministratorStartupEnabled)}", Group = "_")]
@@ -107,7 +106,7 @@ public sealed partial class CommonSettings(IServiceProvider serviceProvider) : S
     }
 
     [JsonIgnore]
-    [DynamicLocaleKey(
+    [DynamicResourceKey(
         LocaleKey.SoftwareSettings_IsAdministratorStartupEnabled_Header,
         LocaleKey.SoftwareSettings_IsAdministratorStartupEnabled_Description)]
     [SettingsItem(IsVisibleBindingPath = nameof(IsStartupEnabled), IsEnabledBindingPath = nameof(IsAdministrator), Group = "_")]
@@ -138,7 +137,7 @@ public sealed partial class CommonSettings(IServiceProvider serviceProvider) : S
     }
 #else
     [JsonIgnore]
-    [DynamicLocaleKey(
+    [DynamicResourceKey(
         LocaleKey.SoftwareSettings_IsUserStartupEnabled_Header,
         LocaleKey.SoftwareSettings_IsUserStartupEnabled_Description)]
     [SettingsItem(Group = "_")]
@@ -163,13 +162,13 @@ public sealed partial class CommonSettings(IServiceProvider serviceProvider) : S
 #endif
 
     [ObservableProperty]
-    [DynamicLocaleKey(
+    [DynamicResourceKey(
         LocaleKey.SoftwareSettings_IsStatisticsEnabled_Header,
         LocaleKey.SoftwareSettings_IsStatisticsEnabled_Description)]
     [SettingsItem(Group = "_")]
     public partial bool IsStatisticsEnabled { get; set; } = true;
 
-    [DynamicLocaleKey(
+    [DynamicResourceKey(
         LocaleKey.SoftwareSettings_DiagnosticData_Header,
         LocaleKey.SoftwareSettings_DiagnosticData_Description)]
     [SettingsItem(Group = "_")]
@@ -184,7 +183,7 @@ public sealed partial class CommonSettings(IServiceProvider serviceProvider) : S
     }
 
     [JsonIgnore]
-    [DynamicLocaleKey(
+    [DynamicResourceKey(
         LocaleKey.SoftwareSettings_DebugFeatures_Header,
         LocaleKey.SoftwareSettings_DebugFeatures_Description)]
     [SettingsItem(Group = LocaleKey.Common_Advanced)]

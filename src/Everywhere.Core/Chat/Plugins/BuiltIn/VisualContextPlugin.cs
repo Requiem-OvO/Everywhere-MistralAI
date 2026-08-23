@@ -6,7 +6,6 @@ using System.Security;
 using System.Text;
 using System.Text.Json.Serialization;
 using Avalonia.Input;
-using Avalonia.Media.Imaging;
 using Everywhere.AI;
 using Everywhere.Chat.Permissions;
 using Everywhere.Common;
@@ -24,8 +23,8 @@ namespace Everywhere.Chat.Plugins.BuiltIn;
 
 public sealed class VisualContextPlugin : BuiltInChatPlugin
 {
-    public override IDynamicLocaleKey HeaderKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_VisualContext_Header);
-    public override IDynamicLocaleKey DescriptionKey { get; } = new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_VisualContext_Description);
+    public override IDynamicResourceKey HeaderKey { get; } = new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_VisualContext_Header);
+    public override IDynamicResourceKey DescriptionKey { get; } = new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_VisualContext_Description);
     public override LucideIconKind? Icon => LucideIconKind.Component;
     public override bool IsDefaultEnabled => true;
 
@@ -74,7 +73,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
 
     [KernelFunction("list_windows")]
     [Description("Lists all windows with their hwnd, title, process information, and state.")]
-    [DynamicLocaleKey(
+    [DynamicResourceKey(
         LocaleKey.BuiltInChatPlugin_VisualContext_ListWindows_Header,
         LocaleKey.BuiltInChatPlugin_VisualContext_ListWindows_Description)]
     private string ListWindows(
@@ -145,10 +144,10 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
             xmlBuilder.AppendLine("</Screen>");
         }
 
-        displaySink.AppendDynamicLocaleKey(
-            new FormattedDynamicLocaleKey(
+        displaySink.AppendDynamicResourceKey(
+            new FormattedDynamicResourceKey(
                 LocaleKey.BuiltInChatPlugin_ListWindows_WindowCount,
-                new DirectLocaleKey(windowCount)));
+                new DirectResourceKey(windowCount)));
         _statisticsRecorder.RecordVisualContextAsync(
                 new StatisticsVisualContextDraft(
                     null,
@@ -163,7 +162,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
 
     [KernelFunction("capture_visual_element")]
     [Description("Captures a screenshot of the specified visual element by Id. Use when XML content is inaccessible or element is image-like.")]
-    [DynamicLocaleKey(
+    [DynamicResourceKey(
         LocaleKey.BuiltInChatPlugin_VisualContext_CaptureVisualElementById_Header,
         LocaleKey.BuiltInChatPlugin_VisualContext_CaptureVisualElementById_Description)]
     private async Task<FileAttachment?> CaptureVisualElementAsync(
@@ -179,7 +178,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
         BlobEntity blob;
         using (var stream = new MemoryStream())
         {
-            bitmap.Save(stream, PngBitmapEncoderOptions.Default);
+            bitmap.Save(stream, 100);
             blob = await _blobStorage.StorageBlobAsync(stream, "image/png", cancellationToken: cancellationToken);
             await _statisticsRecorder.RecordVisualContextAsync(
                 new StatisticsVisualContextDraft(
@@ -192,7 +191,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
         }
 
         return new FileAttachment(
-            new DynamicLocaleKey(string.Empty),
+            new DynamicResourceKey(string.Empty),
             blob.LocalPath,
             blob.Sha256,
             blob.MimeType);
@@ -215,7 +214,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
         'all' will read everything available from the target element. 'none' will only read the target element itself.
         Combine multiple directions with commas, e.g. "parent,child" or "siblings".
         """)]
-    [DynamicLocaleKey(
+    [DynamicResourceKey(
         LocaleKey.BuiltInChatPlugin_VisualContext_GetVisualTree_Header,
         LocaleKey.BuiltInChatPlugin_VisualContext_GetVisualTree_Description)]
     private string GetVisualTree(
@@ -252,10 +251,10 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
         // Merge newly built elements into the chat context so they can be referenced later
         chatContext.VisualElements.AddRange(builder.BuiltVisualElements);
 
-        displaySink.AppendDynamicLocaleKey(
-            new FormattedDynamicLocaleKey(
+        displaySink.AppendDynamicResourceKey(
+            new FormattedDynamicResourceKey(
                 LocaleKey.BuiltInChatPlugin_VisualContext_GetVisualTree_Result,
-                new DirectLocaleKey(builder.BuiltVisualElements.Count)));
+                new DirectResourceKey(builder.BuiltVisualElements.Count)));
         _statisticsRecorder.RecordVisualContextAsync(
                 new StatisticsVisualContextDraft(
                     null,
@@ -271,7 +270,7 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
     [KernelFunction("execute_visual_actions")]
     [Description(
         "Executes UI automation actions as a queue. Supports clicking elements, setting text, sending shortcuts, and waiting.")]
-    [DynamicLocaleKey(
+    [DynamicResourceKey(
         LocaleKey.BuiltInChatPlugin_VisualContext_ExecuteVisualActions_Header,
         LocaleKey.BuiltInChatPlugin_VisualContext_ExecuteVisualActions_Description)]
     private async Task<string> ExecuteVisualActionsAsync(
@@ -289,30 +288,29 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
                 new ArgumentException($"{nameof(actions)} cannot be empty.", nameof(actions)));
         }
 
-        var actionsKey = new AggregateDynamicLocaleKey(
-            actions.AsValueEnumerable().Select(a => a.GetDescriptionKey()).OfType<IDynamicLocaleKey>().ToArray(),
+        var actionsKey = new AggregateDynamicResourceKey(
+            actions.AsValueEnumerable().Select(a => a.GetDescriptionKey()).OfType<IDynamicResourceKey>().ToList(),
             "\n");
 
         var detailBlock = new ChatPluginContainerDisplayBlock
         {
             new ChatPluginTextDisplayBlock(description, "Muted"),
-            new ChatPluginDynamicLocaleKeyDisplayBlock(actionsKey),
+            new ChatPluginDynamicResourceKeyDisplayBlock(actionsKey),
         };
 
         userInterface.DisplaySink.AppendBlock(detailBlock);
 
         var consent = await userInterface.RequestConsentAsync(
             null,
-            new DynamicLocaleKey(LocaleKey.BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ExecuteConsent_Header),
+            new DynamicResourceKey(LocaleKey.BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ExecuteConsent_Header),
             detailBlock,
             cancellationToken: cancellationToken);
         if (!consent)
         {
             throw new HandledException(
-                new UnauthorizedAccessException(
-                    consent.FormatReason(
-                        "The user denied the visual-action approval request, so no visual actions were executed.")),
-                LocaleKey.ConsentDecision_Deny);
+                new UnauthorizedAccessException(consent.FormatReason("User denied consent for visual actions execution.")),
+                new DynamicResourceKey(LocaleKey.ConsentDecision_Deny),
+                showDetails: false);
         }
 
         var index = 0;
@@ -552,37 +550,37 @@ public sealed class VisualContextPlugin : BuiltInChatPlugin
             return new KeyboardShortcut(key, modifiers);
         }
 
-        public IDynamicLocaleKey? GetDescriptionKey()
+        public IDynamicResourceKey? GetDescriptionKey()
         {
             return Type switch
             {
-                VisualActionType.Click => new FormattedDynamicLocaleKey(
+                VisualActionType.Click => new FormattedDynamicResourceKey(
                     LocaleKey.BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_Click,
                     GetTargetDescriptionKey()),
-                VisualActionType.SetText => new FormattedDynamicLocaleKey(
+                VisualActionType.SetText => new FormattedDynamicResourceKey(
                     LocaleKey.BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_SetText,
                     GetTargetDescriptionKey(),
-                    new DirectLocaleKey(Text ?? string.Empty)),
-                VisualActionType.Wait => new FormattedDynamicLocaleKey(
+                    new DirectResourceKey(Text ?? string.Empty)),
+                VisualActionType.Wait => new FormattedDynamicResourceKey(
                     LocaleKey.BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_Wait,
-                    new DirectLocaleKey(DelayMs ?? 0)),
-                VisualActionType.SendKey => new FormattedDynamicLocaleKey(
+                    new DirectResourceKey(DelayMs ?? 0)),
+                VisualActionType.SendKey => new FormattedDynamicResourceKey(
                     LocaleKey.BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_SendKey,
                     GetTargetDescriptionKey(),
-                    new DirectLocaleKey(ResolveShortcut().ToString())),
-                _ => (IDynamicLocaleKey?)null
+                    new DirectResourceKey(ResolveShortcut().ToString())),
+                _ => (IDynamicResourceKey?)null
             };
 
-            IDynamicLocaleKey GetTargetDescriptionKey()
+            IDynamicResourceKey GetTargetDescriptionKey()
             {
-                if (Target.IsNullOrEmpty()) return DirectLocaleKey.Empty;
+                if (Target.IsNullOrEmpty()) return DirectResourceKey.Empty;
                 if (Target.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
-                    return new FormattedDynamicLocaleKey(
+                    return new FormattedDynamicResourceKey(
                         LocaleKey.BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_TargetHwnd,
-                        new DirectLocaleKey(Target));
-                return new FormattedDynamicLocaleKey(
+                        new DirectResourceKey(Target));
+                return new FormattedDynamicResourceKey(
                     LocaleKey.BuiltInChatPlugin_VisualContext_ExecuteVisualActions_ActionDescription_TargetId,
-                    new DirectLocaleKey(Target));
+                    new DirectResourceKey(Target));
             }
         }
 

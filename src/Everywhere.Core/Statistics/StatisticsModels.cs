@@ -45,8 +45,7 @@ public enum StatisticsModelInvocationPurpose
     ContinueResponse,
     TopicGeneration,
     SubagentResponse,
-    Backfill,
-    ContextCompression
+    Backfill
 }
 
 /// <summary>
@@ -127,7 +126,7 @@ public interface IStatisticsHeatmapDay
 
     long Value { get; }
 
-    IDynamicLocaleKey ToolTipKey { get; }
+    IDynamicResourceKey ToolTipKey { get; }
 }
 
 /// <summary>
@@ -135,10 +134,10 @@ public interface IStatisticsHeatmapDay
 /// </summary>
 public sealed record StatisticsSimpleHeatmapDay(DateOnly Date, long Value) : IStatisticsHeatmapDay
 {
-    public IDynamicLocaleKey ToolTipKey => new FormattedDynamicLocaleKey(
+    public IDynamicResourceKey ToolTipKey => new FormattedDynamicResourceKey(
         LocaleKey.HomePage_HeatmapDayToolTip,
-        new DynamicLocaleKey(Date.ToString("D", CultureInfo.CurrentCulture)),
-        new DirectLocaleKey(Value.ToString("N0", CultureInfo.CurrentCulture)));
+        new DirectResourceKey(Date.ToString("D", CultureInfo.CurrentCulture)),
+        new DirectResourceKey(Value.ToString("N0", CultureInfo.CurrentCulture)));
 }
 
 /// <summary>
@@ -153,12 +152,12 @@ public sealed record StatisticsTokenHeatmapDay(
 {
     public long Value => InputTokenCount + OutputTokenCount;
 
-    public IDynamicLocaleKey ToolTipKey => new FormattedDynamicLocaleKey(
+    public IDynamicResourceKey ToolTipKey => new FormattedDynamicResourceKey(
         LocaleKey.HomePage_HeatmapTokenDayToolTip,
-        new DirectLocaleKey(Date.ToString("D", CultureInfo.CurrentCulture)),
-        new DirectLocaleKey(InputTokenCount.ToString("N0", CultureInfo.CurrentCulture)),
-        new DirectLocaleKey(OutputTokenCount.ToString("N0", CultureInfo.CurrentCulture)),
-        new DirectLocaleKey(CachedInputTokenCount.ToString("N0", CultureInfo.CurrentCulture)));
+        new DirectResourceKey(Date.ToString("D", CultureInfo.CurrentCulture)),
+        new DirectResourceKey(InputTokenCount.ToString("N0", CultureInfo.CurrentCulture)),
+        new DirectResourceKey(OutputTokenCount.ToString("N0", CultureInfo.CurrentCulture)),
+        new DirectResourceKey(CachedInputTokenCount.ToString("N0", CultureInfo.CurrentCulture)));
 }
 
 /// <summary>

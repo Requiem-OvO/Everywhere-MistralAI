@@ -5,9 +5,9 @@ namespace Everywhere.AI;
 
 public enum ModelPricingUnit
 {
-    [DynamicLocaleKey(LocaleKey.ModelPricingUnit_MCreditPerMToken)]
+    [DynamicResourceKey(LocaleKey.ModelPricingUnit_MCreditPerMToken)]
     MCreditPerMToken,
-    [DynamicLocaleKey(LocaleKey.ModelPricingUnit_UsdPerMToken)]
+    [DynamicResourceKey(LocaleKey.ModelPricingUnit_UsdPerMToken)]
     UsdPerMToken
 }
 
@@ -36,18 +36,18 @@ public sealed partial class ModelPricing(IReadOnlyList<PricingTier> tiers, Model
     /// </example>
     [IgnoreMember]
     [field: AllowNull, MaybeNull]
-    public IDynamicLocaleKey InputDescriptionKey => field ??= GetDescriptionKey(tp => tp.Input);
+    public IDynamicResourceKey InputDescriptionKey => field ??= GetDescriptionKey(tp => tp.Input);
 
     [field: AllowNull, MaybeNull]
-    public IDynamicLocaleKey OutputDescriptionKey => field ??= GetDescriptionKey(tp => tp.Output);
+    public IDynamicResourceKey OutputDescriptionKey => field ??= GetDescriptionKey(tp => tp.Output);
 
-    private IDynamicLocaleKey GetDescriptionKey(Func<TokenPricing, double> selector)
+    private IDynamicResourceKey GetDescriptionKey(Func<TokenPricing, double> selector)
     {
         switch (_tiers.Count)
         {
             case 0:
             {
-                return DirectLocaleKey.Empty;
+                return DirectResourceKey.Empty;
             }
             case 1:
             {
@@ -55,41 +55,41 @@ public sealed partial class ModelPricing(IReadOnlyList<PricingTier> tiers, Model
             }
             default:
             {
-                var keys = new FormattedDynamicLocaleKey[_tiers.Count];
+                var keys = new FormattedDynamicResourceKey[_tiers.Count];
 
-                keys[0] = new FormattedDynamicLocaleKey(
+                keys[0] = new FormattedDynamicResourceKey(
                     LocaleKey.ModelPricing_NotGreaterThanTierDescription,
                     GetPricingKey(_tiers[0]),
                     GetThresholdKey(_tiers[1]));
 
                 for (var i = 1; i < _tiers.Count - 1; i++)
                 {
-                    keys[i] = new FormattedDynamicLocaleKey(
+                    keys[i] = new FormattedDynamicResourceKey(
                         LocaleKey.ModelPricing_BetweenTiersDescription,
                         GetPricingKey(_tiers[i]),
                         GetThresholdKey(_tiers[i]),
                         GetThresholdKey(_tiers[i + 1]));
                 }
 
-                keys[^1] = new FormattedDynamicLocaleKey(
+                keys[^1] = new FormattedDynamicResourceKey(
                     LocaleKey.ModelPricing_GreaterThanTierDescription,
                     GetPricingKey(_tiers[^1]),
                     GetThresholdKey(_tiers[^1]));
 
-                return new AggregateDynamicLocaleKey(keys, "\n");
+                return new AggregateDynamicResourceKey(keys, "\n");
             }
         }
 
-        FormattedDynamicLocaleKey GetPricingKey(PricingTier tier) => new(
+        FormattedDynamicResourceKey GetPricingKey(PricingTier tier) => new(
             Unit switch
             {
                 ModelPricingUnit.MCreditPerMToken => LocaleKey.ModelPricingUnit_MCreditPerMToken,
                 ModelPricingUnit.UsdPerMToken => LocaleKey.ModelPricingUnit_UsdPerMToken,
                 _ => LocaleKey.Empty
             },
-            new DirectLocaleKey(selector(tier.Pricing).ToString("N")));
+            new DirectResourceKey(selector(tier.Pricing).ToString("N")));
 
-        DirectLocaleKey GetThresholdKey(PricingTier tier) => new(tier.Threshold.ToString("N0"));
+        DirectResourceKey GetThresholdKey(PricingTier tier) => new(tier.Threshold.ToString("N0"));
     }
 }
 

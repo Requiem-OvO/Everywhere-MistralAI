@@ -206,21 +206,11 @@ ul, ol { padding-left: 2em; }
   <Style Selector="md|MarkdownRenderer">
     <Setter Property="CodeBlockColorTheme" Value="{DynamicResource ColorTheme}"/>
 
-    <Style Selector="^ StackPanel">
-      <Setter Property="Spacing" Value="6"/>
-    </Style>
-
-    <Style Selector="^ md|MarkdownListGrid">
-      <Setter Property="ColumnSpacing" Value="4"/>
-      <Setter Property="RowSpacing" Value="6"/>
-
-      <Style Selector="^ md|MarkdownListGrid">
-        <Setter Property="Margin" Value="0,6,0,4"/>
+    <Style Selector="^ InlineUIContainer.Code">
+      <Style Selector="^ md|MarkdownTextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource QuoteColor}"/>
+        <Setter Property="FontSize" Value="{DynamicResource FontSizeM}"/>
       </Style>
-    </Style>
-
-    <Style Selector="^ md|CodeInline">
-      <Setter Property="Foreground" Value="{DynamicResource QuoteColor}"/>
     </Style>
 
     <Style Selector="^ Border.QuoteBlock">
@@ -244,7 +234,6 @@ ul, ol { padding-left: 2em; }
     </Style>
 
     <Style Selector="^ md|MarkdownTextBlock">
-      <Setter Property="FontFamily" Value="{DynamicResource CommonFontFamily}"/>
       <Setter Property="SelectionBrush" Value="#0078D7"/>
       <Setter Property="SelectionForegroundBrush" Value="#E5E5E5"/>
     </Style>
@@ -328,9 +317,5 @@ ul, ol { padding-left: 2em; }
         <TemplateBinding Property="PreviewEndpoint"/>
       </I18N>
     </Setter>
-  </Style>
-
-  <Style Selector="ContentPresenter">
-    <Setter Property="FontFamily" Value="{DynamicResource CommonFontFamily}"/>
   </Style>
 </Styles>

@@ -18,12 +18,12 @@ public sealed partial record Strategy
     /// <summary>
     /// Display name.
     /// </summary>
-    [Key(1)] public required IDynamicLocaleKey NameKey { get; init; }
+    [Key(1)] public required IDynamicResourceKey NameKey { get; init; }
 
     /// <summary>
     /// Optional description shown as tooltip or subtitle.
     /// </summary>
-    public IDynamicLocaleKey? DescriptionKey { get; init; }
+    public IDynamicResourceKey? DescriptionKey { get; init; }
 
     /// <summary>
     /// Icon for UI display.
@@ -57,10 +57,16 @@ public sealed partial record Strategy
     /// Allowed tool/plugin names for this command. null for default.
     /// </summary>
     /// <remarks>
-    /// The outer patterns match plugin keys and the inner patterns match function names.
-    /// More-specific patterns override less-specific patterns.
+    /// Wildcard is allowed. e.g.
+    /// { "builtin.visual_tree.*": true, "builtin.web_browser.web_*": true, "builtin.web_browser.web_search": false }
+    ///
+    /// Note that `builtin.visual_tree.*` and `builtin.visual_tree` are different.
+    /// Thr former means all functions in `builtin.visual_tree` should be applied (enable or disable) no matter whether then are enabled.
+    /// But the latter only means the `builtin.visual_tree` should be applied, functions will keep their original state.
+    ///
+    /// When applying, keys first ordered then apply one by one, latter overrides former.
     /// </remarks>
-    [Key(4)] public ToolPatternRulesets? ToolPatternRulesets { get; init; }
+    [Key(4)] public ToolRulesets? ToolRulesets { get; init; }
 
     /// <summary>
     /// List of preprocessor IDs to run before executing this strategy.
@@ -70,5 +76,5 @@ public sealed partial record Strategy
     /// <summary>
     /// Displays in the watermark as a hint for the user input after selecting this command.
     /// </summary>
-    [Key(6)] public IDynamicLocaleKey? ArgumentHintKey { get; init; }
+    [Key(6)] public IDynamicResourceKey? ArgumentHintKey { get; init; }
 }

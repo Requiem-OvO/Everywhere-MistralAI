@@ -391,8 +391,8 @@ public sealed class ChatContextStorage(
 
             if (node.Message is IHaveChatAttachments messageWithChatAttachments)
             {
-                var fileAttachments = messageWithChatAttachments.Attachments.AsValueEnumerable().OfType<FileAttachment>().ToArray();
-                for (var i = 0; i < fileAttachments.Length; i++)
+                var fileAttachments = messageWithChatAttachments.Attachments.AsValueEnumerable().OfType<FileAttachment>().ToList();
+                for (var i = 0; i < fileAttachments.Count; i++)
                 {
                     var attachment = fileAttachments[i];
                     var key = (node.Id, attachment.Sha256, i);
@@ -540,8 +540,8 @@ public sealed class ChatContextStorage(
     private byte[] SerializeMessage(ChatMessage message) =>
         MessagePackSerializer.Serialize(message, serializerOptions);
 
-    private ChatMessage DeserializeMessage(byte[] payload) =>
-        MessagePackSerializer.Deserialize<ChatMessage>(payload, serializerOptions);
+    private static ChatMessage DeserializeMessage(byte[] payload) =>
+        MessagePackSerializer.Deserialize<ChatMessage>(payload);
 
     private static long GetOrderKey(Guid id)
     {
