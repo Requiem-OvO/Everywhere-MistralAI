@@ -70,6 +70,7 @@ public sealed class MistralKernelMixin : KernelMixin
 
         settings.ExtensionData = new Dictionary<string, object>
         {
+            // Pass through free-text values for forward compatibility; null is omitted from the serialized request downstream.
             ["reasoning_effort"] = reasoningEffort!
         };
 
