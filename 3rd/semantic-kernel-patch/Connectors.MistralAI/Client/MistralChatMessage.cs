@@ -22,7 +22,11 @@ internal sealed class MistralChatMessage
 
     internal string? GetTextContent() => GetContent(this.Content).Text;
 
-    internal string? GetReasoningContent() => GetContent(this.Content).Reasoning ?? this.ReasoningContent;
+    internal string? GetReasoningContent()
+    {
+        var (_, reasoning) = GetContent(this.Content);
+        return string.IsNullOrWhiteSpace(reasoning) ? this.ReasoningContent : reasoning;
+    }
 
     internal static (string? Text, string? Reasoning) GetContent(object? content)
     {
