@@ -615,9 +615,9 @@ internal sealed class MistralClient
         using var httpRequestMessage = this.CreatePost(request, endpoint, this._apiKey, false);
 
         var response = await this.SendRequestAsync<TextEmbeddingResponse>(httpRequestMessage, cancellationToken).ConfigureAwait(false);
-        if (response.Data is null || response.Data.Any(item => item.Embedding is null))
+        if (response.Data is null || response.Data.Count != data.Count || response.Data.Any(item => item.Embedding is null))
         {
-            throw new KernelException("Embedding response did not contain embedding data.");
+            throw new KernelException("Embedding response did not contain embedding data for every input.");
         }
 
         return response.Data.Select(item => new ReadOnlyMemory<float>([.. item.Embedding!])).ToList();

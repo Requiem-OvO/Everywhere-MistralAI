@@ -145,7 +145,7 @@ public abstract partial class Assistant : ObservableValidator, IModelDefinition
     /// <summary>
     /// Gets the Mistral-specific options for this assistant.
     /// </summary>
-    [DynamicResourceKey(
+    [DynamicLocaleKey(
         LocaleKey.Assistant_MistralOptions_Header,
         LocaleKey.Assistant_MistralOptions_Description)]
     [SettingsItem(IsVisibleBindingPath = nameof(IsMistral), Group = LocaleKey.Common_Advanced)]
