@@ -72,6 +72,7 @@ public sealed class MistralKernelMixin : KernelMixin
         if (!string.IsNullOrWhiteSpace(reasoningEffort))
         {
             settings.ExtensionData ??= new Dictionary<string, object>();
+            // Preserve existing extension data and pass through non-empty free-text values for forward compatibility.
             settings.ExtensionData["reasoning_effort"] = reasoningEffort;
         }
 

@@ -35,6 +35,7 @@ public sealed partial class MistralOptions : ObservableObject
     /// <summary>
     /// Gets or sets the sampling temperature passed to the model.
     /// </summary>
+    [ObservableProperty]
     [DynamicLocaleKey(
         LocaleKey.Assistant_Temperature_Header,
         LocaleKey.Assistant_Temperature_Description)]
@@ -44,6 +45,7 @@ public sealed partial class MistralOptions : ObservableObject
     /// <summary>
     /// Gets or sets the nucleus sampling probability passed to the model.
     /// </summary>
+    [ObservableProperty]
     [DynamicLocaleKey(
         LocaleKey.Assistant_TopP_Header,
         LocaleKey.Assistant_TopP_Description)]
