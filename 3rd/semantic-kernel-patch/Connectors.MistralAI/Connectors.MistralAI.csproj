@@ -21,7 +21,7 @@
     <Compile Include="Client\ChatCompletionRequest.cs">
       <Link>Client\ChatCompletionRequest.cs</Link>
     </Compile>
-    <Compile Include="$(ProjectRoot)\Client\ChatCompletionResponse.cs">
+    <Compile Include="Client\ChatCompletionResponse.cs">
       <Link>Client\ChatCompletionResponse.cs</Link>
     </Compile>
     <Compile Include="$(ProjectRoot)\Client\ContentChunk.cs">
@@ -69,7 +69,7 @@
     <Compile Include="Client\MistralToolCall.cs">
       <Link>Client\MistralToolCall.cs</Link>
     </Compile>
-    <Compile Include="$(ProjectRoot)\Client\MistralUsage.cs">
+    <Compile Include="Client\MistralUsage.cs">
       <Link>Client\MistralUsage.cs</Link>
     </Compile>
     <Compile Include="Client\TextChunk.cs">
@@ -93,7 +93,7 @@
     <Compile Include="$(ProjectRoot)\Extensions\MistralAIServiceCollectionExtensions.DependencyInjection.cs">
       <Link>Extensions\MistralAIServiceCollectionExtensions.DependencyInjection.cs</Link>
     </Compile>
-    <Compile Include="$(ProjectRoot)\MistralAIPromptExecutionSettings.cs">
+    <Compile Include="MistralAIPromptExecutionSettings.cs">
       <Link>MistralAIPromptExecutionSettings.cs</Link>
     </Compile>
     <Compile Include="$(ProjectRoot)\MistralAIToolCallBehavior.cs">

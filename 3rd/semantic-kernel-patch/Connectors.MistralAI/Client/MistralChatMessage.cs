@@ -40,47 +40,49 @@ internal sealed class MistralChatMessage
             return (element.GetString(), null);
         }
 
-        if (element.ValueKind != JsonValueKind.Array)
-        {
-            return (null, null);
-        }
-
         var text = (StringBuilder?)null;
         var reasoning = (StringBuilder?)null;
-        foreach (var item in element.EnumerateArray())
+        if (element.ValueKind == JsonValueKind.Object)
         {
-            if (!item.TryGetProperty("type", out var typeProperty))
+            AppendContent(element, ref text, ref reasoning);
+        }
+        else if (element.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in element.EnumerateArray())
             {
-                continue;
-            }
-
-            if (typeProperty.ValueKind != JsonValueKind.String)
-            {
-                continue;
-            }
-
-            switch (typeProperty.GetString())
-            {
-                case "text" when item.TryGetProperty("text", out var textProperty) && textProperty.ValueKind == JsonValueKind.String:
-                    (text ??= new StringBuilder()).Append(textProperty.GetString());
-                    break;
-                case "thinking" when item.TryGetProperty("thinking", out var thinkingProperty) && thinkingProperty.ValueKind == JsonValueKind.Array:
-                    foreach (var thinkingItem in thinkingProperty.EnumerateArray())
-                    {
-                        if (thinkingItem.TryGetProperty("type", out var thinkingTypeProperty) &&
-                            thinkingTypeProperty.ValueKind == JsonValueKind.String &&
-                            thinkingTypeProperty.GetString() == "text" &&
-                            thinkingItem.TryGetProperty("text", out var reasoningTextProperty) &&
-                            reasoningTextProperty.ValueKind == JsonValueKind.String)
-                        {
-                            (reasoning ??= new StringBuilder()).Append(reasoningTextProperty.GetString());
-                        }
-                    }
-                    break;
+                AppendContent(item, ref text, ref reasoning);
             }
         }
 
         return (text?.ToString(), reasoning?.ToString());
+    }
+
+    private static void AppendContent(JsonElement item, ref StringBuilder? text, ref StringBuilder? reasoning)
+    {
+        if (!item.TryGetProperty("type", out var typeProperty) || typeProperty.ValueKind != JsonValueKind.String)
+        {
+            return;
+        }
+
+        switch (typeProperty.GetString())
+        {
+            case "text" when item.TryGetProperty("text", out var textProperty) && textProperty.ValueKind == JsonValueKind.String:
+                (text ??= new StringBuilder()).Append(textProperty.GetString());
+                break;
+            case "thinking" when item.TryGetProperty("thinking", out var thinkingProperty) && thinkingProperty.ValueKind == JsonValueKind.Array:
+                foreach (var thinkingItem in thinkingProperty.EnumerateArray())
+                {
+                    if (thinkingItem.TryGetProperty("type", out var thinkingTypeProperty) &&
+                        thinkingTypeProperty.ValueKind == JsonValueKind.String &&
+                        thinkingTypeProperty.GetString() == "text" &&
+                        thinkingItem.TryGetProperty("text", out var reasoningTextProperty) &&
+                        reasoningTextProperty.ValueKind == JsonValueKind.String)
+                    {
+                        (reasoning ??= new StringBuilder()).Append(reasoningTextProperty.GetString());
+                    }
+                }
+                break;
+        }
     }
 
     [JsonPropertyName("name")]
@@ -107,11 +109,6 @@ internal sealed class MistralChatMessage
     [JsonConstructor]
     internal MistralChatMessage(string? role, object? content)
     {
-        if (role is not null and not "system" and not "user" and not "assistant" and not "tool")
-        {
-            throw new System.ArgumentException($"Role must be one of: system, user, assistant or tool. {role} is an invalid role.", nameof(role));
-        }
-
         this.Role = role;
         this.Content = content;
     }

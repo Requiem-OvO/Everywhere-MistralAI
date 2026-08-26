@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
@@ -58,8 +59,8 @@ public sealed class MistralKernelMixin : KernelMixin
 
         var settings = new MistralAIPromptExecutionSettings
         {
-            Temperature = double.TryParse(_options.Temperature, out var temperature) ? temperature : 0.7,
-            TopP = double.TryParse(_options.TopP, out var topP) ? topP : 1,
+            Temperature = double.TryParse(_options.Temperature, NumberStyles.Float, CultureInfo.InvariantCulture, out var temperature) ? temperature : null,
+            TopP = double.TryParse(_options.TopP, NumberStyles.Float, CultureInfo.InvariantCulture, out var topP) ? topP : null,
             ToolCallBehavior = toolCallBehavior,
         };
 
@@ -68,11 +69,11 @@ public sealed class MistralKernelMixin : KernelMixin
             ? _options.ReasoningEffort
             : "none";
 
-        settings.ExtensionData = new Dictionary<string, object>
+        if (!string.IsNullOrWhiteSpace(reasoningEffort))
         {
-            // Pass through free-text values for forward compatibility; null is omitted from the serialized request downstream.
-            ["reasoning_effort"] = reasoningEffort!
-        };
+            settings.ExtensionData ??= [];
+            settings.ExtensionData["reasoning_effort"] = reasoningEffort;
+        }
 
         return settings;
     }
@@ -168,6 +169,7 @@ public sealed class MistralKernelMixin : KernelMixin
                 {
                     InputTokenCount = usage.PromptTokens,
                     OutputTokenCount = usage.CompletionTokens,
+                    ReasoningTokenCount = usage.CompletionTokensDetails?.ReasoningTokens,
                     TotalTokenCount = usage.TotalTokens
                 }
             };

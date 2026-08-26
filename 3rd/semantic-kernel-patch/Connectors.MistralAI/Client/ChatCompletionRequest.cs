@@ -11,16 +11,18 @@ namespace Microsoft.SemanticKernel.Connectors.MistralAI.Client;
 internal sealed class ChatCompletionRequest
 {
     [JsonPropertyName("model")]
-    public string Model { get; set; }
+    public string Model { get; }
 
     [JsonPropertyName("messages")]
     public IList<MistralChatMessage> Messages { get; set; } = [];
 
     [JsonPropertyName("temperature")]
-    public double Temperature { get; set; } = 0.7;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public double? Temperature { get; set; }
 
     [JsonPropertyName("top_p")]
-    public double TopP { get; set; } = 1;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public double? TopP { get; set; }
 
     [JsonPropertyName("max_tokens")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -31,7 +33,7 @@ internal sealed class ChatCompletionRequest
 
     [JsonPropertyName("safe_prompt")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public bool? SafePrompt { get; set; } = false;
+    public bool? SafePrompt { get; set; }
 
     [JsonPropertyName("tools")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

@@ -7,5 +7,7 @@ namespace Microsoft.SemanticKernel.Connectors.MistralAI.Client;
 internal sealed class TextChunk(string text) : ContentChunk(ContentChunkType.Text)
 {
     [JsonPropertyName("text")]
-    public string Text { get; set; } = text;
+    public string Text { get; } = !string.IsNullOrEmpty(text)
+        ? text
+        : throw new System.ArgumentException("Text must not be empty.", nameof(text));
 }

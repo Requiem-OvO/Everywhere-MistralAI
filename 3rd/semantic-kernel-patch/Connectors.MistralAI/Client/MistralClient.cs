@@ -57,7 +57,9 @@ internal sealed class MistralClient
 
         for (int requestIndex = 1; ; requestIndex++)
         {
-            var chatRequest = this.CreateChatCompletionRequest(modelId, stream: false, chatHistory, mistralExecutionSettings, kernel);
+            var allowTools = mistralExecutionSettings.ToolCallBehavior is null ||
+                requestIndex <= mistralExecutionSettings.ToolCallBehavior.MaximumUseAttempts;
+            var chatRequest = this.CreateChatCompletionRequest(modelId, stream: false, chatHistory, mistralExecutionSettings, kernel, allowTools);
 
             ChatCompletionResponse? responseData = null;
             List<ChatMessageContent> responseContent;
@@ -199,7 +201,7 @@ internal sealed class MistralClient
                     }).ConfigureAwait(false);
                 }
 #pragma warning disable CA1031 // Do not catch general exception types
-                catch (Exception e)
+                catch (Exception e) when (e is not OperationCanceledException)
 #pragma warning restore CA1031
                 {
                     this.AddResponseMessage(chatHistory, toolCall, result: null, $"Error: Exception while invoking function. {e.Message}");
@@ -233,23 +235,10 @@ internal sealed class MistralClient
             // Update tool use information for the next go-around based on having completed another requestIndex.
             Debug.Assert(mistralExecutionSettings.ToolCallBehavior is not null);
 
-            // Set the tool choice to none. If we end up wanting to use tools, we'll reset it to the desired value.
-            chatRequest.ToolChoice = "none";
-            chatRequest.Tools?.Clear();
-
-            if (requestIndex >= mistralExecutionSettings.ToolCallBehavior!.MaximumUseAttempts)
+            if (requestIndex >= mistralExecutionSettings.ToolCallBehavior!.MaximumUseAttempts &&
+                this._logger.IsEnabled(LogLevel.Debug))
             {
-                // Don't add any tools as we've reached the maximum attempts limit.
-                if (this._logger.IsEnabled(LogLevel.Debug))
-                {
-                    this._logger.LogDebug("Maximum use ({MaximumUse}) reached; removing the tool.", mistralExecutionSettings.ToolCallBehavior!.MaximumUseAttempts);
-                }
-            }
-            else
-            {
-                // Regenerate the tool list as necessary. The invocation of the function(s) could have augmented
-                // what functions are available in the kernel.
-                mistralExecutionSettings.ToolCallBehavior.ConfigureRequest(kernel, chatRequest);
+                this._logger.LogDebug("Maximum use ({MaximumUse}) reached; removing the tool.", mistralExecutionSettings.ToolCallBehavior.MaximumUseAttempts);
             }
 
             // Disable auto invocation if we've exceeded the allowed limit.
@@ -275,7 +264,9 @@ internal sealed class MistralClient
         List<MistralToolCall>? toolCalls = null;
         for (int requestIndex = 1; ; requestIndex++)
         {
-            var chatRequest = this.CreateChatCompletionRequest(modelId, stream: true, chatHistory, mistralExecutionSettings, kernel);
+            var allowTools = mistralExecutionSettings.ToolCallBehavior is null ||
+                requestIndex <= mistralExecutionSettings.ToolCallBehavior.MaximumUseAttempts;
+            var chatRequest = this.CreateChatCompletionRequest(modelId, stream: true, chatHistory, mistralExecutionSettings, kernel, allowTools);
 
             // Reset state
             toolCalls?.Clear();
@@ -328,7 +319,7 @@ internal sealed class MistralClient
                             }
 
                             MistralChatCompletionChoice chatChoice = completionChunk!.Choices![0]; // TODO Handle multiple choices
-                            streamedRole ??= chatChoice.Delta!.Role;
+                            streamedRole ??= chatChoice.Delta?.Role;
                             if (chatChoice.ToolCalls is { Count: > 0 } chunkToolCalls)
                             {
                                 toolCalls ??= [];
@@ -450,7 +441,7 @@ internal sealed class MistralClient
                     }).ConfigureAwait(false);
                 }
 #pragma warning disable CA1031 // Do not catch general exception types
-                catch (Exception e)
+                catch (Exception e) when (e is not OperationCanceledException)
 #pragma warning restore CA1031
                 {
                     this.AddResponseMessage(chatHistory, toolCall, result: null, $"Error: Exception while invoking function. {e.Message}");
@@ -487,23 +478,10 @@ internal sealed class MistralClient
             // Update tool use information for the next go-around based on having completed another requestIndex.
             Debug.Assert(mistralExecutionSettings.ToolCallBehavior is not null);
 
-            // Set the tool choice to none. If we end up wanting to use tools, we'll reset it to the desired value.
-            chatRequest.ToolChoice = "none";
-            chatRequest.Tools?.Clear();
-
-            if (requestIndex >= mistralExecutionSettings.ToolCallBehavior!.MaximumUseAttempts)
+            if (requestIndex >= mistralExecutionSettings.ToolCallBehavior!.MaximumUseAttempts &&
+                this._logger.IsEnabled(LogLevel.Debug))
             {
-                // Don't add any tools as we've reached the maximum attempts limit.
-                if (this._logger.IsEnabled(LogLevel.Debug))
-                {
-                    this._logger.LogDebug("Maximum use ({MaximumUse}) reached; removing the tool.", mistralExecutionSettings.ToolCallBehavior!.MaximumUseAttempts);
-                }
-            }
-            else
-            {
-                // Regenerate the tool list as necessary. The invocation of the function(s) could have augmented
-                // what functions are available in the kernel.
-                mistralExecutionSettings.ToolCallBehavior.ConfigureRequest(kernel, chatRequest);
+                this._logger.LogDebug("Maximum use ({MaximumUse}) reached; removing the tool.", mistralExecutionSettings.ToolCallBehavior.MaximumUseAttempts);
             }
 
             // Disable auto invocation if we've exceeded the allowed limit.
@@ -609,8 +587,8 @@ internal sealed class MistralClient
 
     internal async Task<IList<ReadOnlyMemory<float>>> GenerateEmbeddingsAsync(IList<string> data, CancellationToken cancellationToken, PromptExecutionSettings? executionSettings = null, Kernel? kernel = null)
     {
-        var request = new TextEmbeddingRequest(this._modelId, data);
         var mistralExecutionSettings = MistralAIPromptExecutionSettings.FromExecutionSettings(executionSettings);
+        var request = new TextEmbeddingRequest(mistralExecutionSettings.ModelId ?? this._modelId, data);
         var endpoint = this.GetEndpoint(mistralExecutionSettings, path: "embeddings");
         using var httpRequestMessage = this.CreatePost(request, endpoint, this._apiKey, false);
 
@@ -730,7 +708,7 @@ internal sealed class MistralClient
         }
     }
 
-    private ChatCompletionRequest CreateChatCompletionRequest(string modelId, bool stream, ChatHistory chatHistory, MistralAIPromptExecutionSettings executionSettings, Kernel? kernel = null)
+    private ChatCompletionRequest CreateChatCompletionRequest(string modelId, bool stream, ChatHistory chatHistory, MistralAIPromptExecutionSettings executionSettings, Kernel? kernel = null, bool allowTools = true)
     {
         if (this._logger.IsEnabled(LogLevel.Trace))
         {
@@ -770,7 +748,10 @@ internal sealed class MistralClient
             };
         }
 
-        executionSettings.ToolCallBehavior?.ConfigureRequest(kernel, request);
+        if (allowTools)
+        {
+            executionSettings.ToolCallBehavior?.ConfigureRequest(kernel, request);
+        }
 
         return request;
     }
@@ -876,7 +857,7 @@ internal sealed class MistralClient
                 continue;
             }
 
-            throw new NotSupportedException("Invalid message content, only text, image url and document url are supported.");
+            this._logger.LogWarning("Ignoring unsupported Mistral message content of type {ContentType}.", item.GetType().Name);
         }
 
         return [new MistralChatMessage(chatMessage.Role.ToString(), content)];
@@ -895,7 +876,7 @@ internal sealed class MistralClient
         request.Headers.Add("User-Agent", HttpHeaderConstant.Values.UserAgent);
         request.Headers.Add(HttpHeaderConstant.Names.SemanticKernelVersion, HttpHeaderConstant.Values.GetAssemblyVersion(this.GetType()));
         request.Headers.Add("Accept", stream ? "text/event-stream" : "application/json");
-        request.Headers.Add("Authorization", $"Bearer {apiKey}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
         request.Content!.Headers.ContentType = new MediaTypeHeaderValue("application/json");
     }
 
@@ -916,8 +897,8 @@ internal sealed class MistralClient
     private Uri GetEndpoint(MistralAIPromptExecutionSettings executionSettings, string path)
     {
         var endpoint = this._endpoint ?? new Uri($"https://api.mistral.ai/{executionSettings.ApiVersion}");
-        var separator = endpoint.AbsolutePath.EndsWith("/", StringComparison.InvariantCulture) ? string.Empty : "/";
-        return new Uri($"{endpoint}{separator}{path}");
+        var normalizedEndpoint = new Uri($"{endpoint.AbsoluteUri.TrimEnd('/')}/", UriKind.Absolute);
+        return new Uri(normalizedEndpoint, path);
     }
 
     /// <summary>Checks if a tool call is for a function that was defined.</summary>
@@ -977,7 +958,7 @@ internal sealed class MistralClient
 
     private ChatMessageContent ToChatMessageContent(string modelId, string streamedRole, MistralChatCompletionChunk chunk, MistralChatCompletionChoice chatChoice)
     {
-        var message = new ChatMessageContent(new AuthorRole(streamedRole), chatChoice.Delta!.GetTextContent(), modelId, chatChoice, Encoding.UTF8, GetChatChoiceMetadata(chunk, chatChoice));
+        var message = new ChatMessageContent(new AuthorRole(streamedRole), chatChoice.Delta?.GetTextContent(), modelId, chatChoice, Encoding.UTF8, GetChatChoiceMetadata(chunk, chatChoice));
 
         if (chatChoice.IsToolCall)
         {
@@ -1004,11 +985,6 @@ internal sealed class MistralClient
             if (target is null && update.Index is int toolCallIndex)
             {
                 target = accumulated.FirstOrDefault(item => item.Index == toolCallIndex);
-            }
-
-            if (target is null && update.Index is null && index < accumulated.Count)
-            {
-                target = accumulated[index];
             }
 
             if (target is null)

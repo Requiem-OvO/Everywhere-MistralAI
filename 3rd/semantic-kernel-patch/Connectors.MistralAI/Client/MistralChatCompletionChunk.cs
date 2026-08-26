@@ -18,7 +18,7 @@ internal sealed class MistralChatCompletionChunk
     public string? Object { get; set; }
 
     [JsonPropertyName("created")]
-    public int Created { get; set; }
+    public long Created { get; set; }
 
     [JsonPropertyName("model")]
     public string? Model { get; set; }
@@ -30,7 +30,7 @@ internal sealed class MistralChatCompletionChunk
     public MistralUsage? Usage { get; set; }
 
     internal IReadOnlyDictionary<string, object?>? GetMetadata() =>
-        this._metadata ??= new Dictionary<string, object?>(4)
+        this._metadata ??= new Dictionary<string, object?>(5)
         {
             { nameof(MistralChatCompletionChunk.Id), this.Id },
             { nameof(MistralChatCompletionChunk.Model), this.Model },
@@ -41,13 +41,16 @@ internal sealed class MistralChatCompletionChunk
 
     internal int GetChoiceCount() => this.Choices?.Count ?? 0;
 
-    internal string? GetRole(int index) => this.Choices?[index]?.Delta?.Role;
+    internal string? GetRole(int index) => this.GetChoice(index)?.Delta?.Role;
 
-    internal string? GetContent(int index) => this.Choices?[index]?.Delta?.GetTextContent();
+    internal string? GetContent(int index) => this.GetChoice(index)?.Delta?.GetTextContent();
 
-    internal string? GetReasoningContent(int index) => this.Choices?[index]?.Delta?.GetReasoningContent();
+    internal string? GetReasoningContent(int index) => this.GetChoice(index)?.Delta?.GetReasoningContent();
 
-    internal int GetChoiceIndex(int index) => this.Choices?[index]?.Index ?? -1;
+    internal int GetChoiceIndex(int index) => this.GetChoice(index)?.Index ?? -1;
+
+    private MistralChatCompletionChoice? GetChoice(int index) =>
+        this.Choices is { } choices && (uint)index < (uint)choices.Count ? choices[index] : null;
 
     internal Encoding? GetEncoding() => null;
 

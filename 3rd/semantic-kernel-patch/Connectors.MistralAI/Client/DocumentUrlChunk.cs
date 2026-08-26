@@ -7,5 +7,7 @@ namespace Microsoft.SemanticKernel.Connectors.MistralAI.Client;
 internal sealed class DocumentUrlChunk(string documentUrl) : ContentChunk(ContentChunkType.DocumentUrl)
 {
     [JsonPropertyName("document_url")]
-    public string DocumentUrl { get; set; } = documentUrl;
+    public string DocumentUrl { get; } = !string.IsNullOrWhiteSpace(documentUrl)
+        ? documentUrl
+        : throw new System.ArgumentException("Document URL must not be empty.", nameof(documentUrl));
 }
