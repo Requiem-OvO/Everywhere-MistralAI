@@ -1,3 +1,4 @@
+﻿using System.Globalization;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
@@ -44,9 +45,6 @@ public sealed class MistralKernelMixin : KernelMixin
     }
 
     /// <inheritdoc/>
-    public override bool IsPersistentMessageMetadataKey(string key) => key is "reasoningSignature";
-
-    /// <inheritdoc/>
     public override PromptExecutionSettings GetPromptExecutionSettings(FunctionChoiceBehavior? functionChoiceBehavior = null)
     {
         // Convert FunctionChoiceBehavior to MistralAIToolCallBehavior
@@ -58,8 +56,8 @@ public sealed class MistralKernelMixin : KernelMixin
 
         var settings = new MistralAIPromptExecutionSettings
         {
-            Temperature = double.TryParse(_options.Temperature, out var temperature) ? temperature : 0.7,
-            TopP = double.TryParse(_options.TopP, out var topP) ? topP : 1,
+            Temperature = double.TryParse(_options.Temperature, NumberStyles.Float, CultureInfo.InvariantCulture, out var temperature) ? temperature : 0.7,
+            TopP = double.TryParse(_options.TopP, NumberStyles.Float, CultureInfo.InvariantCulture, out var topP) ? topP : 1,
             ToolCallBehavior = toolCallBehavior,
         };
 

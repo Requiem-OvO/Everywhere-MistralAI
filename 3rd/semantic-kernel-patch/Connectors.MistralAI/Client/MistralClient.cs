@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft. All rights reserved.
+﻿// Copyright (c) Microsoft. All rights reserved.
 
 using System;
 using System.Collections.Generic;
@@ -58,6 +58,7 @@ internal sealed class MistralClient
         for (int requestIndex = 1; ; requestIndex++)
         {
             var chatRequest = this.CreateChatCompletionRequest(modelId, stream: false, chatHistory, mistralExecutionSettings, kernel);
+            this.RemoveToolsIfMaximumUseAttemptsReached(requestIndex, mistralExecutionSettings, chatRequest);
 
             ChatCompletionResponse? responseData = null;
             List<ChatMessageContent> responseContent;
@@ -230,27 +231,7 @@ internal sealed class MistralClient
                 }
             }
 
-            // Update tool use information for the next go-around based on having completed another requestIndex.
             Debug.Assert(mistralExecutionSettings.ToolCallBehavior is not null);
-
-            // Set the tool choice to none. If we end up wanting to use tools, we'll reset it to the desired value.
-            chatRequest.ToolChoice = "none";
-            chatRequest.Tools?.Clear();
-
-            if (requestIndex >= mistralExecutionSettings.ToolCallBehavior!.MaximumUseAttempts)
-            {
-                // Don't add any tools as we've reached the maximum attempts limit.
-                if (this._logger.IsEnabled(LogLevel.Debug))
-                {
-                    this._logger.LogDebug("Maximum use ({MaximumUse}) reached; removing the tool.", mistralExecutionSettings.ToolCallBehavior!.MaximumUseAttempts);
-                }
-            }
-            else
-            {
-                // Regenerate the tool list as necessary. The invocation of the function(s) could have augmented
-                // what functions are available in the kernel.
-                mistralExecutionSettings.ToolCallBehavior.ConfigureRequest(kernel, chatRequest);
-            }
 
             // Disable auto invocation if we've exceeded the allowed limit.
             if (requestIndex >= mistralExecutionSettings.ToolCallBehavior!.MaximumAutoInvokeAttempts)
@@ -276,6 +257,7 @@ internal sealed class MistralClient
         for (int requestIndex = 1; ; requestIndex++)
         {
             var chatRequest = this.CreateChatCompletionRequest(modelId, stream: true, chatHistory, mistralExecutionSettings, kernel);
+            this.RemoveToolsIfMaximumUseAttemptsReached(requestIndex, mistralExecutionSettings, chatRequest);
 
             // Reset state
             toolCalls?.Clear();
@@ -484,27 +466,7 @@ internal sealed class MistralClient
                 }
             }
 
-            // Update tool use information for the next go-around based on having completed another requestIndex.
             Debug.Assert(mistralExecutionSettings.ToolCallBehavior is not null);
-
-            // Set the tool choice to none. If we end up wanting to use tools, we'll reset it to the desired value.
-            chatRequest.ToolChoice = "none";
-            chatRequest.Tools?.Clear();
-
-            if (requestIndex >= mistralExecutionSettings.ToolCallBehavior!.MaximumUseAttempts)
-            {
-                // Don't add any tools as we've reached the maximum attempts limit.
-                if (this._logger.IsEnabled(LogLevel.Debug))
-                {
-                    this._logger.LogDebug("Maximum use ({MaximumUse}) reached; removing the tool.", mistralExecutionSettings.ToolCallBehavior!.MaximumUseAttempts);
-                }
-            }
-            else
-            {
-                // Regenerate the tool list as necessary. The invocation of the function(s) could have augmented
-                // what functions are available in the kernel.
-                mistralExecutionSettings.ToolCallBehavior.ConfigureRequest(kernel, chatRequest);
-            }
 
             // Disable auto invocation if we've exceeded the allowed limit.
             if (requestIndex >= mistralExecutionSettings.ToolCallBehavior!.MaximumAutoInvokeAttempts)
@@ -727,6 +689,26 @@ internal sealed class MistralClient
         if (firstRole is not "system" and not "user")
         {
             throw new ArgumentException("The first message in chat history must have either the system or user role", nameof(chatHistory));
+        }
+    }
+
+    private void RemoveToolsIfMaximumUseAttemptsReached(
+        int requestIndex,
+        MistralAIPromptExecutionSettings executionSettings,
+        ChatCompletionRequest request)
+    {
+        var toolCallBehavior = executionSettings.ToolCallBehavior;
+        if (toolCallBehavior is null || requestIndex <= toolCallBehavior.MaximumUseAttempts)
+        {
+            return;
+        }
+
+        request.ToolChoice = null;
+        request.Tools = null;
+
+        if (this._logger.IsEnabled(LogLevel.Debug))
+        {
+            this._logger.LogDebug("Maximum use ({MaximumUse}) reached; removing tools from the request.", toolCallBehavior.MaximumUseAttempts);
         }
     }
 
