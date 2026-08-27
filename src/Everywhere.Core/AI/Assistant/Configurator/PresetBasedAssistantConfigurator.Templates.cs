@@ -410,10 +410,10 @@ partial class PresetBasedAssistantConfigurator
                 },
                 new ModelDefinitionTemplate
                 {
-                    ModelId = "devstral-latest",
-                    Name = "Devstral",
+                    ModelId = "mistral-large-latest",
+                    Name = "Mistral Large",
                     SupportsToolCall = true,
-                    InputModalities = Modalities.Text,
+                    InputModalities = Modalities.Text | Modalities.Image,
                     OutputModalities = Modalities.Text,
                     ContextLimit = 256_000,
                     OutputLimit = 128_000
