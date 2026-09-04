@@ -1,3 +1,6 @@
+# PR已合并，此仓库存档
+
+
 # Everywhere-MistralAI
 
 > ⚠️ **声明：本项目是基于优秀的 [Everywhere](https://github.com/Sylinko/Everywhere) 开发的非官方 Fork 分支。**
